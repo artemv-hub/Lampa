@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.1.5',
+    version: '3.1.6',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -61,7 +61,6 @@
         type: 'select',
         default: '12',
         values: {
-          '8': '8',
           '10': '10',
           '12': '12',
           '14': '14'
@@ -105,7 +104,7 @@
         let torrentBtn = render.find('.view--torrent')
         let onlineBtn = render.find('.view--online').removeClass('hide')
 
-        if (window.lampa_settings.torrents_use) {
+        if (Lampa.Storage.field('parser_use')) {
           torrentBtn.removeClass('hide')
           buttonsContainer.prepend([torrentBtn[0], onlineBtn[0]])
         } else {
