@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.1.3',
+    version: '3.1.4',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -99,14 +99,12 @@
     Lampa.Listener.follow('full', (e) => {
       if (e.type == 'complite') {
         let render = e.object.activity.render()
-
         let buttonsContainer = render.find('.full-start-new__buttons')
-        buttonsContainer.find('.full-start__button').addClass('hide')
+        buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options').remove()
 
         let torrentBtn = render.find('.view--torrent').removeClass('hide')
         let onlineBtn = render.find('.view--online').removeClass('hide')
-        let bookBtn = render.find('.button--book').removeClass('hide')
-        buttonsContainer.empty().append([torrentBtn[0], onlineBtn[0], bookBtn[0]])
+        buttonsContainer.prepend([torrentBtn[0], onlineBtn[0]])
       }
     })
   }
