@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.1.4',
+    version: '3.1.5',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -59,12 +59,12 @@
       param: {
         name: 'interface_fixsize',
         type: 'select',
-        default: '16',
+        default: '12',
         values: {
+          '8': '8',
           '10': '10',
           '12': '12',
-          '14': '14',
-          '16': '16'
+          '14': '14'
         }
       },
       field: { name: 'Фиксированный размер' },
@@ -86,8 +86,8 @@
     var layer_update = Lampa.Layer.update;
 
     Lampa.Layer.update = function (where) {
-      var font_size = parseInt(Lampa.Storage.field('interface_fixsize')) || 16;
-      if (Lampa.Platform.screen('mobile')) { font_size = 10; }
+      var font_size = parseInt(Lampa.Storage.field('interface_fixsize'));
+      if (Lampa.Platform.screen('mobile')) { font_size = 8; }
       $('body').css({ fontSize: font_size + 'px' });
       layer_update(where);
     };
@@ -102,9 +102,15 @@
         let buttonsContainer = render.find('.full-start-new__buttons')
         buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options').remove()
 
-        let torrentBtn = render.find('.view--torrent').removeClass('hide')
+        let torrentBtn = render.find('.view--torrent')
         let onlineBtn = render.find('.view--online').removeClass('hide')
-        buttonsContainer.prepend([torrentBtn[0], onlineBtn[0]])
+
+        if (window.lampa_settings.torrents_use) {
+          torrentBtn.removeClass('hide')
+          buttonsContainer.prepend([torrentBtn[0], onlineBtn[0]])
+        } else {
+          buttonsContainer.prepend(onlineBtn[0])
+        }
       }
     })
   }
