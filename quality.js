@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.0.3',
+    version: '3.0.4',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -194,6 +194,9 @@
         }
       });
     });
+    if (shouldProcess) {
+    processCards();
+    }
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
