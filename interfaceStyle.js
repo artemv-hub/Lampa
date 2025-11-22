@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.1.7',
+    version: '3.1.8',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -39,6 +39,21 @@
         }
       }
     });
+  }
+
+  function fixSyncBookmarks() {  
+    Lampa.Activity.listener.follow('create', function(e) {  
+      if (e.component === 'bookmarks' || e.component === 'favorite') {  
+        const localhost = Lampa.Manifest.plugins.find(p => p.url?.includes('/bookmark.js'))?.url.split('/bookmark.js')[0] || '';  
+
+        Lampa.Api.request(localhost + '/bookmark/list', '', function(data) {  
+          if (data && !data.dbInNotInitialization) {  
+            Lampa.Storage.set('favorite', data);  
+            Lampa.Activity.active().activity.render();  
+          }  
+        });  
+      }  
+    });  
   }
 
   function fixSize() {
@@ -123,6 +138,7 @@
 
   function startPlugin() {
     addTitle();
+    fixSyncBookmarks();
     fixSize();
     fixButtons();
     fixLabelsTV(document.querySelectorAll('.card--tv'));
