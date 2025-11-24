@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.1.0',
+    version: '3.1.1',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -86,7 +86,7 @@
 
     var hasTSAudio = /звук с ts|audio ts/i.test(bestTorrentTitle);
     if (hasTSAudio) {
-      displayQuality = displayQuality + ' (TS audio)';
+      displayQuality = displayQuality + '/TS';
     }
 
     return displayQuality;
