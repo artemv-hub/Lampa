@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.1.2',
+    version: '3.1.3',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -130,7 +130,10 @@
 
     const badge = document.createElement('div');
     badge.className = 'card__quality';
-    badge.innerText = quality;
+
+    const inner = document.createElement('div');
+    inner.innerText = quality;
+    badge.appendChild(inner);
     cardView.appendChild(badge);
   }
 
