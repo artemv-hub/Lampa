@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.2.2',
+    version: '3.3.0',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -41,16 +41,16 @@
     });
   }
 
-  function fixSyncBookmarks() {  
-    Lampa.Activity.listener.follow('create', function(e) {  
-      if (e.component === 'bookmarks' || e.component === 'favorite') {  
-        Lampa.Api.request('{localhost}/bookmark/list', '', function(data) {  
-          if (data && !data.dbInNotInitialization) {  
-            Lampa.Storage.set('favorite', data);  
-            Lampa.Activity.active().activity.render();  
-          }  
-        });  
-      }  
+  function fixSyncBookmarks() {
+    Lampa.Activity.listener.follow('create', function (e) {
+      if (e.component === 'bookmarks' || e.component === 'favorite') {
+        Lampa.Api.request('{localhost}/bookmark/list', '', function (data) {
+          if (data && !data.dbInNotInitialization) {
+            Lampa.Storage.set('favorite', data);
+            Lampa.Activity.active().activity.render();
+          }
+        });
+      }
     });
   }
 
@@ -58,13 +58,13 @@
     let originalLineInit = Lampa.Maker.map('Line').Items.onInit
     Lampa.Maker.map('Line').Items.onInit = function () {
       originalLineInit.call(this)
-      this.view = 16
+      this.view = 12
     }
 
     let originalCategoryInit = Lampa.Maker.map('Category').Items.onInit
     Lampa.Maker.map('Category').Items.onInit = function () {
       originalCategoryInit.call(this)
-      this.limit_view = 16
+      this.limit_view = 12
     }
 
     Lampa.SettingsApi.addParam({
@@ -98,7 +98,7 @@
     var layer_update = Lampa.Layer.update;
 
     Lampa.Layer.update = function (where) {
-      var font_size = parseInt(Lampa.Storage.field('interface_fixsize'));
+      var font_size = parseInt(Lampa.Storage.field('interface_fixsize')) || 12;
       if (Lampa.Platform.screen('mobile')) { font_size = 10; }
       $('body').css({ fontSize: font_size + 'px' });
       layer_update(where);
@@ -117,14 +117,26 @@
         let torrentBtn = render.find('.view--torrent')
         let onlineBtn = render.find('.view--online').removeClass('hide')
 
+        buttonsContainer.prepend(onlineBtn[0])
         if (Lampa.Storage.field('parser_use')) {
           torrentBtn.removeClass('hide')
-          buttonsContainer.prepend([torrentBtn[0], onlineBtn[0]])
-        } else {
-          buttonsContainer.prepend(onlineBtn[0])
+          buttonsContainer.prepend(torrentBtn[0])
         }
       }
     })
+  }
+
+  function fixButtonsM() {
+    var mobileBtn = $('.navigation-bar__item[data-action="main"]');
+
+    mobileBtn.attr('data-action', 'favorite')
+      .find('svg use').attr('xlink:href', '#sprite-bookmark').end()
+      .find('.navigation-bar__label').text(Lampa.Lang.translate('title_book')).end()
+      .off('hover:enter').on('hover:enter', function () {
+        Lampa.Router.call('bookmarks', {
+          title: Lampa.Lang.translate('settings_input_links')
+        });
+      });
   }
 
   function fixLabelsTV(cards) {
@@ -139,6 +151,7 @@
     fixSyncBookmarks();
     fixSize();
     fixButtons();
+    fixButtonsM();
     fixLabelsTV(document.querySelectorAll('.card--tv'));
 
     const observer = new MutationObserver((mutations) => {
