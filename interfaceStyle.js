@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.3.0',
+    version: '3.3.1',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -126,19 +126,6 @@
     })
   }
 
-  function fixButtonsM() {
-    var mobileBtn = $('.navigation-bar__item[data-action="main"]');
-
-    mobileBtn.attr('data-action', 'favorite')
-      .find('svg use').attr('xlink:href', '#sprite-bookmark').end()
-      .find('.navigation-bar__label').text(Lampa.Lang.translate('title_book')).end()
-      .off('hover:enter').on('hover:enter', function () {
-        Lampa.Router.call('bookmarks', {
-          title: Lampa.Lang.translate('settings_input_links')
-        });
-      });
-  }
-
   function fixLabelsTV(cards) {
     cards.forEach(card => {
       const typeElem = card.querySelector('.card__type');
@@ -151,7 +138,6 @@
     fixSyncBookmarks();
     fixSize();
     fixButtons();
-    fixButtonsM();
     fixLabelsTV(document.querySelectorAll('.card--tv'));
 
     const observer = new MutationObserver((mutations) => {
