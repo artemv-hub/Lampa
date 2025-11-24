@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.3.1',
+    version: '3.3.2',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -15,8 +15,7 @@
     .full-start__title-original { font-size: 1.6em; margin-bottom: 0em; }
     .full-start-new__buttons .full-start__button:not(.focus) span { display: unset; }
 
-    .card__quality { font-size: 1em; left: 0.2em; bottom: 0.2em; border-radius: 1em; padding: 0.2em 0.5em; background: rgba(0, 0, 0, 0.5); text-transform: none; }
-    .card__quality div { font-weight: bold; font-size: 1.2em; color: #fff; }
+    .card__quality { font-weight: bold; font-size: 1.2em; left: 0.2em; bottom: 0.2em; border-radius: 1em; padding: 0.2em 0.5em; color: #fff; background: rgba(0, 0, 0, 0.5); text-transform: none; }
     .card__vote { font-weight: bold; font-size: 1.2em; right: 0.2em; bottom: 0.2em; }
     .card__type { top: 2.2em; }
     .card__icons { top: 1.6em; }

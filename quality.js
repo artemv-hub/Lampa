@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.1.3',
+    version: '3.3.2',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -78,7 +78,7 @@
     let displayQuality = result.quality;
     const hasTSAudio = /звук с ts|audio ts/i.test(result.title);
     if (hasTSAudio) {
-      displayQuality = displayQuality + '/TS)';
+      displayQuality = displayQuality + '/TS';
     }
     return displayQuality;
   }
@@ -130,10 +130,7 @@
 
     const badge = document.createElement('div');
     badge.className = 'card__quality';
-
-    const inner = document.createElement('div');
-    inner.innerText = quality;
-    badge.appendChild(inner);
+    badge.innerText = quality;
     cardView.appendChild(badge);
   }
 

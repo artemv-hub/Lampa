@@ -3,7 +3,7 @@
   
   let manifest = {  
     type: 'interface',  
-    version: '3.0.1',  
+    version: '3.3.2',  
     name: 'Цветные рейтинги и качество',  
     component: 'color_ratings_quality'  
   }  
@@ -37,7 +37,7 @@
       { qualities: ["480p", "camrip", "vhsrip", "tc", "ts"], color: "#e67e22" },
     ];
     
-    const elements = document.querySelectorAll(".card__quality div");
+    const elements = document.querySelectorAll(".card__quality");
     
     elements.forEach(el => {
       const quality = el.textContent.trim().toLowerCase();
