@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.0.4',
+    version: '3.0.5',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -23,7 +23,7 @@
     '1080i': 85,
     '720p': 80,
     '480p': 70,
-    'BD': 95,
+    'Blu-Ray': 95,
     'BDRemux': 92,
     'BDRip': 88,
     'HDRip': 78,
@@ -98,8 +98,8 @@
     if (video && audio) return video + ' / ' + audio;
     if (video) return video;
 
-    if (/blu-?ray|bluray/i.test(title) && !/rip/i.test(title)) return 'BD';
-    if (/bdremux|bd-?remux/i.test(title)) return 'BDRemux';
+    if (/blu-?ray/i.test(title)) return 'Blu-Ray';
+    if (/blu-?ray remux|bd-?remux/i.test(title)) return 'BDRemux';
     if (/bdrip|bd-?rip/i.test(title)) return 'BDRip';
     if (/web-?dl/i.test(title)) return 'WEB-DL';
     if (/webrip|web-?rip/i.test(title)) return 'WEBRip';
