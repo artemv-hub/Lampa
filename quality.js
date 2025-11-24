@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.1.1',
+    version: '3.1.2',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -54,41 +54,32 @@
   }
 
   function findBestQuality(torrents, targetYear) {
-    var best = null;
-    var bestPriority = -1;
-    var bestTorrentTitle = '';
+    const result = torrents.reduce((best, t) => {
+      const title = (t.title || '').toLowerCase();
 
-    for (var i = 0; i < torrents.length; i++) {
-      var t = torrents[i];
-      var title = (t.title || '').toLowerCase();
-
-      var yearMatch = title.match(/\b(19|20)\d{2}\b/);
+      const yearMatch = title.match(/\b(19|20)\d{2}\b/);
       if (yearMatch) {
-        var torrentYear = parseInt(yearMatch[0]);
-        if (Math.abs(torrentYear - targetYear) > 1) continue;
+        const torrentYear = parseInt(yearMatch[0]);
+        if (Math.abs(torrentYear - targetYear) > 1) return best;
       }
 
-      var quality = parseQuality(title);
-      if (!quality) continue;
+      const quality = parseQuality(title);
+      if (!quality) return best;
 
-      var priority = QUALITY_PRIORITY[quality] || 0;
-
-      if (priority > bestPriority) {
-        bestPriority = priority;
-        best = quality;
-        bestTorrentTitle = title;
+      const priority = QUALITY_PRIORITY[quality] || 0;
+      if (priority > best.priority) {
+        return { priority, quality, title };
       }
-    }
+      return best;
+    }, { priority: -1, quality: null, title: '' });
 
-    if (!best) return null;
+    if (!result.quality) return null;
 
-    var displayQuality = best;
-
-    var hasTSAudio = /звук с ts|audio ts/i.test(bestTorrentTitle);
+    let displayQuality = result.quality;
+    const hasTSAudio = /звук с ts|audio ts/i.test(result.title);
     if (hasTSAudio) {
-      displayQuality = displayQuality + '/TS';
+      displayQuality = displayQuality + '/TS)';
     }
-
     return displayQuality;
   }
 
@@ -131,43 +122,37 @@
   }
 
   function renderQualityBadge(cardElement, quality) {
-    var cardView = cardElement.querySelector('.card__view');
+    const cardView = cardElement.querySelector('.card__view');
     if (!cardView) return;
 
-    var old = cardView.querySelector('.card__quality');
-    if (old) old.remove();
+    const oldBadge = cardView.querySelector('.card__quality');
+    if (oldBadge) oldBadge.remove();
 
-    var badge = document.createElement('div');
+    const badge = document.createElement('div');
     badge.className = 'card__quality';
-    var inner = document.createElement('div');
-    inner.innerText = quality;
-    badge.appendChild(inner);
+    badge.innerText = quality;
     cardView.appendChild(badge);
   }
 
   function processCards() {
-    var cards = document.querySelectorAll('.card');
-
-    cards.forEach(function (cardElement) {
-      if (cardElement.hasAttribute('data-quality-processed')) return;
+    const cards = document.querySelectorAll('.card:not([data-quality-processed])');
+    cards.forEach(cardElement => {
       cardElement.setAttribute('data-quality-processed', 'true');
-
-      var cardData = cardElement.card_data;
-
+      const cardData = cardElement.card_data;
       if (!cardData) return;
 
-      var title = cardData.title || cardData.name;
-      var year = (cardData.release_date || cardData.first_air_date || '').substring(0, 4);
+      const title = cardData.title || cardData.name;
 
+      const year = (cardData.release_date || cardData.first_air_date || '').substring(0, 4);
       if (!title || !year) return;
 
-      var cacheKey = cardData.id + '_' + year;
-      var cached = getCache(cacheKey);
+      const cacheKey = `${cardData.id}_${year}`;
 
+      const cached = getCache(cacheKey);
       if (cached) {
         renderQualityBadge(cardElement, cached);
       } else {
-        fetchQuality(title, year, function (quality) {
+        fetchQuality(title, year, quality => {
           if (quality) {
             setCache(cacheKey, quality);
             renderQualityBadge(cardElement, quality);
