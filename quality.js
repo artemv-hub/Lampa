@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.0.6',
+    version: '3.1.0',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -12,7 +12,7 @@
 
   var CONFIG = {
     CACHE_KEY: 'lampa_quality_cache',
-    CACHE_TTL_MS: 3 * 24 * 60 * 60 * 1000,
+    CACHE_TTL_MS: 24 * 60 * 60 * 1000,
     JACRED_URL: 'https://jacred.xyz/api/v1.0/torrents',
     TIMEOUT_MS: 5000
   };
@@ -56,6 +56,7 @@
   function findBestQuality(torrents, targetYear) {
     var best = null;
     var bestPriority = -1;
+    var bestTorrentTitle = '';
 
     for (var i = 0; i < torrents.length; i++) {
       var t = torrents[i];
@@ -75,10 +76,20 @@
       if (priority > bestPriority) {
         bestPriority = priority;
         best = quality;
+        bestTorrentTitle = title;
       }
     }
 
-    return best;
+    if (!best) return null;
+
+    var displayQuality = best;
+
+    var hasTSAudio = /звук с ts|audio ts/i.test(bestTorrentTitle);
+    if (hasTSAudio) {
+      displayQuality = displayQuality + ' (TS audio)';
+    }
+
+    return displayQuality;
   }
 
   function parseQuality(title) {
@@ -183,7 +194,7 @@
       });
     });
     if (shouldProcess) {
-    processCards();
+      processCards();
     }
   });
 
