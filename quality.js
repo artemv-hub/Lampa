@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.4.3',
+    version: '3.4.4',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -189,7 +189,7 @@
 
   Lampa.Listener.follow('activity', function (e) {
     if (e.type == 'start') {
-      setTimeout(processCards, 500);
+      setTimeout(processCards, 50);
     } else if (e.type == 'page') {
       setTimeout(processCards, 50);
     }
