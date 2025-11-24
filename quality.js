@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.3.2',
+    version: '3.4.0',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -84,26 +84,36 @@
   }
 
   function parseQuality(title) {
-    if (/2160p|\b4k\b/i.test(title)) return '2160p';
-    if (/1080p|\bfhd\b/i.test(title)) return '1080p';
-    if (/1080i/i.test(title)) return '1080i';
-    if (/720p|\bhd\b/i.test(title)) return '720p';
-    if (/480p|\bsd\b/i.test(title)) return '480p';
+    const patterns = [
+      [/2160p|\b4k\b/i, '2160p'],
+      [/1080p|\bfhd\b/i, '1080p'],
+      [/1080i/i, '1080i'],
+      [/720p|\bhd\b/i, '720p'],
+      [/480p|\bsd\b/i, '480p'],
+      [/blu-?ray remux|bd-?remux/i, 'BDRemux'],
+      [/blu-?ray|\bbd\b/i, 'Blu-Ray'],
+      [/bd-?rip/i, 'BDRip'],
+      [/hd-?rip/i, 'HDRip'],
+      [/dvd-?rip/i, 'DVDRip'],
+      [/web-?dl/i, 'WEB-DL'],
+      [/web-?rip|webdl-?rip/i, 'WEBRip'],
+      [/vhs-?rip/i, 'VHSRip'],
+      [/cam-?rip/i, 'CAMRip'],
+      [/hdtv|iptv|sat|dvb|\btv\b|tvrip/i, 'TV'],
+      [/telecine|\btc\b/i, 'TC'],
+      [/telesync|\bts\b/i, 'TS']
+    ];
 
-    if (/blu-?ray|\bbd\b/i.test(title)) return 'Blu-Ray';
-    if (/blu-?ray remux|bd-?remux/i.test(title)) return 'BDRemux';
-    if (/bd-?rip/i.test(title)) return 'BDRip';
-    if (/hd-?rip/i.test(title)) return 'HDRip';
-    if (/dvd-?rip/i.test(title)) return 'DVDRip';
-    if (/web-?dl/i.test(title)) return 'WEB-DL';
-    if (/web-?rip|webdl-?rip/i.test(title)) return 'WEBRip';
-    if (/vhs-?rip/i.test(title)) return 'VHSRip';
-    if (/cam-?rip/i.test(title)) return 'CAMRip';
-    if (/hdtv|iptv|sat|dvb|\btv\b|tvrip/i.test(title)) return 'TV';
-    if (/telecine|\btc\b/i.test(title)) return 'TC';
-    if (/telesync|\bts\b/i.test(title)) return 'TS';
-
+    for (const [pattern, quality] of patterns) {
+      if (pattern.test(title)) return quality;
+    }
     return null;
+  }
+
+  function setCache(key, quality) {
+    var cache = Lampa.Storage.get(CONFIG.CACHE_KEY) || {};
+    cache[key] = { quality: quality, ts: Date.now() };
+    Lampa.Storage.set(CONFIG.CACHE_KEY, cache);
   }
 
   function getCache(key) {
@@ -115,10 +125,18 @@
     return null;
   }
 
-  function setCache(key, quality) {
+  function cleanCache() {
     var cache = Lampa.Storage.get(CONFIG.CACHE_KEY) || {};
-    cache[key] = { quality: quality, ts: Date.now() };
-    Lampa.Storage.set(CONFIG.CACHE_KEY, cache);
+    var now = Date.now();
+    var cleaned = {};
+
+    Object.keys(cache).forEach(key => {
+      if (now - cache[key].ts < CONFIG.CACHE_TTL_MS) {
+        cleaned[key] = cache[key];
+      }
+    });
+
+    Lampa.Storage.set(CONFIG.CACHE_KEY, cleaned);
   }
 
   function renderQualityBadge(cardElement, quality) {
@@ -184,6 +202,8 @@
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
+
+  cleanCache();
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', processCards);
