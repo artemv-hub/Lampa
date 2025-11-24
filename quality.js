@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.0.5',
+    version: '3.0.6',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -20,23 +20,21 @@
   var QUALITY_PRIORITY = {
     '2160p': 100,
     '1080p': 90,
-    '1080i': 85,
+    '1080i': 88,
     '720p': 80,
     '480p': 70,
-    'Blu-Ray': 95,
-    'BDRemux': 92,
-    'BDRip': 88,
-    'HDRip': 78,
-    'DVDRip': 68,
-    'WEB-DL': 83,
-    'WEBRip': 81,
+    'Blu-Ray': 60,
+    'BDRemux': 58,
+    'BDRip': 56,
+    'HDRip': 54,
+    'DVDRip': 52,
+    'WEB-DL': 50,
+    'WEBRip': 48,
     'VHSRip': 40,
     'CAMRip': 30,
-    'HDTV': 65,
-    'IPTV': 60,
-    'TV': 55,
-    'TC': 35,
-    'TS': 32
+    'TV': 20,
+    'TC': 10,
+    'TS': 8
   };
 
   function fetchQuality(title, year, callback) {
@@ -84,32 +82,22 @@
   }
 
   function parseQuality(title) {
-    var video = null;
-    var audio = null;
+    if (/2160p|\b4k\b/i.test(title)) return '2160p';
+    if (/1080p|\bfhd\b/i.test(title)) return '1080p';
+    if (/1080i/i.test(title)) return '1080i';
+    if (/720p|\bhd\b/i.test(title)) return '720p';
+    if (/480p|\bsd\b/i.test(title)) return '480p';
 
-    if (/2160p/i.test(title)) video = '2160p';
-    else if (/1080p/i.test(title)) video = '1080p';
-    else if (/1080i/i.test(title)) video = '1080i';
-    else if (/720p/i.test(title)) video = '720p';
-    else if (/480p/i.test(title)) video = '480p';
-
-    if (/звук с ts|аудио ts|audio ts/i.test(title)) audio = 'TS audio';
-
-    if (video && audio) return video + ' / ' + audio;
-    if (video) return video;
-
-    if (/blu-?ray/i.test(title)) return 'Blu-Ray';
+    if (/blu-?ray|\bbd\b/i.test(title)) return 'Blu-Ray';
     if (/blu-?ray remux|bd-?remux/i.test(title)) return 'BDRemux';
-    if (/bdrip|bd-?rip/i.test(title)) return 'BDRip';
+    if (/bd-?rip/i.test(title)) return 'BDRip';
+    if (/hd-?rip/i.test(title)) return 'HDRip';
+    if (/dvd-?rip/i.test(title)) return 'DVDRip';
     if (/web-?dl/i.test(title)) return 'WEB-DL';
-    if (/webrip|web-?rip/i.test(title)) return 'WEBRip';
-    if (/hdrip|hd-?rip/i.test(title)) return 'HDRip';
-    if (/dvdrip|dvd-?rip/i.test(title)) return 'DVDRip';
-    if (/hdtv/i.test(title)) return 'HDTV';
-    if (/iptv/i.test(title)) return 'IPTV';
-    if (/\btv\b|tvrip/i.test(title)) return 'TV';
-    if (/vhsrip|vhs-?rip/i.test(title)) return 'VHSRip';
-    if (/camrip|cam-?rip/i.test(title)) return 'CAMRip';
+    if (/web-?rip|webdl-?rip/i.test(title)) return 'WEBRip';
+    if (/vhs-?rip/i.test(title)) return 'VHSRip';
+    if (/cam-?rip/i.test(title)) return 'CAMRip';
+    if (/hdtv|iptv|sat|dvb|\btv\b|tvrip/i.test(title)) return 'TV';
     if (/telecine|\btc\b/i.test(title)) return 'TC';
     if (/telesync|\bts\b/i.test(title)) return 'TS';
 
