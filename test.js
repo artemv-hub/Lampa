@@ -1,10 +1,32 @@
 (function () {  
     'use strict';  
   
+    // Получаем uid пользователя  
+    function getAuthParams() {  
+        let params = new URLSearchParams();  
+          
+        let uid = Lampa.Storage.get('account_email') ||   
+                  Lampa.Storage.get('uid') ||   
+                  Lampa.Storage.get('token');  
+          
+        if (uid) {  
+            params.append('uid', uid);  
+        }  
+          
+        return params.toString();  
+    }  
+  
     // Функция получения прогресса из SQL  
     async function getContentProgress(card, callback) {  
         let card_id = card.id;  
-        let response = await fetch(`/timecode/all?card_id=${card_id}`);  
+        let authParams = getAuthParams();  
+          
+        let url = `/timecode/all?card_id=${card_id}`;  
+        if (authParams) {  
+            url += `&${authParams}`;  
+        }  
+          
+        let response = await fetch(url);  
         let timecodes = await response.json();  
           
         // Сериал  
