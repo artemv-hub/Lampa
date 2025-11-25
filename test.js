@@ -1,146 +1,146 @@
-(function () {  
+(function() {  
     'use strict';  
   
-    // Получаем uid пользователя  
-    function getAuthParams() {  
-        let params = new URLSearchParams();  
-          
-        var unic_id = Lampa.Storage.get('lampac_unic_id', '');  
-        if (!unic_id) {  
-            unic_id = Lampa.Utils.uid(8).toLowerCase();  
-            Lampa.Storage.set('lampac_unic_id', unic_id);  
-        }  
-          
-        if (unic_id) {  
-            params.append('uid', unic_id);  
-        }  
-          
-        return params.toString();  
-    }  
+    // Манифест плагина  
+    let manifest = {  
+        type: 'other',  
+        version: '1.0.0',  
+        name: 'Custom Progress Display',  
+        description: 'Отображает прогресс просмотра всегда, а не только при наведении'  
+    };  
   
-    // Функция получения прогресса из SQL  
-    async function getContentProgress(card, callback) {  
-        let card_id = card.id;  
-        let authParams = getAuthParams();  
-          
-        let url = `/timecode/all?card_id=${card_id}`;  
-        if (authParams) {  
-            url += `&${authParams}`;  
-        }  
-          
-        let response = await fetch(url);  
-        let timecodes = await response.json();  
-          
-        // Сериал  
-        if (card.original_name) {  
-            let lastItem = null;  
-            let lastUpdated = 0;  
-              
-            for (let item_id in timecodes) {  
-                let data = JSON.parse(timecodes[item_id]);  
-                if (data.updated && data.updated > lastUpdated) {  
-                    lastUpdated = data.updated;  
-                    lastItem = item_id;  
+    Lampa.Manifest.plugins = manifest;  
+  
+    function startPlugin() {  
+        // Отключаем стандартное отображение  
+        Lampa.Storage.set('card_episodes', false, true);  
+  
+        // Добавляем CSS для постоянного отображения  
+        let style = `  
+            <style>  
+                .card-progress-custom {  
+                    position: absolute;  
+                    bottom: 0.5em;  
+                    left: 0.5em;  
+                    right: 0.5em;  
+                    background: rgba(0, 0, 0, 0.9);  
+                    padding: 0.5em 0.8em;  
+                    border-radius: 0.5em;  
+                    color: #fff;  
+                    font-size: 0.9em;  
+                    z-index: 2;  
+                    pointer-events: none;  
+                    white-space: nowrap;  
+                    overflow: hidden;  
+                    text-overflow: ellipsis;  
                 }  
-            }  
-              
-            if (lastItem) {  
-                let match = lastItem.match(/s(\d+)e(\d+)/i);  
-                if (match) {  
-                    let currentSeason = parseInt(match[1]);  
-                    let currentEpisode = parseInt(match[2]);  
+            </style>  
+        `;  
+  
+        Lampa.Template.add('custom_progress_css', style);  
+        $('body').append(Lampa.Template.get('custom_progress_css', {}, true));  
+  
+        // Функция получения прогресса  
+        function getContentProgress(card, callback) {  
+            // Сериал  
+            if (card.original_name) {  
+                let last = Lampa.Storage.get('online_watched_last', '{}');  
+                let filed = last[Lampa.Utils.hash(card.original_title)];  
+                  
+                if (filed && filed.episode && filed.season) {  
                     let totalSeasons = card.number_of_seasons || 1;  
                       
                     Lampa.Timetable.get(card, (episodes) => {  
-                        let seasonEpisodes = episodes.filter(ep => ep.season_number === currentSeason);  
-                        let totalEpisodes = seasonEpisodes.length;  
+                        let currentSeasonEpisodes = episodes.filter(ep => ep.season_number === filed.season);  
+                        let totalEpisodes = currentSeasonEpisodes.length || '?';  
                           
-                        callback(`E${currentEpisode}/${totalEpisodes} S${currentSeason}/${totalSeasons}`);  
+                        callback(`E${filed.episode}/${totalEpisodes} S${filed.season}/${totalSeasons}`);  
                     });  
-                    return;  
+                } else {  
+                    callback(null);  
                 }  
             }  
-            callback(null);  
-        }  
-        // Фильм  
-        else if (card.original_title) {  
-            let item_id = 'movie';  
-              
-            if (timecodes[item_id]) {  
-                let data = JSON.parse(timecodes[item_id]);  
-                let currentTime = data.time;  
-                let totalTime = data.duration;  
+            // Фильм  
+            else if (card.original_title) {  
+                let hash = Lampa.Utils.hash(card.original_title);  
+                let time = Lampa.Timeline.view(hash);  
                   
-                if (currentTime && totalTime) {  
-                    callback(`${Lampa.Utils.secondsToTimeHuman(currentTime)} / ${Lampa.Utils.secondsToTimeHuman(totalTime)}`);  
-                    return;  
+                if (time.time && time.duration) {  
+                    callback(Lampa.Utils.secondsToTimeHuman(time.time) + ' / ' +   
+                            Lampa.Utils.secondsToTimeHuman(time.duration));  
+                } else {  
+                    callback(null);  
                 }  
             }  
-            callback(null);  
+            else {  
+                callback(null);  
+            }  
         }  
+  
+        // Сохраняем оригинальный конструктор Card  
+        let OriginalCard = Lampa.Card;  
+  
+        // Переопределяем конструктор Card  
+        Lampa.Card = function(data, params) {  
+            let card = new OriginalCard(data, params);  
+              
+            // Добавляем свой прогресс после создания карточки  
+            let addCustomProgress = () => {  
+                getContentProgress(data, (progressText) => {  
+                    if (progressText) {  
+                        // Удаляем старый элемент, если есть  
+                        let oldProgress = card.card.querySelector('.card-progress-custom');  
+                        if (oldProgress) oldProgress.remove();  
+  
+                        // Создаем новый элемент  
+                        let progressElement = document.createElement('div');  
+                        progressElement.className = 'card-progress-custom';  
+                        progressElement.innerText = progressText;  
+                          
+                        let view = card.card.querySelector('.card__view');  
+                        if (view) view.appendChild(progressElement);  
+                    }  
+                });  
+            };  
+  
+            // Добавляем прогресс при создании  
+            card.card.addEventListener('visible', () => {  
+                setTimeout(addCustomProgress, 100);  
+            });  
+  
+            // Обновляем при изменении Timeline  
+            let updateListener = (e) => {  
+                if (e.target === 'timeline' && (e.reason === 'read' || e.reason === 'update')) {  
+                    addCustomProgress();  
+                }  
+            };  
+  
+            Lampa.Listener.follow('state:changed', updateListener);  
+  
+            // Сохраняем оригинальный destroy  
+            let originalDestroy = card.destroy;  
+            card.destroy = function() {  
+                Lampa.Listener.remove('state:changed', updateListener);  
+                if (originalDestroy) originalDestroy.call(card);  
+            };  
+  
+            return card;  
+        };  
+  
+        // Копируем все свойства оригинального конструктора  
+        for (let key in OriginalCard) {  
+            if (OriginalCard.hasOwnProperty(key)) {  
+                Lampa.Card[key] = OriginalCard[key];  
+            }  
+        }  
+        Lampa.Card.prototype = OriginalCard.prototype;  
     }  
   
-    // КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Переопределяем базовую функцию Lampa  
-    // Сохраняем оригинальную функцию  
-    let originalCardRender = Lampa.Template.get;  
-      
-    // Переопределяем Template.get для перехвата рендеринга карточек  
-    Lampa.Template.get = function(name, data) {  
-        let result = originalCardRender.apply(this, arguments);  
-          
-        if (name === 'card' && data) {  
-            // Добавляем наш прогресс после рендеринга карточки  
-            setTimeout(() => {  
-                let cardElement = $('.card').filter(function() {  
-                    return $(this).data('card')?.id === data.id;  
-                }).first();  
-                  
-                if (cardElement.length && !cardElement.data('progress-added')) {  
-                    cardElement.data('progress-added', true);  
-                      
-                    // Удаляем базовый прогресс Lampa  
-                    cardElement.find('.card__view').remove();  
-                      
-                    // Добавляем наш прогресс  
-                    let progressElement = $('<div class="card-progress"></div>');  
-                    cardElement.find('.card-img').append(progressElement);  
-                      
-                    getContentProgress(data, (progressText) => {  
-                        if (progressText) {  
-                            progressElement.text(progressText).show();  
-                        } else {  
-                            progressElement.remove();  
-                        }  
-                    });  
-                }  
-            }, 100);  
-        }  
-          
-        return result;  
-    };  
-  
-    // Добавляем CSS стили  
-    Lampa.Template.add('progress_style', `  
-        <style>  
-        .card-progress {  
-            position: absolute;  
-            bottom: 5px;  
-            right: 5px;  
-            background: rgba(0, 0, 0, 0.8);  
-            color: white;  
-            padding: 3px 8px;  
-            border-radius: 3px;  
-            font-size: 12px;  
-            z-index: 3;  
-            display: none;  
-        }  
-        /* Скрываем базовый прогресс Lampa */  
-        .card__view {  
-            display: none !important;  
-        }  
-        </style>  
-    `);  
-      
-    $('body').append(Lampa.Template.get('progress_style'));  
-  
+    // Запускаем плагин  
+    if (window.appready) startPlugin();  
+    else {  
+        Lampa.Listener.follow('app', (e) => {  
+            if (e.type === 'ready') startPlugin();  
+        });  
+    }  
 })();
