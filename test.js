@@ -80,6 +80,45 @@
         }  
     }  
   
+    // КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Переопределяем базовую функцию Lampa  
+    // Сохраняем оригинальную функцию  
+    let originalCardRender = Lampa.Template.get;  
+      
+    // Переопределяем Template.get для перехвата рендеринга карточек  
+    Lampa.Template.get = function(name, data) {  
+        let result = originalCardRender.apply(this, arguments);  
+          
+        if (name === 'card' && data) {  
+            // Добавляем наш прогресс после рендеринга карточки  
+            setTimeout(() => {  
+                let cardElement = $('.card').filter(function() {  
+                    return $(this).data('card')?.id === data.id;  
+                }).first();  
+                  
+                if (cardElement.length && !cardElement.data('progress-added')) {  
+                    cardElement.data('progress-added', true);  
+                      
+                    // Удаляем базовый прогресс Lampa  
+                    cardElement.find('.card__view').remove();  
+                      
+                    // Добавляем наш прогресс  
+                    let progressElement = $('<div class="card-progress"></div>');  
+                    cardElement.find('.card-img').append(progressElement);  
+                      
+                    getContentProgress(data, (progressText) => {  
+                        if (progressText) {  
+                            progressElement.text(progressText).show();  
+                        } else {  
+                            progressElement.remove();  
+                        }  
+                    });  
+                }  
+            }, 100);  
+        }  
+          
+        return result;  
+    };  
+  
     // Добавляем CSS стили  
     Lampa.Template.add('progress_style', `  
         <style>  
@@ -92,62 +131,16 @@
             padding: 3px 8px;  
             border-radius: 3px;  
             font-size: 12px;  
-            z-index: 2;  
+            z-index: 3;  
+            display: none;  
+        }  
+        /* Скрываем базовый прогресс Lampa */  
+        .card__view {  
+            display: none !important;  
         }  
         </style>  
     `);  
       
     $('body').append(Lampa.Template.get('progress_style'));  
-  
-    // Функция добавления прогресса на карточку  
-    function addProgressToCard(cardElement) {  
-        let cardData = cardElement.data('card');  
-          
-        if (!cardData || cardElement.find('.card-progress').length > 0) {  
-            return;  
-        }  
-          
-        let progressElement = $('<div class="card-progress"></div>');  
-        cardElement.find('.card-img').append(progressElement);  
-          
-        getContentProgress(cardData, (progressText) => {  
-            if (progressText) {  
-                progressElement.text(progressText);  
-            } else {  
-                progressElement.remove();  
-            }  
-        });  
-    }  
-  
-    // Отслеживаем появление карточек  
-    Lampa.Listener.follow('full', function(e) {  
-        if (e.type == 'complite') {  
-            $('.card').each(function() {  
-                addProgressToCard($(this));  
-            });  
-        }  
-    });  
-  
-    // Также обрабатываем динамически добавляемые карточки  
-    let observer = new MutationObserver(function(mutations) {  
-        mutations.forEach(function(mutation) {  
-            mutation.addedNodes.forEach(function(node) {  
-                if (node.nodeType === 1) {  
-                    let cards = $(node).find('.card');  
-                    if ($(node).hasClass('card')) {  
-                        cards = cards.add(node);  
-                    }  
-                    cards.each(function() {  
-                        addProgressToCard($(this));  
-                    });  
-                }  
-            });  
-        });  
-    });  
-  
-    observer.observe(document.body, {  
-        childList: true,  
-        subtree: true  
-    });  
   
 })();
