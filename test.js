@@ -5,12 +5,14 @@
     function getAuthParams() {  
         let params = new URLSearchParams();  
           
-        let uid = Lampa.Storage.get('account_email') ||   
-                  Lampa.Storage.get('uid') ||   
-                  Lampa.Storage.get('token');  
+        var unic_id = Lampa.Storage.get('lampac_unic_id', '');  
+        if (!unic_id) {  
+            unic_id = Lampa.Utils.uid(8).toLowerCase();  
+            Lampa.Storage.set('lampac_unic_id', unic_id);  
+        }  
           
-        if (uid) {  
-            params.append('uid', uid);  
+        if (unic_id) {  
+            params.append('uid', unic_id);  
         }  
           
         return params.toString();  
