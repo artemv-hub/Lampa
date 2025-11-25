@@ -1,119 +1,102 @@
 (function() {  
-    'use strict';  
+  'use strict';  
   
-    let manifest = {  
-        type: 'other',  
-        version: '1.0.0',  
-        name: 'Custom Progress Display',  
-        description: 'Отображает прогресс просмотра всегда'  
-    };  
+  function formatTime(seconds) {  
+    if (!seconds || seconds <= 0) return '0:00';  
+      
+    var hours = Math.floor(seconds / 3600);  
+    var minutes = Math.floor((seconds % 3600) / 60);  
+    var secs = Math.floor(seconds % 60);  
+      
+    if (hours > 0) {  
+      return hours + ':' +   
+             (minutes < 10 ? '0' : '') + minutes + ':' +   
+             (secs < 10 ? '0' : '') + secs;  
+    }  
+    return minutes + ':' + (secs < 10 ? '0' : '') + secs;  
+  }  
   
-    Lampa.Manifest.plugins = manifest;  
+  // Функция обновления отображения времени на карточке  
+  function updateCardTimeDisplay(cardElement, hash) {  
+    var acc = Lampa.Storage.get('account', '{}');  
+    var viewedKey = 'file_view' + (acc.profile ? '_' + acc.profile.id : '');  
+    var viewed = Lampa.Storage.cache(viewedKey, 10000, {});  
+      
+    var timeData = viewed[hash];  
+      
+    if (timeData && timeData.time && timeData.duration) {  
+      var timeText = formatTime(timeData.time) + ' / ' + formatTime(timeData.duration);  
+        
+      // Находим элемент с процентами и заменяем текст  
+      var percentElement = cardElement.find('.card__view-percent');  
+      if (percentElement.length) {  
+        percentElement.text(timeText);  
+      }  
+        
+      // Также обновляем линию прогресса, если есть  
+      var lineElement = cardElement.find('.card-watched__line');  
+      if (lineElement.length) {  
+        lineElement.attr('data-time', timeText);  
+      }  
+    }  
+  }  
   
-    function startPlugin() {  
-        // Проверяем версию Lampa  
-        if (Lampa.Manifest.app_digital < 300) {  
-            console.log('Плагин требует Lampa 3.0+');  
-            return;  
-        }  
-  
-        // Отключаем стандартное отображение  
-        Lampa.Storage.set('card_episodes', false, true);  
-  
-        // CSS стили  
-        let style = `  
-            <style>  
-                .card-progress-custom {  
-                    position: absolute;  
-                    bottom: 0.5em;  
-                    left: 0.5em;  
-                    right: 0.5em;  
-                    background: rgba(0, 0, 0, 0.9);  
-                    padding: 0.5em 0.8em;  
-                    border-radius: 0.5em;  
-                    color: #fff;  
-                    font-size: 0.9em;  
-                    z-index: 2;  
-                    pointer-events: none;  
-                }  
-            </style>  
-        `;  
-  
-        Lampa.Template.add('custom_progress_css', style);  
-        $('body').append(Lampa.Template.get('custom_progress_css', {}, true));  
-  
-        // Функция получения прогресса  
-        function getContentProgress(card, callback) {  
-            if (card.original_name) {  
-                // Сериал  
-                let last = Lampa.Storage.get('online_watched_last', '{}');  
-                let filed = last[Lampa.Utils.hash(card.original_title)];  
-                  
-                if (filed && filed.episode && filed.season) {  
-                    let totalSeasons = card.number_of_seasons || 1;  
-                      
-                    Lampa.Timetable.get(card, (episodes) => {  
-                        let currentSeasonEpisodes = episodes.filter(ep => ep.season_number === filed.season);  
-                        let totalEpisodes = currentSeasonEpisodes.length || '?';  
-                          
-                        callback(`E${filed.episode}/${totalEpisodes} S${filed.season}/${totalSeasons}`);  
-                    });  
-                } else {  
-                    callback(null);  
-                }  
-            } else if (card.original_title) {  
-                // Фильм  
-                let hash = Lampa.Utils.hash(card.original_title);  
-                let time = Lampa.Timeline.view(hash);  
-                  
-                if (time.time && time.duration) {  
-                    callback(Lampa.Utils.secondsToTimeHuman(time.time) + ' / ' +   
-                            Lampa.Utils.secondsToTimeHuman(time.duration));  
-                } else {  
-                    callback(null);  
-                }  
-            } else {  
-                callback(null);  
-            }  
-        }  
-  
-        // Переопределяем модуль Create для Card  
-        let originalCreate = Lampa.Maker.map('Card').Create;  
+  // Перехватываем создание карточек  
+  function patchCardCreation() {  
+    Lampa.Listener.follow('card', function(e) {  
+      if (e.object && e.object.card) {  
+        var card = e.object.card;  
+        var hash = card.hash || (card.id + '_' + (card.name ? 'tv' : 'movie'));  
           
-        Lampa.Maker.map('Card').Create = {  
-            onCreateAndAppend: function() {  
-                // Вызываем оригинальный метод  
-                if (originalCreate.onCreateAndAppend) {  
-                    originalCreate.onCreateAndAppend.call(this);  
-                }  
+        // Обновляем сразу при создании карточки  
+        updateCardTimeDisplay($(card), hash);  
+      }  
+    });  
+  }  
   
-                // Добавляем свой прогресс  
-                let addProgress = () => {  
-                    getContentProgress(this.data, (progressText) => {  
-                        if (progressText) {  
-                            let oldProgress = this.card.querySelector('.card-progress-custom');  
-                            if (oldProgress) oldProgress.remove();  
-  
-                            let progressElement = document.createElement('div');  
-                            progressElement.className = 'card-progress-custom';  
-                            progressElement.innerText = progressText;  
-                              
-                            let view = this.card.querySelector('.card__view');  
-                            if (view) view.appendChild(progressElement);  
-                        }  
-                    });  
-                };  
-  
-                setTimeout(addProgress, 100);  
+  // Перехватываем обновление данных таймкодов  
+  function patchTimecodeUpdate() {  
+    Lampa.Listener.follow('lampac', function(e) {  
+      if (e.type == 'timecode_pullFromServer') {  
+        // После обновления таймкодов с сервера, обновляем все видимые карточки  
+        setTimeout(function() {  
+          $('.card').each(function() {  
+            var cardElement = $(this);  
+            var cardData = cardElement.data('card');  
+            if (cardData) {  
+              var hash = cardData.hash || (cardData.id + '_' + (cardData.name ? 'tv' : 'movie'));  
+              updateCardTimeDisplay(cardElement, hash);  
             }  
-        };  
-    }  
+          });  
+        }, 100);  
+      }  
+    });  
+  }  
   
-    // Запуск плагина  
-    if (window.appready) startPlugin();  
-    else {  
-        Lampa.Listener.follow('app', (e) => {  
-            if (e.type === 'ready') startPlugin();  
-        });  
-    }  
+  // Периодическое обновление всех карточек  
+  function startPeriodicUpdate() {  
+    setInterval(function() {  
+      $('.card').each(function() {  
+        var cardElement = $(this);  
+        var cardData = cardElement.data('card');  
+        if (cardData) {  
+          var hash = cardData.hash || (cardData.id + '_' + (cardData.name ? 'tv' : 'movie'));  
+          updateCardTimeDisplay(cardElement, hash);  
+        }  
+      });  
+    }, 5000); // Обновляем каждые 5 секунд  
+  }  
+  
+  function startPlugin() {  
+    window.lampac_timeformat_plugin = true;  
+      
+    patchCardCreation();  
+    patchTimecodeUpdate();  
+    startPeriodicUpdate();  
+      
+    console.log('TimeFormat plugin loaded - always visible mode');  
+  }  
+  
+  if (!window.lampac_timeformat_plugin) startPlugin();  
+  
 })();
