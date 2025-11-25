@@ -1,21 +1,26 @@
 (function() {  
     'use strict';  
   
-    // Манифест плагина  
     let manifest = {  
         type: 'other',  
         version: '1.0.0',  
         name: 'Custom Progress Display',  
-        description: 'Отображает прогресс просмотра всегда, а не только при наведении'  
+        description: 'Отображает прогресс просмотра всегда'  
     };  
   
     Lampa.Manifest.plugins = manifest;  
   
     function startPlugin() {  
+        // Проверяем версию Lampa  
+        if (Lampa.Manifest.app_digital < 300) {  
+            console.log('Плагин требует Lampa 3.0+');  
+            return;  
+        }  
+  
         // Отключаем стандартное отображение  
         Lampa.Storage.set('card_episodes', false, true);  
   
-        // Добавляем CSS для постоянного отображения  
+        // CSS стили  
         let style = `  
             <style>  
                 .card-progress-custom {  
@@ -30,9 +35,6 @@
                     font-size: 0.9em;  
                     z-index: 2;  
                     pointer-events: none;  
-                    white-space: nowrap;  
-                    overflow: hidden;  
-                    text-overflow: ellipsis;  
                 }  
             </style>  
         `;  
@@ -42,8 +44,8 @@
   
         // Функция получения прогресса  
         function getContentProgress(card, callback) {  
-            // Сериал  
             if (card.original_name) {  
+                // Сериал  
                 let last = Lampa.Storage.get('online_watched_last', '{}');  
                 let filed = last[Lampa.Utils.hash(card.original_title)];  
                   
@@ -59,9 +61,8 @@
                 } else {  
                     callback(null);  
                 }  
-            }  
-            // Фильм  
-            else if (card.original_title) {  
+            } else if (card.original_title) {  
+                // Фильм  
                 let hash = Lampa.Utils.hash(card.original_title);  
                 let time = Lampa.Timeline.view(hash);  
                   
@@ -71,72 +72,44 @@
                 } else {  
                     callback(null);  
                 }  
-            }  
-            else {  
+            } else {  
                 callback(null);  
             }  
         }  
   
-        // Сохраняем оригинальный конструктор Card  
-        let OriginalCard = Lampa.Card;  
-  
-        // Переопределяем конструктор Card  
-        Lampa.Card = function(data, params) {  
-            let card = new OriginalCard(data, params);  
-              
-            // Добавляем свой прогресс после создания карточки  
-            let addCustomProgress = () => {  
-                getContentProgress(data, (progressText) => {  
-                    if (progressText) {  
-                        // Удаляем старый элемент, если есть  
-                        let oldProgress = card.card.querySelector('.card-progress-custom');  
-                        if (oldProgress) oldProgress.remove();  
-  
-                        // Создаем новый элемент  
-                        let progressElement = document.createElement('div');  
-                        progressElement.className = 'card-progress-custom';  
-                        progressElement.innerText = progressText;  
-                          
-                        let view = card.card.querySelector('.card__view');  
-                        if (view) view.appendChild(progressElement);  
-                    }  
-                });  
-            };  
-  
-            // Добавляем прогресс при создании  
-            card.card.addEventListener('visible', () => {  
-                setTimeout(addCustomProgress, 100);  
-            });  
-  
-            // Обновляем при изменении Timeline  
-            let updateListener = (e) => {  
-                if (e.target === 'timeline' && (e.reason === 'read' || e.reason === 'update')) {  
-                    addCustomProgress();  
+        // Переопределяем модуль Create для Card  
+        let originalCreate = Lampa.Maker.map('Card').Create;  
+          
+        Lampa.Maker.map('Card').Create = {  
+            onCreateAndAppend: function() {  
+                // Вызываем оригинальный метод  
+                if (originalCreate.onCreateAndAppend) {  
+                    originalCreate.onCreateAndAppend.call(this);  
                 }  
-            };  
   
-            Lampa.Listener.follow('state:changed', updateListener);  
+                // Добавляем свой прогресс  
+                let addProgress = () => {  
+                    getContentProgress(this.data, (progressText) => {  
+                        if (progressText) {  
+                            let oldProgress = this.card.querySelector('.card-progress-custom');  
+                            if (oldProgress) oldProgress.remove();  
   
-            // Сохраняем оригинальный destroy  
-            let originalDestroy = card.destroy;  
-            card.destroy = function() {  
-                Lampa.Listener.remove('state:changed', updateListener);  
-                if (originalDestroy) originalDestroy.call(card);  
-            };  
+                            let progressElement = document.createElement('div');  
+                            progressElement.className = 'card-progress-custom';  
+                            progressElement.innerText = progressText;  
+                              
+                            let view = this.card.querySelector('.card__view');  
+                            if (view) view.appendChild(progressElement);  
+                        }  
+                    });  
+                };  
   
-            return card;  
-        };  
-  
-        // Копируем все свойства оригинального конструктора  
-        for (let key in OriginalCard) {  
-            if (OriginalCard.hasOwnProperty(key)) {  
-                Lampa.Card[key] = OriginalCard[key];  
+                setTimeout(addProgress, 100);  
             }  
-        }  
-        Lampa.Card.prototype = OriginalCard.prototype;  
+        };  
     }  
   
-    // Запускаем плагин  
+    // Запуск плагина  
     if (window.appready) startPlugin();  
     else {  
         Lampa.Listener.follow('app', (e) => {  
