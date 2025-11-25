@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.4.5',
+    version: '3.4.6',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -152,55 +152,55 @@
     cardView.appendChild(badge);
   }
 
-  function processCards() {  
-    document.querySelectorAll('.card:not([data-quality-processed])').forEach(cardElement => {  
-      const cardData = cardElement.card_data;  
-      if (!cardData) return;  
-  
-      cardElement.setAttribute('data-quality-processed', 'true');  
-  
-      const title = cardData.title || cardData.name;  
-      const year = (cardData.release_date || cardData.first_air_date || '').substring(0, 4);  
-      if (!title || !year) return;  
-  
-      const cacheKey = `${cardData.id}_${year}`;  
-      const cached = getCache(cacheKey);  
-  
-      if (cached) {  
-        renderQualityBadge(cardElement, cached);  
-      } else {  
-        fetchQuality(title, year, quality => {  
-          if (quality) {  
-            setCache(cacheKey, quality);  
-            renderQualityBadge(cardElement, quality);  
-          }  
-        });  
-      }  
-    });  
-  }  
-  
-  Lampa.Listener.follow('activity', function (e) {  
-    if (e.type == 'start' || e.type == 'page') {  
-      setTimeout(processCards, 50);  
-    }  
-  });  
-  
-  var observer = new MutationObserver(function (mutations) {  
-    mutations.forEach(function (mutation) {  
-      mutation.addedNodes.forEach(function (node) {  
-        if (node.nodeType === 1 && node.classList && node.classList.contains('card')) {  
-          node.addEventListener('visible', function() {  
-            if (!node.hasAttribute('data-quality-processed')) {  
-              processCards();  
-            }  
-          });  
-        }  
-      });  
-    });  
-  });  
-  
-  observer.observe(document.body, { childList: true, subtree: true });  
-  
-  cleanCache();  
-  processCards();  
+  function processCards() {
+    document.querySelectorAll('.card:not([data-quality-processed])').forEach(cardElement => {
+      const cardData = cardElement.card_data;
+      if (!cardData) return;
+
+      cardElement.setAttribute('data-quality-processed', 'true');
+
+      const title = cardData.title || cardData.name;
+      const year = (cardData.release_date || cardData.first_air_date || '').substring(0, 4);
+      if (!title || !year) return;
+
+      const cacheKey = `${cardData.id}_${year}`;
+      const cached = getCache(cacheKey);
+
+      if (cached) {
+        renderQualityBadge(cardElement, cached);
+      } else {
+        fetchQuality(title, year, quality => {
+          if (quality) {
+            setCache(cacheKey, quality);
+            renderQualityBadge(cardElement, quality);
+          }
+        });
+      }
+    });
+  }
+
+  Lampa.Listener.follow('activity', function (e) {
+    if (e.type == 'start' || e.type == 'page') {
+      setTimeout(processCards, 500);
+    }
+  });
+
+  var observer = new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+      mutation.addedNodes.forEach(function (node) {
+        if (node.nodeType === 1 && node.classList && node.classList.contains('card')) {
+          node.addEventListener('visible', function () {
+            if (!node.hasAttribute('data-quality-processed')) {
+              processCards();
+            }
+          });
+        }
+      });
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  cleanCache();
+  processCards();
 })();
