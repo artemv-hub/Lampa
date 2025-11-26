@@ -18,26 +18,22 @@
         }  
     }  
       
-    // Переопределяем функцию watched в Timeline для фильмов  
+    // Переопределяем функцию format в Timeline  
     if (Lampa.Timeline) {  
-        const originalWatched = Lampa.Timeline.watched;  
+        const originalFormat = Lampa.Timeline.format;  
           
-        Lampa.Timeline.watched = function(card, return_time = false) {  
-            const result = originalWatched.call(this, card, return_time);  
+        Lampa.Timeline.format = function(params) {  
+            const formatted = originalFormat.call(this, params);  
               
-            // Для фильмов всегда возвращаем время вместо процентов  
-            if (!card.original_name && return_time && result && result.percent) {  
-                return {  
-                    ...result,  
-                    formatted_time: formatTimeShort(result.time) + '/' + formatTimeShort(result.duration)  
-                };  
-            }  
+            // Заменяем human-readable формат на короткий  
+            formatted.time = formatTimeShort(params.time);  
+            formatted.duration = formatTimeShort(params.duration);  
               
-            return result;  
+            return formatted;  
         };  
     }  
       
-    // Переопределяем onWatched в карточках  
+    // Переопределяем onWatched для фильмов  
     if (Lampa.Card && Lampa.Card.module && Lampa.Card.module.watched) {  
         const originalOnWatched = Lampa.Card.module.watched.onWatched;  
           
@@ -79,7 +75,7 @@
                             }  
                         }  
                           
-                        // Для фильмов - всегда показываем время  
+                        // Для фильмов - всегда показываем время в формате "текущее/общее"  
                         if (!viewed && !data.original_name) {  
                             let time = Lampa.Timeline.watched(data, true);  
                               
@@ -133,10 +129,12 @@
                                 if (ep == viewed.ep) {  
                                     let timeline = Lampa.Timeline.render(viewed.view)[0];  
                                       
-                                    // Обновляем текст в таймлайне  
-                                    let details = timeline.find('.time-line-details');  
-                                    if (details.length > 0) {  
-                                        details.text(formatTimeShort(viewed.view.time) + '/' + formatTimeShort(viewed.view.duration));  
+                                    // Обновляем текст в таймлайне для фильмов  
+                                    if (!data.original_name) {  
+                                        let details = timeline.find('.time-line-details');  
+                                        if (details.length > 0) {  
+                                            details.text(formatTimeShort(viewed.view.time) + '/' + formatTimeShort(viewed.view.duration));  
+                                        }  
                                     }  
                                       
                                     div.append(timeline);  
@@ -161,15 +159,16 @@
         };  
     }  
       
-    // Принудительное обновление карточек  
+    // Принудительное обновление всех карточек  
     setTimeout(() => {  
+        Lampa.Listener.send('full', {type: 'complite'});  
         $('.card').each(function() {  
             let card = $(this).data('card');  
             if (card && card.emit) {  
                 card.emit('update');  
             }  
         });  
-    }, 2000);  
+    }, 1000);  
       
-    console.log('[Always Time Progress v2] Plugin loaded');  
+    console.log('[Always Time Progress Movies] Plugin loaded');  
 })();
