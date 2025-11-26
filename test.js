@@ -1,136 +1,92 @@
-(function() {  
-    'use strict';  
-      
-    function init() {  
-        if (!window.Lampa || !Lampa.Utils) {  
-            setTimeout(init, 500);  
-            return;  
-        }  
-          
-        // Переопределяем secondsToTimeHuman для короткого формата  
-        const originalSecondsToTimeHuman = Lampa.Utils.secondsToTimeHuman;  
-          
-        Lampa.Utils.secondsToTimeHuman = function(seconds) {  
-            if (typeof seconds === 'number' && seconds > 0) {  
-                const hours = Math.floor(seconds / 3600);  
-                const minutes = Math.floor((seconds % 3600) / 60);  
-                const secs = Math.floor(seconds % 60);  
-                  
-                return hours > 0   
-                    ? `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`  
-                    : `${minutes}:${secs.toString().padStart(2, '0')}`;  
-            }  
+(function() {    
+    'use strict';    
+        
+    function init() {    
+        if (!window.Lampa || !Lampa.Utils || !Lampa.Listener) {    
+            setTimeout(init, 500);    
+            return;    
+        }    
+            
+        // Форматирование времени в HH:MM:SS  
+        const formatTime = (seconds) => {  
+            if (typeof seconds !== 'number' || seconds <= 0) return '00:00';  
               
-            return originalSecondsToTimeHuman.apply(this, arguments);  
+            const hours = Math.floor(seconds / 3600);  
+            const minutes = Math.floor((seconds % 3600) / 60);  
+            const secs = Math.floor(seconds % 60);  
+              
+            return hours > 0     
+                ? `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`    
+                : `${minutes}:${secs.toString().padStart(2, '0')}`;  
         };  
           
-        // Переопределяем watched для фильмов - убираем "Просмотрено" и добавляем полное время  
-        if (Lampa.Card && Lampa.Card.module && Lampa.Card.module.watched) {  
-            const originalOnWatched = Lampa.Card.module.watched.onWatched;  
-              
-            Lampa.Card.module.watched.onWatched = function() {  
-                if (!Lampa.Storage.field('card_episodes')) return;  
-                  
-                if (!this.watched_checked) {  
-                    let data = this.data;  
-                      
-                    function get(callback) {  
-                        if (data.original_name) Lampa.Timetable.get(data, callback);  
-                        else callback([]);  
-                    }  
-                      
-                    get((episodes, from_db) => {  
-                        let viewed;  
-                          
-                        let Draw = () => {  
-                            episodes.forEach(ep => {  
-                                let hash = Lampa.Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '', ep.episode_number, data.original_title].join(''));  
-                                let view = Lampa.Timeline.view(hash);  
-                                  
-                                if (view.percent) viewed = {ep, view};  
-                            });  
-                              
-                            if (!viewed && data.original_name) {  
-                                let last = Lampa.Storage.get('online_watched_last', '{}');  
-                                let filed = last[Lampa.Utils.hash(data.original_title)];  
-                                  
-                                if (filed && filed.episode) {  
-                                    viewed = {  
-                                        ep: {  
-                                            episode_number: filed.episode,  
-                                            name: Lampa.Lang.translate('full_episode') + ' ' + filed.episode,  
-                                        },  
-                                        view: Lampa.Timeline.view(Lampa.Utils.hash([filed.season, filed.season > 10 ? ':' : '',filed.episode,data.original_title].join('')))  
-                                    };  
-                                }  
-                            }  
-                              
-                            // Главное изменение для фильмов  
-                            if (!viewed && !data.original_name) {  
-                                let time = Lampa.Timeline.watched(data, true);  
-                                  
-                                if (time.percent) {  
-                                    viewed = {  
-                                        ep: {  
-                                            // Убрали Lang.translate('title_viewed') и добавили полный формат  
-                                            name: Lampa.Utils.secondsToTime(time.time, true) + '/' + Lampa.Utils.secondsToTime(time.duration, true),  
-                                        },  
-                                        view: time  
-                                    };  
-                                }  
-                            }  
-                              
-                            if (!viewed && data.original_name) {  
-                                let any = Lampa.Timeline.watched(data, true).pop();  
-                                  
-                                if (any) viewed = {ep: {  
-                                    name: Lampa.Lang.translate('full_episode') + ' ' + any.ep,  
-                                }, view: any.view};  
-                            }  
-                              
-                            if (viewed) {  
-                                let wrap = Lampa.Template.js('card_watched', {});  
-                                  
-                                let div = document.createElement('div');  
-                                let span = document.createElement('span');  
-                                  
-                                div.addClass('card-watched__item');  
-                                div.append(span);  
-                                  
-                                span.innerText = viewed.ep.name;  
-                                  
-                                if (viewed.view) {  
-                                    let timeline = Lampa.Timeline.render(viewed.view)[0];  
-                                    div.append(timeline);  
-                                }  
-                                  
-                                wrap.find('.card-watched__body').append(div);  
-                                  
-                                this.watched_wrap = wrap;  
-                                let view = this.html.find('.card__view');  
-                                view.insertBefore(wrap, view.firstChild);  
-                            }  
-                        };  
-                          
-                        Draw();  
-                    });  
-                      
-                    this.watched_checked = true;  
-                }  
-            };  
-        }  
+        // Отключаем стандартный watched  
+        Lampa.Storage.set('card_episodes', false);  
           
-        // Для постоянного отображения добавляем CSS  
+        // Функция добавления кастомного watched  
+        const addCustomWatched = (card) => {  
+            const data = card.data;  
+              
+            // Только для фильмов  
+            if (data.original_name) return;  
+              
+            // Удаляем стандартный watched если есть  
+            const oldWatched = card.querySelector('.card-watched');  
+            if (oldWatched) oldWatched.remove();  
+              
+            // Получаем прогресс просмотра  
+            const time = Lampa.Timeline.watched(data, true);  
+              
+            if (time.percent && time.duration > 0) {  
+                // Создаем простой watched элемент  
+                const watched = document.createElement('div');  
+                watched.className = 'card-watched-custom';  
+                watched.innerHTML = `  
+                    <div class="card-watched-custom__time">  
+                        ${formatTime(time.time)}/${formatTime(time.duration)}  
+                    </div>  
+                `;  
+                  
+                // Добавляем в карточку  
+                const view = card.querySelector('.card__view');  
+                view.insertBefore(watched, view.firstChild);  
+            }  
+        };  
+          
+        // Слушаем создание всех карточек  
+        Lampa.Listener.follow('card', (e) => {  
+            if (e.type === 'create') {  
+                addCustomWatched(e.card);  
+            }  
+        });  
+          
+        // CSS стили - всегда виден  
         const style = document.createElement('style');  
         style.textContent = `  
-            .card-watched {  
+            .card-watched-custom {  
+                position: absolute;  
+                top: auto;  
+                left: 1em;  
+                right: 1em;  
+                bottom: 3em;  
+                z-index: 1;  
+                background: rgba(0,0,0,0.9);  
+                padding: 0.6em;  
+                border-radius: 0.8em;  
                 display: block !important;  
+            }  
+              
+            .card-watched-custom__time {  
+                color: #fff;  
+                font-size: 0.85em;  
+                font-weight: 600;  
+                text-align: center;  
             }  
         `;  
         document.head.appendChild(style);  
           
-        console.log('[Always Time Format] Plugin loaded');  
-    }  
-      
-    init();  
+        console.log('[Custom Watched] Plugin loaded - always visible time only');    
+    }    
+        
+    init();    
 })();
