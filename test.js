@@ -23,13 +23,28 @@
         // Отключаем стандартный watched  
         Lampa.Storage.set('card_episodes', false);  
           
-        // Переопределяем модуль Watched для карточек  
+        // Переопределяем модуль Watched с правильными методами  
         Lampa.ModuleMap.Watched = {  
-            onVisible: function(){  
+            onCreate: function(){  
+                // Пустой метод, но должен существовать  
+            },  
+              
+            onUpdate: function(){  
+                this.watched_checked = false;  
+                this.watched_wrap?.remove();  
+                this.onWatched();  
+            },  
+              
+            onWatched: function(){  
+                if(this.watched_checked) return;  
+                  
                 const data = this.data;  
                   
                 // Только для фильмов  
-                if (data.original_name) return;  
+                if (data.original_name) {  
+                    this.watched_checked = true;  
+                    return;  
+                }  
                   
                 // Получаем прогресс просмотра  
                 const time = Lampa.Timeline.watched(data, true);  
@@ -48,8 +63,15 @@
                     const view = this.html.find('.card__view')[0];  
                     if (view) {  
                         view.insertBefore(watched, view.firstChild);  
+                        this.watched_wrap = watched;  
                     }  
                 }  
+                  
+                this.watched_checked = true;  
+            },  
+              
+            onDestroy: function(){  
+                // Очистка если нужна  
             }  
         };  
           
@@ -78,7 +100,7 @@
         `;  
         document.head.appendChild(style);  
           
-        console.log('[Custom Watched] Plugin loaded - Lampa 3.0 compatible');    
+        console.log('[Custom Watched] Plugin loaded - correct module methods');    
     }    
         
     init();    
