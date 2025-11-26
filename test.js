@@ -7,7 +7,7 @@
             return;    
         }    
             
-        // Форматирование времени  
+        // Форматирование времени в HH:MM:SS  
         const formatTime = (seconds) => {  
             if (typeof seconds !== 'number' || seconds <= 0) return '00:00';  
               
