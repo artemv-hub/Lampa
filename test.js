@@ -17,7 +17,7 @@ function startPlugin() {
     Lampa.Card.prototype.create = function() {  
         let result = originalCreate.call(this)  
           
-        // Переопределяем watched функцию - убираем проверку на фокус  
+        // Переопределяем watched функцию  
         this.watched = function(){  
             if(this.watched_checked) return  
               
@@ -80,7 +80,7 @@ function startPlugin() {
             }  
         }  
           
-        // Вызываем watched сразу при создании карточки (без проверки фокуса)  
+        // Вызываем watched сразу при создании карточки  
         this.watched()  
           
         return result  
@@ -92,88 +92,6 @@ function startPlugin() {
     Lampa.Card.prototype.update = function(){  
         // Не сбрасываем watched_checked при обновлении  
         this.favorite()  
-    }  
-  
-    // Также переопределяем для модульной системы  
-    if(Lampa.Maker && Lampa.Maker.module) {  
-        let cardModule = Lampa.Maker.module('Card')  
-          
-        if(cardModule && cardModule.moduleNames && cardModule.moduleNames.indexOf('Watched') >= 0) {  
-            Lampa.Maker.map('Card').Watched = {  
-                onCreate: function(){  
-                    // Убираем обработчики наведения  
-                },  
-                  
-                onUpdate: function(){  
-                    // Не сбрасываем watched_checked  
-                    this.watched_wrap?.remove()  
-                    // Вызываем onWatched сразу без проверки фокуса  
-                    this.emit('watched')  
-                },  
-                  
-                onWatched: function(){  
-                    // Убираем проверку Storage.field('card_episodes')  
-                    if(!this.watched_checked){  
-                        let data = this.data  
-  
-                        function get(callback){  
-                            if(data.original_name) Lampa.Timetable.get(data, callback)  
-                            else callback([])  
-                        }  
-  
-                        get((episodes, from_db)=>{  
-                            let viewed  
-  
-                            let Draw = ()=>{  
-                                episodes.forEach(ep=>{  
-                                    let hash = Lampa.Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '',ep.episode_number,data.original_title].join(''))  
-                                    let view = Lampa.Timeline.view(hash)  
-  
-                                    if(view.percent) viewed = {ep, view}  
-                                })  
-  
-                                // Для фильмов  
-                                if(!viewed && !data.original_name){  
-                                    let time = Lampa.Timeline.view(Lampa.Utils.hash([data.original_title].join('')))  
-  
-                                    if(time.time && time.duration) {  
-                                        viewed = {  
-                                            ep: {  
-                                                name: Lampa.Utils.secondsToTime(time.time) + '/' + Lampa.Utils.secondsToTime(time.duration),  
-                                            },  
-                                            view: time  
-                                        }  
-                                    }  
-                                }  
-  
-                                if(viewed){  
-                                    let span = document.createElement('span')  
-                                    span.className = 'card__watched'  
-                                      
-                                    if(data.original_name) {  
-                                        // Формат E7S2 для сериалов  
-                                        span.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number  
-                                    } else {  
-                                        // Формат 0:50/1:40 для фильмов  
-                                        span.innerText = viewed.ep.name  
-                                    }  
-  
-                                    let view_elem = this.html.find('.card__view')  
-                                      
-                                    if(view_elem.find('.card__watched').length === 0) {  
-                                        view_elem.append(span)  
-                                    }  
-                                }  
-                            }  
-  
-                            Draw()  
-                        })  
-  
-                        this.watched_checked = true  
-                    }  
-                }  
-            }  
-        }  
     }  
   
     // CSS стили для отображения  
