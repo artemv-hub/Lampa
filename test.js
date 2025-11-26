@@ -21,7 +21,7 @@
     const badge = document.createElement('div');  
     badge.className = 'card__watched';  
   
-    // Используем ту же логику что и в оригинальном watched()  
+    // Используем полную логику из оригинального watched.js  
     function get(callback) {  
       if (data.original_name && Lampa.Timetable && typeof Lampa.Timetable.get === 'function') {  
         Lampa.Timetable.get(data, callback);  
@@ -30,24 +30,26 @@
       }  
     }  
   
-    get(episodes => {  
+    get((episodes, from_db) => {  
       let viewed = null;  
   
-      // Для сериалов - ищем просмотренные эпизоды  
-      if (data.original_name && episodes && episodes.length) {  
-        episodes.forEach(ep => {  
-          if (!ep || !ep.episode_number || !ep.season_number) return;  
-            
-          const hash = Lampa.Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '', ep.episode_number, data.original_title || data.original_name].join(''));  
-          const view = Lampa.Timeline.view(hash);  
+      const Draw = () => {  
+        // Ищем просмотренные эпизоды в Timetable  
+        if (data.original_name && episodes && episodes.length) {  
+          episodes.forEach(ep => {  
+            if (!ep || !ep.episode_number || !ep.season_number) return;  
+              
+            const hash = Lampa.Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '', ep.episode_number, data.original_title || data.original_name].join(''));  
+            const view = Lampa.Timeline.view(hash);  
   
-          if (view && view.percent) viewed = {ep, view};  
-        });  
+            if (view && view.percent) viewed = {ep, view};  
+          });  
+        }  
   
-        // Fallback к последнему просмотренному из storage  
+        // Fallback 1: online_watched_last storage  
         if (!viewed && data.original_name) {  
           const last = Lampa.Storage.get('online_watched_last', '{}');  
-          const filed = last[Lampa.Utils.hash(data.original_title)];  
+          const filed = last[Lampa.Utils.hash(data.original_title || data.original_name)];  
   
           if (filed && filed.episode) {  
             badge.innerText = 'E' + filed.episode + 'S' + (filed.season || 1);  
@@ -56,24 +58,39 @@
           }  
         }  
   
+        // Fallback 2: Timeline.watched для сериалов  
+        if (!viewed && data.original_name) {  
+          const any = Lampa.Timeline.watched(data, true).pop();  
+  
+          if (any) {  
+            badge.innerText = 'E' + any.ep + 'S' + (any.season || 1);  
+            cardView.appendChild(badge);  
+            return;  
+          }  
+        }  
+  
+        // Если нашли просмотренный эпизод  
         if (viewed && viewed.ep) {  
           badge.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number;  
           cardView.appendChild(badge);  
         }  
-      }  
-      // Для фильмов - используем Timeline напрямую  
-      else if (!data.original_name) {  
-        const hash = Lampa.Utils.hash([data.original_title || data.title || data.name].join(''));  
-        const timeData = Lampa.Timeline.view(hash);  
+      };  
   
-        if (timeData && timeData.time && timeData.duration) {  
-          const current = Lampa.Utils.secondsToTime(timeData.time);  
-          const total = Lampa.Utils.secondsToTime(timeData.duration);  
-          badge.innerText = current + '/' + total;  
-          cardView.appendChild(badge);  
-        }  
-      }  
+      Draw();  
     });  
+  
+    // Для фильмов - используем Timeline напрямую  
+    if (!data.original_name) {  
+      const hash = Lampa.Utils.hash([data.original_title || data.title || data.name].join(''));  
+      const timeData = Lampa.Timeline.view(hash);  
+  
+      if (timeData && timeData.time && timeData.duration) {  
+        const current = Lampa.Utils.secondsToTime(timeData.time);  
+        const total = Lampa.Utils.secondsToTime(timeData.duration);  
+        badge.innerText = current + '/' + total;  
+        cardView.appendChild(badge);  
+      }  
+    }  
   }  
   
   function processCards() {  
