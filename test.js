@@ -1,30 +1,31 @@
-(function () {
-  'use strict';
-
-  function init() {
-    if (!window.Lampa || !Lampa.Utils) {
-      setTimeout(init, 500);
-      return;
-    }
-
-    const originalSecondsToTimeHuman = Lampa.Utils.secondsToTimeHuman;
-
-    Lampa.Utils.secondsToTimeHuman = function (seconds) {
-      if (typeof seconds === 'number' && seconds > 0) {
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = Math.floor(seconds % 60);
-
-        if (hours > 0) {
-          return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        } else {
-          return `${minutes}:${secs.toString().padStart(2, '0')}`;
-        }
-      }
-
-      return originalSecondsToTimeHuman.apply(this, arguments);
-    };
-  }
-
-  init();
+(function () {  
+  "use strict";  
+    
+  let manifest = {    
+    type: 'modification',    
+    version: '1.0.0',    
+    name: 'Timeline Time Display',    
+    description: 'Отображает время просмотра вместо процента в card-watched'  
+  }    
+      
+  Lampa.Manifest.plugins = manifest    
+  
+  function startPlugin() {  
+    // Переопределяем функцию форматирования таймлайна  
+    Lampa.Timeline.format = function(params) {  
+      let road = {  
+        percent: params.time ? Lampa.Utils.secondsToTimeHuman(params.time) : params.percent + '%',  
+        time: Lampa.Utils.secondsToTimeHuman(params.time),  
+        duration: Lampa.Utils.secondsToTimeHuman(params.duration)  
+      }  
+      return road  
+    }  
+  }  
+    
+  if (window.appready) { startPlugin(); }  
+  else {  
+    Lampa.Listener.follow("app", function (e) {  
+      if (e.type === "ready") { startPlugin(); }  
+    });  
+  }  
 })();
