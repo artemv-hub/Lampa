@@ -23,46 +23,64 @@
   
     // Для сериалов - формат E7S2  
     if (data.original_name) {  
-      Lampa.Timetable.get(data, (episodes) => {  
-        if (!episodes.length) return;  
+      try {  
+        Lampa.Timetable.get(data, (episodes) => {  
+          try {  
+            if (!episodes || !Array.isArray(episodes) || !episodes.length) return;  
   
-        let viewed = null;  
+            let viewed = null;  
   
-        episodes.forEach((ep) => {  
-          const hash = Lampa.Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '', ep.episode_number, data.original_name].join(''));  
-          const view = Lampa.Timeline.view(hash);  
+            episodes.forEach((ep) => {  
+              if (!ep || !ep.episode_number || !ep.season_number) return;  
+                
+              const hash = Lampa.Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '', ep.episode_number, data.original_title || data.original_name].join(''));  
+              const view = Lampa.Timeline.view(hash);  
   
-          if (view.percent) viewed = {ep, view};  
+              if (view && view.percent) viewed = {ep, view};  
+            });  
+  
+            if (viewed && viewed.ep) {  
+              badge.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number;  
+              cardView.appendChild(badge);  
+            }  
+          } catch (e) {  
+            console.error('Custom Episodes: Error processing episodes', e);  
+          }  
         });  
-  
-        if (viewed) {  
-          badge.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number;  
-          cardView.appendChild(badge);  
-        }  
-      });  
+      } catch (e) {  
+        console.error('Custom Episodes: Error getting timetable', e);  
+      }  
     }  
     // Для фильмов - формат 0:50/1:40  
     else {  
-      const hash = Lampa.Utils.hash([data.original_title].join(''));  
-      const timeData = Lampa.Timeline.view(hash);  
+      try {  
+        const hash = Lampa.Utils.hash([data.original_title || data.title || data.name].join(''));  
+        const timeData = Lampa.Timeline.view(hash);  
   
-      if (timeData && timeData.time && timeData.duration) {  
-        const current = Lampa.Utils.secondsToTime(timeData.time);  
-        const total = Lampa.Utils.secondsToTime(timeData.duration);  
-        badge.innerText = current + '/' + total;  
-        cardView.appendChild(badge);  
+        if (timeData && timeData.time && timeData.duration) {  
+          const current = Lampa.Utils.secondsToTime(timeData.time);  
+          const total = Lampa.Utils.secondsToTime(timeData.duration);  
+          badge.innerText = current + '/' + total;  
+          cardView.appendChild(badge);  
+        }  
+      } catch (e) {  
+        console.error('Custom Episodes: Error processing movie', e);  
       }  
     }  
   }  
   
   function processCards() {  
-    document.querySelectorAll('.card:not([data-episodes-processed])').forEach(cardElement => {  
-      const cardData = cardElement.card_data;  
-      if (!cardData) return;  
+    try {  
+      document.querySelectorAll('.card:not([data-episodes-processed])').forEach(cardElement => {  
+        const cardData = cardElement.card_data;  
+        if (!cardData) return;  
   
-      cardElement.setAttribute('data-episodes-processed', 'true');  
-      renderEpisodeBadge(cardElement, cardData);  
-    });  
+        cardElement.setAttribute('data-episodes-processed', 'true');  
+        renderEpisodeBadge(cardElement, cardData);  
+      });  
+    } catch (e) {  
+      console.error('Custom Episodes: Error processing cards', e);  
+    }  
   }  
   
   // Следим за активностью  
