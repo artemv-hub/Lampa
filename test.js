@@ -5,13 +5,13 @@
     type: 'modification',    
     version: '1.0.0',    
     name: 'Timeline Always Visible',    
-    description: 'Делает card-watched всегда видимым, а не только при наведении'  
+    description: 'Делает card-watched всегда видимым с момента загрузки'  
   }    
       
   Lampa.Manifest.plugins = manifest    
   
   function startPlugin() {  
-    // Добавляем CSS стиль для постоянного отображения card-watched  
+    // Добавляем CSS стиль для постоянного отображения  
     let style = document.createElement('style')  
     style.textContent = `  
       .card-watched {  
@@ -20,7 +20,7 @@
     `  
     document.head.appendChild(style)  
       
-    // Также переопределяем шаблон timeline для формата MM:HH  
+    // Переопределяем шаблон timeline  
     Lampa.Template.add('timeline_details', `<span class="time-line-details" data-hash="{hash}">  
 <b a="t">{time}</b> / <b a="d">{duration}</b>  
 </span>`)  
@@ -41,6 +41,24 @@
       }  
       return road  
     }  
+  
+    // Принудительно инициализируем watched для всех видимых карточек  
+    function initAllWatched() {  
+      document.querySelectorAll('.card').forEach(card => {  
+        if (card.card && card.card.emit) {  
+          card.card.emit('watched')  
+        }  
+      })  
+    }  
+  
+    // Запускаем инициализацию сразу и при изменениях DOM  
+    setTimeout(initAllWatched, 1000)  
+      
+    const observer = new MutationObserver(() => {  
+      setTimeout(initAllWatched, 500)  
+    })  
+      
+    observer.observe(document.body, { childList: true, subtree: true })  
   }  
     
   if (window.appready) { startPlugin(); }  
