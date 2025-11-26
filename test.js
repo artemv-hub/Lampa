@@ -1,100 +1,119 @@
 function startPlugin() {  
-    window.plugin_custom_episodes_ready = true  
+    'use strict';  
+      
+    window.plugin_custom_episodes_ready = true;  
   
-    let manifest = {  
+    const manifest = {  
         type: 'modification',  
         version: '1.0.0',  
         name: 'Custom Episodes',  
         description: 'Кастомное отображение прогресса на карточках',  
         component: 'custom_episodes',  
-    }  
+    };  
       
-    Lampa.Manifest.plugins = manifest  
+    Lampa.Manifest.plugins = manifest;  
   
-    // Переопределяем функцию watched в карточках  
-    let originalCreate = Lampa.Card.prototype.create  
+    // Сохраняем оригинальные функции  
+    const originalCreate = Lampa.Card.prototype.create;  
+    const originalUpdate = Lampa.Card.prototype.update;  
       
     Lampa.Card.prototype.create = function() {  
-        let result = originalCreate.call(this)  
+        'use strict';  
+          
+        const result = originalCreate.call(this);  
           
         // Переопределяем watched функцию  
-        this.watched = function(){  
-            if(this.watched_checked) return  
+        this.watched = function() {  
+            'use strict';  
               
-            this.watched_checked = true  
+            if (this.watched_checked) return;  
               
-            let data = this.object  
+            this.watched_checked = true;  
               
-            if(!data) return  
+            const data = this.data; // ИСПРАВЛЕНО: this.object -> this.data  
+              
+            if (!data) return;  
               
             // Для сериалов  
-            if(data.original_name) {  
-                Lampa.TimeTable.get(data, (episodes)=>{  
-                    if(!episodes.length) return  
+            if (data.original_name) {  
+                Timetable.get(data, (episodes) => { // ИСПРАВЛЕНО: Lampa.TimeTable -> Timetable  
+                    'use strict';  
                       
-                    let viewed = null  
+                    if (!episodes.length) return;  
                       
-                    // Ищем последний просмотренный эпизод  
-                    episodes.forEach(ep => {  
-                        let hash = Lampa.Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '', ep.episode_number, data.original_title].join(''))  
-                        let view = Lampa.Timeline.view(hash)  
-                          
-                        if(view.percent) viewed = {ep, view}  
-                    })  
+                    let viewed = null;  
                       
-                    if(viewed) {  
-                        let span = document.createElement('span')  
-                        span.className = 'card__watched'  
+                    episodes.forEach((ep) => {  
+                        const hash = Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '', ep.episode_number, data.original_title].join(''));  
+                        const view = Timeline.view(hash);  
                           
-                        // Формат E7S2  
-                        span.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number  
+                        if (view.percent) viewed = {ep, view};  
+                    });  
+                      
+                    if (viewed) {  
+                        const span = document.createElement('span');  
+                        span.className = 'card__watched';  
                           
-                        let view_elem = this.render().find('.card__view')  
+                        span.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number;  
                           
-                        if(view_elem.find('.card__watched').length === 0) {  
-                            view_elem.append(span)  
+                        const view_elem = this.render().find('.card__view');  
+                          
+                        if (view_elem.find('.card__watched').length === 0) {  
+                            view_elem.append(span);  
                         }  
                     }  
-                })  
+                });  
             }  
             // Для фильмов  
             else {  
-                let hash = Lampa.Utils.hash([data.original_title].join(''))  
-                let timeData = Lampa.Timeline.view(hash)  
+                const hash = Utils.hash([data.original_title].join(''));  
+                const timeData = Timeline.view(hash);  
                   
-                if(timeData && timeData.time && timeData.duration) {  
-                    let span = document.createElement('span')  
-                    span.className = 'card__watched'  
+                if (timeData && timeData.time && timeData.duration) {  
+                    const span = document.createElement('span');  
+                    span.className = 'card__watched';  
                       
-                    // Формат 0:50/1:40  
-                    let current = Lampa.Utils.secondsToTime(timeData.time)  
-                    let total = Lampa.Utils.secondsToTime(timeData.duration)  
-                    span.innerText = current + '/' + total  
+                    const current = Utils.secondsToTime(timeData.time);  
+                    const total = Utils.secondsToTime(timeData.duration);  
+                    span.innerText = current + '/' + total;  
                       
-                    let view_elem = this.render().find('.card__view')  
+                    const view_elem = this.render().find('.card__view');  
                       
-                    if(view_elem.find('.card__watched').length === 0) {  
-                        view_elem.append(span)  
+                    if (view_elem.find('.card__watched').length === 0) {  
+                        view_elem.append(span);  
                     }  
                 }  
             }  
-        }  
+        };  
           
         // Вызываем watched сразу при создании карточки  
-        this.watched()  
+        this.watched();  
           
-        return result  
-    }  
+        return result;  
+    };  
   
-    // Переопределяем update функцию чтобы не сбрасывать watched при потере фокуса  
-    let originalUpdate = Lampa.Card.prototype.update  
-      
-    Lampa.Card.prototype.update = function(){  
-        // Не сбрасываем watched_checked при обновлении  
-        this.favorite()  
-    }  
+    Lampa.Card.prototype.update = function() {  
+        'use strict';  
+          
+        // Восстанавливаем оригинальную логику для parser  
+        if (this.params.isparser) return;  
   
-    // CSS стили для отображения  
+        this.watched_checked = false;  
+  
+        if (this.watched_wrap) {  
+            const remove = (elem) => {  
+                if (elem) elem.remove();  
+            };  
+            remove(this.watched_wrap);  
+        }  
+  
+        this.favorite();  
+          
+        // Вызываем watched сразу для постоянного отображения  
+        this.watched();  
+    };  
+  
+    // CSS стили  
     Lampa.Template.add('custom_episodes_css', `  
         <style>  
         .card__watched {  
@@ -109,18 +128,22 @@ function startPlugin() {
             z-index: 10;  
         }  
         </style>  
-    `)  
+    `);  
   
-    // Добавляем стили на страницу  
-    $('body').append(Lampa.Template.get('custom_episodes_css', {}, true))  
+    $('body').append(Lampa.Template.get('custom_episodes_css', {}, true));  
 }  
   
 // Запускаем плагин  
-if(!window.plugin_custom_episodes_ready && Lampa.Manifest.app_digital >= 242) {  
-    if(window.appready) startPlugin()  
-    else {  
+if (!window.plugin_custom_episodes_ready && Lampa.Manifest.app_digital >= 242) {  
+    'use strict';  
+      
+    if (window.appready) {  
+        startPlugin();  
+    } else {  
         Lampa.Listener.follow('app', function (e) {  
-            if (e.type == 'ready') startPlugin()  
-        })  
+            'use strict';  
+              
+            if (e.type === 'ready') startPlugin();  
+        });  
     }  
 }
