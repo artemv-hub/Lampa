@@ -21,70 +21,48 @@
     const badge = document.createElement('div');  
     badge.className = 'card__watched';  
   
-    // Для сериалов - формат E7S2 с расширенной проверкой  
-    if (data.original_name) {  
-      try {  
-        // Расширенная проверка данных  
-        const hasValidId = typeof data.id === 'number';  
-        const hasValidSource = data.source === 'tmdb' || data.source === 'cub';  
-        const timetableAvailable = Lampa.Timetable && typeof Lampa.Timetable.get === 'function';  
-  
-        console.log('Custom Episodes: Serial check:', {  
-          id: data.id,  
-          source: data.source,  
-          hasValidId,  
-          hasValidSource,  
-          timetableAvailable,  
-          title: data.title || data.name  
-        });  
-  
-        if (timetableAvailable && hasValidId && hasValidSource) {  
-          Lampa.Timetable.get(data, (episodes) => {  
-            try {  
-              if (!episodes || !Array.isArray(episodes) || !episodes.length) {  
-                console.log('Custom Episodes: No episodes found for:', data.title || data.name);  
-                return;  
-              }  
-  
-              let viewed = null;  
-  
-              episodes.forEach((ep) => {  
-                if (!ep || !ep.episode_number || !ep.season_number) return;  
-                  
-                const hash = Lampa.Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '', ep.episode_number, data.original_title || data.original_name].join(''));  
-                const view = Lampa.Timeline.view(hash);  
-  
-                if (view && view.percent) viewed = {ep, view};  
-              });  
-  
-              if (viewed && viewed.ep) {  
-                badge.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number;  
-                cardView.appendChild(badge);  
-                console.log('Custom Episodes: Rendered badge for:', data.title || data.name);  
-              } else {  
-                console.log('Custom Episodes: No viewed episodes found for:', data.title || data.name);  
-              }  
-            } catch (e) {  
-              console.error('Custom Episodes: Error processing episodes', e);  
-            }  
-          });  
-        } else {  
-          console.log('Custom Episodes: Skipping serial - requirements not met:', {  
-            title: data.title || data.name,  
-            reasons: [  
-              !timetableAvailable ? 'Timetable unavailable' : null,  
-              !hasValidId ? 'Invalid ID (not number)' : null,  
-              !hasValidSource ? 'Invalid source (not tmdb/cub)' : null  
-            ].filter(Boolean)  
-          });  
-        }  
-      } catch (e) {  
-        console.error('Custom Episodes: Error with Timetable', e);  
+    // Используем ту же логику что и в оригинальном watched()  
+    function get(callback) {  
+      if (data.original_name && Lampa.Timetable && typeof Lampa.Timetable.get === 'function') {  
+        Lampa.Timetable.get(data, callback);  
+      } else {  
+        callback([]);  
       }  
     }  
-    // Для фильмов - формат 0:50/1:40  
-    else {  
-      try {  
+  
+    get(episodes => {  
+      let viewed = null;  
+  
+      // Для сериалов - ищем просмотренные эпизоды  
+      if (data.original_name && episodes && episodes.length) {  
+        episodes.forEach(ep => {  
+          if (!ep || !ep.episode_number || !ep.season_number) return;  
+            
+          const hash = Lampa.Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '', ep.episode_number, data.original_title || data.original_name].join(''));  
+          const view = Lampa.Timeline.view(hash);  
+  
+          if (view && view.percent) viewed = {ep, view};  
+        });  
+  
+        // Fallback к последнему просмотренному из storage  
+        if (!viewed && data.original_name) {  
+          const last = Lampa.Storage.get('online_watched_last', '{}');  
+          const filed = last[Lampa.Utils.hash(data.original_title)];  
+  
+          if (filed && filed.episode) {  
+            badge.innerText = 'E' + filed.episode + 'S' + (filed.season || 1);  
+            cardView.appendChild(badge);  
+            return;  
+          }  
+        }  
+  
+        if (viewed && viewed.ep) {  
+          badge.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number;  
+          cardView.appendChild(badge);  
+        }  
+      }  
+      // Для фильмов - используем Timeline напрямую  
+      else if (!data.original_name) {  
         const hash = Lampa.Utils.hash([data.original_title || data.title || data.name].join(''));  
         const timeData = Lampa.Timeline.view(hash);  
   
@@ -94,10 +72,8 @@
           badge.innerText = current + '/' + total;  
           cardView.appendChild(badge);  
         }  
-      } catch (e) {  
-        console.error('Custom Episodes: Error processing movie', e);  
       }  
-    }  
+    });  
   }  
   
   function processCards() {  
