@@ -22,10 +22,10 @@
     badge.className = 'card__watched';  
   
     // Для сериалов - формат E7S2  
-    if (data.original_name && typeof data.id === 'number') {  
+    if (data.original_name) {  
       try {  
-        // Проверяем, что Timetable готов и данные корректны  
-        if (Lampa.Timetable && typeof Lampa.Timetable.get === 'function') {  
+        // Проверяем доступность Timetable и корректные данные  
+        if (Lampa.Timetable && typeof Lampa.Timetable.get === 'function' && typeof data.id === 'number') {  
           Lampa.Timetable.get(data, (episodes) => {  
             try {  
               if (!episodes || !Array.isArray(episodes) || !episodes.length) return;  
@@ -50,10 +50,10 @@
             }  
           });  
         } else {  
-          console.warn('Custom Episodes: Timetable not available');  
+          console.log('Custom Episodes: Skipping serial - no valid id or Timetable unavailable');  
         }  
       } catch (e) {  
-        console.error('Custom Episodes: Error getting timetable', e);  
+        console.error('Custom Episodes: Error with Timetable', e);  
       }  
     }  
     // Для фильмов - формат 0:50/1:40  
