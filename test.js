@@ -22,31 +22,36 @@
     badge.className = 'card__watched';  
   
     // Для сериалов - формат E7S2  
-    if (data.original_name) {  
+    if (data.original_name && typeof data.id === 'number') {  
       try {  
-        Lampa.Timetable.get(data, (episodes) => {  
-          try {  
-            if (!episodes || !Array.isArray(episodes) || !episodes.length) return;  
+        // Проверяем, что Timetable готов и данные корректны  
+        if (Lampa.Timetable && typeof Lampa.Timetable.get === 'function') {  
+          Lampa.Timetable.get(data, (episodes) => {  
+            try {  
+              if (!episodes || !Array.isArray(episodes) || !episodes.length) return;  
   
-            let viewed = null;  
+              let viewed = null;  
   
-            episodes.forEach((ep) => {  
-              if (!ep || !ep.episode_number || !ep.season_number) return;  
-                
-              const hash = Lampa.Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '', ep.episode_number, data.original_title || data.original_name].join(''));  
-              const view = Lampa.Timeline.view(hash);  
+              episodes.forEach((ep) => {  
+                if (!ep || !ep.episode_number || !ep.season_number) return;  
+                  
+                const hash = Lampa.Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '', ep.episode_number, data.original_title || data.original_name].join(''));  
+                const view = Lampa.Timeline.view(hash);  
   
-              if (view && view.percent) viewed = {ep, view};  
-            });  
+                if (view && view.percent) viewed = {ep, view};  
+              });  
   
-            if (viewed && viewed.ep) {  
-              badge.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number;  
-              cardView.appendChild(badge);  
+              if (viewed && viewed.ep) {  
+                badge.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number;  
+                cardView.appendChild(badge);  
+              }  
+            } catch (e) {  
+              console.error('Custom Episodes: Error processing episodes', e);  
             }  
-          } catch (e) {  
-            console.error('Custom Episodes: Error processing episodes', e);  
-          }  
-        });  
+          });  
+        } else {  
+          console.warn('Custom Episodes: Timetable not available');  
+        }  
       } catch (e) {  
         console.error('Custom Episodes: Error getting timetable', e);  
       }  
