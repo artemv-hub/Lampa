@@ -52,8 +52,16 @@
           const filed = last[Lampa.Utils.hash(data.original_title || data.original_name)];  
   
           if (filed && filed.episode) {  
-            badge.innerText = 'E' + filed.episode + 'S' + (filed.season || 1);  
-            cardView.appendChild(badge);  
+            // Получаем информацию о сезонах и сериях  
+            getSeasonInfo(data, (seasonInfo) => {  
+              const currentEp = filed.episode;  
+              const currentSeason = filed.season || 1;  
+              const totalEpisodes = seasonInfo[currentSeason] || '?';  
+              const totalSeasons = Object.keys(seasonInfo).length || '?';  
+                
+              badge.innerText = `E${currentEp}/${totalEpisodes} S${currentSeason}/${totalSeasons}`;  
+              cardView.appendChild(badge);  
+            });  
             return;  
           }  
         }  
@@ -63,33 +71,93 @@
           const any = Lampa.Timeline.watched(data, true).pop();  
   
           if (any) {  
-            badge.innerText = 'E' + any.ep + 'S' + (any.season || 1);  
-            cardView.appendChild(badge);  
+            // Получаем информацию о сезонах и сериях  
+            getSeasonInfo(data, (seasonInfo) => {  
+              const currentEp = any.ep;  
+              const currentSeason = any.season || 1;  
+              const totalEpisodes = seasonInfo[currentSeason] || '?';  
+              const totalSeasons = Object.keys(seasonInfo).length || '?';  
+                
+              badge.innerText = `E${currentEp}/${totalEpisodes} S${currentSeason}/${totalSeasons}`;  
+              cardView.appendChild(badge);  
+            });  
             return;  
           }  
         }  
   
-        // Если нашли просмотренный эпизод  
+        // Если нашли просмотренный эпизод через Timetable  
         if (viewed && viewed.ep) {  
-          badge.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number;  
-          cardView.appendChild(badge);  
+          // Получаем информацию о сезонах и сериях  
+          getSeasonInfo(data, (seasonInfo) => {  
+            const currentEp = viewed.ep.episode_number;  
+            const currentSeason = viewed.ep.season_number;  
+            const totalEpisodes = seasonInfo[currentSeason] || '?';  
+            const totalSeasons = Object.keys(seasonInfo).length || '?';  
+              
+            badge.innerText = `E${currentEp}/${totalEpisodes} S${currentSeason}/${totalSeasons}`;  
+            cardView.appendChild(badge);  
+          });  
         }  
       };  
   
       Draw();  
     });  
   
-    // Для фильмов - используем Timeline напрямую  
+    // Для фильмов - используем Timeline напрямую с коротким форматом времени  
     if (!data.original_name) {  
       const hash = Lampa.Utils.hash([data.original_title || data.title || data.name].join(''));  
       const timeData = Lampa.Timeline.view(hash);  
   
       if (timeData && timeData.time && timeData.duration) {  
-        const current = Lampa.Utils.secondsToTime(timeData.time);  
-        const total = Lampa.Utils.secondsToTime(timeData.duration);  
+        // Используем короткий формат времени (без секунд)  
+        const current = Lampa.Utils.secondsToTime(timeData.time, true);  
+        const total = Lampa.Utils.secondsToTime(timeData.duration, true);  
         badge.innerText = current + '/' + total;  
         cardView.appendChild(badge);  
       }  
+    }  
+  }  
+  
+  // Функция для получения информации о сезонах и сериях  
+  function getSeasonInfo(data, callback) {  
+    const seasonInfo = {};  
+      
+    // Сначала пробуем получить из данных карточки  
+    if (data.seasons && Array.isArray(data.seasons)) {  
+      data.seasons.forEach(season => {  
+        if (season.season_number && season.episode_count) {  
+          seasonInfo[season.season_number] = season.episode_count;  
+        }  
+      });  
+        
+      if (Object.keys(seasonInfo).length > 0) {  
+        callback(seasonInfo);  
+        return;  
+      }  
+    }  
+  
+    // Если нет данных, делаем запрос к API  
+    if (data.id && Lampa.Api) {  
+      const totalSeasons = Utils.countSeasons(data) || 1;  
+        
+      // Получаем информацию о каждом сезоне  
+      const seasonPromises = [];  
+      for (let i = 1; i <= totalSeasons; i++) {  
+        seasonPromises.push(new Promise((resolve) => {  
+          Lampa.Api.seasons(data, [i], (seasonData) => {  
+            if (seasonData[i] && seasonData[i].episodes) {  
+              seasonInfo[i] = seasonData[i].episodes.length;  
+            }  
+            resolve();  
+          });  
+        }));  
+      }  
+  
+      Promise.all(seasonPromises).then(() => {  
+        callback(seasonInfo);  
+      });  
+    } else {  
+      callback(seasonInfo);  
     }  
   }  
   
