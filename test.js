@@ -42,23 +42,45 @@
       return road  
     }  
   
-    // Принудительно инициализируем watched для всех видимых карточек  
+    // Принудительно инициализируем watched для всех карточек  
     function initAllWatched() {  
+      if (!Lampa.Storage.field('card_episodes')) return  
+        
       document.querySelectorAll('.card').forEach(card => {  
-        if (card.card && card.card.emit) {  
+        // Проверяем что у карточки есть модуль watched  
+        if (card.card && card.card.emit && card.card.watched_checked !== true) {  
+          // Принудительно вызываем событие watched  
           card.card.emit('watched')  
         }  
       })  
     }  
   
-    // Запускаем инициализацию сразу и при изменениях DOM  
-    setTimeout(initAllWatched, 1000)  
+    // Запускаем инициализацию с задержкой  
+    setTimeout(initAllWatched, 2000)  
       
-    const observer = new MutationObserver(() => {  
-      setTimeout(initAllWatched, 500)  
+    // Отслеживаем изменения DOM  
+    const observer = new MutationObserver((mutations) => {  
+      let shouldInit = false  
+      mutations.forEach(mutation => {  
+        mutation.addedNodes.forEach(node => {  
+          if (node.nodeType === 1 && node.classList && node.classList.contains('card')) {  
+            shouldInit = true  
+          }  
+        })  
+      })  
+      if (shouldInit) {  
+        setTimeout(initAllWatched, 1000)  
+      }  
     })  
       
     observer.observe(document.body, { childList: true, subtree: true })  
+      
+    // Также отслеживаем изменение настроек  
+    Lampa.Listener.follow('state', (e) => {  
+      if (e.name === 'card_episodes') {  
+        setTimeout(initAllWatched, 500)  
+      }  
+    })  
   }  
     
   if (window.appready) { startPlugin(); }  
