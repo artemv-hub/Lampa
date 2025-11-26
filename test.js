@@ -2,7 +2,7 @@
     'use strict';    
         
     function init() {    
-        if (!window.Lampa || !Lampa.Utils || !Lampa.Listener) {    
+        if (!window.Lampa || !Lampa.Utils || !Lampa.Maker) {    
             setTimeout(init, 500);    
             return;    
         }    
@@ -23,56 +23,35 @@
         // Отключаем стандартный watched  
         Lampa.Storage.set('card_episodes', false);  
           
-        // Функция добавления кастомного watched  
-        const addCustomWatched = (card) => {  
-            const data = card.data;  
-              
-            // Только для фильмов  
-            if (data.original_name) return;  
-              
-            // Удаляем стандартный watched если есть  
-            const oldWatched = card.querySelector('.card-watched');  
-            if (oldWatched) oldWatched.remove();  
-              
-            // Получаем прогресс просмотра  
-            const time = Lampa.Timeline.watched(data, true);  
-              
-            if (time.percent && time.duration > 0) {  
-                // Создаем простой watched элемент  
-                const watched = document.createElement('div');  
-                watched.className = 'card-watched-custom';  
-                watched.innerHTML = `  
-                    <div class="card-watched-custom__time">  
-                        ${formatTime(time.time)}/${formatTime(time.duration)}  
-                    </div>  
-                `;  
+        // Переопределяем модуль Watched для карточек  
+        Lampa.ModuleMap.Watched = {  
+            onVisible: function(){  
+                const data = this.data;  
                   
-                // Добавляем в карточку  
-                const view = card.querySelector('.card__view');  
-                if (view) {  
-                    view.insertBefore(watched, view.firstChild);  
+                // Только для фильмов  
+                if (data.original_name) return;  
+                  
+                // Получаем прогресс просмотра  
+                const time = Lampa.Timeline.watched(data, true);  
+                  
+                if (time.percent && time.duration > 0) {  
+                    // Создаем простой watched элемент  
+                    const watched = document.createElement('div');  
+                    watched.className = 'card-watched-custom';  
+                    watched.innerHTML = `  
+                        <div class="card-watched-custom__time">  
+                            ${formatTime(time.time)}/${formatTime(time.duration)}  
+                        </div>  
+                    `;  
+                      
+                    // Добавляем в карточку  
+                    const view = this.html.find('.card__view')[0];  
+                    if (view) {  
+                        view.insertBefore(watched, view.firstChild);  
+                    }  
                 }  
             }  
         };  
-          
-        // Правильный способ - переопределяем создание карточек  
-        const originalCard = Lampa.Card;  
-        Lampa.Card = function(data, params) {  
-            const card = new originalCard(data, params);  
-            const originalCreate = card.create;  
-              
-            card.create = function() {  
-                originalCreate.call(this);  
-                // Добавляем watched после создания карточки  
-                setTimeout(() => addCustomWatched(this.card), 100);  
-            };  
-              
-            return card;  
-        };  
-          
-        // Копируем статические методы  
-        Object.setPrototypeOf(Lampa.Card, originalCard);  
-        Object.setPrototypeOf(Lampa.Card.prototype, originalCard.prototype);  
           
         // CSS стили  
         const style = document.createElement('style');  
@@ -99,7 +78,7 @@
         `;  
         document.head.appendChild(style);  
           
-        console.log('[Custom Watched] Plugin loaded - fixed version');    
+        console.log('[Custom Watched] Plugin loaded - Lampa 3.0 compatible');    
     }    
         
     init();    
