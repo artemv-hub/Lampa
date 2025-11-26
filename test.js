@@ -49,18 +49,32 @@
                   
                 // Добавляем в карточку  
                 const view = card.querySelector('.card__view');  
-                view.insertBefore(watched, view.firstChild);  
+                if (view) {  
+                    view.insertBefore(watched, view.firstChild);  
+                }  
             }  
         };  
           
-        // Слушаем создание всех карточек  
-        Lampa.Listener.follow('card', (e) => {  
-            if (e.type === 'create') {  
-                addCustomWatched(e.card);  
-            }  
-        });  
+        // Правильный способ - переопределяем создание карточек  
+        const originalCard = Lampa.Card;  
+        Lampa.Card = function(data, params) {  
+            const card = new originalCard(data, params);  
+            const originalCreate = card.create;  
+              
+            card.create = function() {  
+                originalCreate.call(this);  
+                // Добавляем watched после создания карточки  
+                setTimeout(() => addCustomWatched(this.card), 100);  
+            };  
+              
+            return card;  
+        };  
           
-        // CSS стили - всегда виден  
+        // Копируем статические методы  
+        Object.setPrototypeOf(Lampa.Card, originalCard);  
+        Object.setPrototypeOf(Lampa.Card.prototype, originalCard.prototype);  
+          
+        // CSS стили  
         const style = document.createElement('style');  
         style.textContent = `  
             .card-watched-custom {  
@@ -85,7 +99,7 @@
         `;  
         document.head.appendChild(style);  
           
-        console.log('[Custom Watched] Plugin loaded - always visible time only');    
+        console.log('[Custom Watched] Plugin loaded - fixed version');    
     }    
         
     init();    
