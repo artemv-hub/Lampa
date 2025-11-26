@@ -23,12 +23,8 @@
         // Отключаем стандартный watched  
         Lampa.Storage.set('card_episodes', false);  
           
-        // Переопределяем модуль Watched с правильными методами  
+        // Переопределяем модуль Watched  
         Lampa.ModuleMap.Watched = {  
-            onCreate: function(){  
-                // Пустой метод, но должен существовать  
-            },  
-              
             onUpdate: function(){  
                 this.watched_checked = false;  
                 this.watched_wrap?.remove();  
@@ -40,17 +36,15 @@
                   
                 const data = this.data;  
                   
-                // Только для фильмов  
-                if (data.original_name) {  
+                // Пропускаем сериалы и фильмы без прогресса  
+                if (data.original_name || !data) {  
                     this.watched_checked = true;  
                     return;  
                 }  
                   
-                // Получаем прогресс просмотра  
                 const time = Lampa.Timeline.watched(data, true);  
                   
                 if (time.percent && time.duration > 0) {  
-                    // Создаем простой watched элемент  
                     const watched = document.createElement('div');  
                     watched.className = 'card-watched-custom';  
                     watched.innerHTML = `  
@@ -59,7 +53,6 @@
                         </div>  
                     `;  
                       
-                    // Добавляем в карточку  
                     const view = this.html.find('.card__view')[0];  
                     if (view) {  
                         view.insertBefore(watched, view.firstChild);  
@@ -68,10 +61,6 @@
                 }  
                   
                 this.watched_checked = true;  
-            },  
-              
-            onDestroy: function(){  
-                // Очистка если нужна  
             }  
         };  
           
@@ -100,7 +89,7 @@
         `;  
         document.head.appendChild(style);  
           
-        console.log('[Custom Watched] Plugin loaded - correct module methods');    
+        console.log('[Custom Watched] Plugin loaded - simplified version');    
     }    
         
     init();    
