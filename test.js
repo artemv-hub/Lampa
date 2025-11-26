@@ -1,149 +1,113 @@
-function startPlugin() {  
-    'use strict';  
-      
-    window.plugin_custom_episodes_ready = true;  
+(function () {  
+  "use strict";  
   
-    const manifest = {  
-        type: 'modification',  
-        version: '1.0.0',  
-        name: 'Custom Episodes',  
-        description: 'Кастомное отображение прогресса на карточках',  
-        component: 'custom_episodes',  
-    };  
-      
-    Lampa.Manifest.plugins = manifest;  
+  let manifest = {  
+    type: 'other',  
+    version: '1.0.0',  
+    name: 'Custom Episodes',  
+    component: 'custom_episodes'  
+  };  
   
-    // Сохраняем оригинальные функции  
-    const originalCreate = Lampa.Card.prototype.create;  
-    const originalUpdate = Lampa.Card.prototype.update;  
-      
-    Lampa.Card.prototype.create = function() {  
-        'use strict';  
-          
-        const result = originalCreate.call(this);  
-          
-        // Переопределяем watched функцию  
-        this.watched = function() {  
-            'use strict';  
-              
-            if (this.watched_checked) return;  
-              
-            this.watched_checked = true;  
-              
-            const data = this.data; // ИСПРАВЛЕНО: this.object -> this.data  
-              
-            if (!data) return;  
-              
-            // Для сериалов  
-            if (data.original_name) {  
-                Timetable.get(data, (episodes) => { // ИСПРАВЛЕНО: Lampa.TimeTable -> Timetable  
-                    'use strict';  
-                      
-                    if (!episodes.length) return;  
-                      
-                    let viewed = null;  
-                      
-                    episodes.forEach((ep) => {  
-                        const hash = Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '', ep.episode_number, data.original_title].join(''));  
-                        const view = Timeline.view(hash);  
-                          
-                        if (view.percent) viewed = {ep, view};  
-                    });  
-                      
-                    if (viewed) {  
-                        const span = document.createElement('span');  
-                        span.className = 'card__watched';  
-                          
-                        span.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number;  
-                          
-                        const view_elem = this.render().find('.card__view');  
-                          
-                        if (view_elem.find('.card__watched').length === 0) {  
-                            view_elem.append(span);  
-                        }  
-                    }  
-                });  
-            }  
-            // Для фильмов  
-            else {  
-                const hash = Utils.hash([data.original_title].join(''));  
-                const timeData = Timeline.view(hash);  
-                  
-                if (timeData && timeData.time && timeData.duration) {  
-                    const span = document.createElement('span');  
-                    span.className = 'card__watched';  
-                      
-                    const current = Utils.secondsToTime(timeData.time);  
-                    const total = Utils.secondsToTime(timeData.duration);  
-                    span.innerText = current + '/' + total;  
-                      
-                    const view_elem = this.render().find('.card__view');  
-                      
-                    if (view_elem.find('.card__watched').length === 0) {  
-                        view_elem.append(span);  
-                    }  
-                }  
-            }  
-        };  
-          
-        // Вызываем watched сразу при создании карточки  
-        this.watched();  
-          
-        return result;  
-    };  
+  Lampa.Manifest.plugins = manifest;  
   
-    Lampa.Card.prototype.update = function() {  
-        'use strict';  
-          
-        // Восстанавливаем оригинальную логику для parser  
-        if (this.params.isparser) return;  
+  function renderEpisodeBadge(cardElement, data) {  
+    const cardView = cardElement.querySelector('.card__view');  
+    if (!cardView) return;  
   
-        this.watched_checked = false;  
+    // Удаляем старый бейдж если есть  
+    const oldBadge = cardView.querySelector('.card__watched');  
+    if (oldBadge) oldBadge.remove();  
   
-        if (this.watched_wrap) {  
-            const remove = (elem) => {  
-                if (elem) elem.remove();  
-            };  
-            remove(this.watched_wrap);  
-        }  
+    const badge = document.createElement('div');  
+    badge.className = 'card__watched';  
   
-        this.favorite();  
-          
-        // Вызываем watched сразу для постоянного отображения  
-        this.watched();  
-    };  
+    // Для сериалов - формат E7S2  
+    if (data.original_name) {  
+      Lampa.Timetable.get(data, (episodes) => {  
+        if (!episodes.length) return;  
   
-    // CSS стили  
-    Lampa.Template.add('custom_episodes_css', `  
-        <style>  
-        .card__watched {  
-            position: absolute;  
-            bottom: 5px;  
-            right: 5px;  
-            background: rgba(0, 0, 0, 0.8);  
-            color: white;  
-            padding: 2px 6px;  
-            border-radius: 3px;  
-            font-size: 11px;  
-            z-index: 10;  
-        }  
-        </style>  
-    `);  
+        let viewed = null;  
   
-    $('body').append(Lampa.Template.get('custom_episodes_css', {}, true));  
-}  
+        episodes.forEach((ep) => {  
+          const hash = Lampa.Utils.hash([ep.season_number, ep.season_number > 10 ? ':' : '', ep.episode_number, data.original_name].join(''));  
+          const view = Lampa.Timeline.view(hash);  
   
-// Запускаем плагин  
-if (!window.plugin_custom_episodes_ready && Lampa.Manifest.app_digital >= 242) {  
-    'use strict';  
-      
-    if (window.appready) {  
-        startPlugin();  
-    } else {  
-        Lampa.Listener.follow('app', function (e) {  
-            'use strict';  
-              
-            if (e.type === 'ready') startPlugin();  
+          if (view.percent) viewed = {ep, view};  
         });  
+  
+        if (viewed) {  
+          badge.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number;  
+          cardView.appendChild(badge);  
+        }  
+      });  
     }  
-}
+    // Для фильмов - формат 0:50/1:40  
+    else {  
+      const hash = Lampa.Utils.hash([data.original_title].join(''));  
+      const timeData = Lampa.Timeline.view(hash);  
+  
+      if (timeData && timeData.time && timeData.duration) {  
+        const current = Lampa.Utils.secondsToTime(timeData.time);  
+        const total = Lampa.Utils.secondsToTime(timeData.duration);  
+        badge.innerText = current + '/' + total;  
+        cardView.appendChild(badge);  
+      }  
+    }  
+  }  
+  
+  function processCards() {  
+    document.querySelectorAll('.card:not([data-episodes-processed])').forEach(cardElement => {  
+      const cardData = cardElement.card_data;  
+      if (!cardData) return;  
+  
+      cardElement.setAttribute('data-episodes-processed', 'true');  
+      renderEpisodeBadge(cardElement, cardData);  
+    });  
+  }  
+  
+  // Следим за активностью  
+  Lampa.Listener.follow('activity', function (e) {  
+    if (e.type == 'start' || e.type == 'page') {  
+      setTimeout(processCards, 100);  
+    }  
+  });  
+  
+  // Следим за новыми карточками  
+  var observer = new MutationObserver(function (mutations) {  
+    mutations.forEach(function (mutation) {  
+      mutation.addedNodes.forEach(function (node) {  
+        if (node.nodeType === 1 && node.classList && node.classList.contains('card')) {  
+          node.addEventListener('visible', function () {  
+            if (!node.hasAttribute('data-episodes-processed')) {  
+              processCards();  
+            }  
+          });  
+        }  
+      });  
+    });  
+  });  
+  
+  observer.observe(document.body, { childList: true, subtree: true });  
+  
+  // CSS стили  
+  Lampa.Template.add('custom_episodes_css', `  
+    <style>  
+    .card__watched {  
+      position: absolute;  
+      bottom: 5px;  
+      right: 5px;  
+      background: rgba(0, 0, 0, 0.8);  
+      color: white;  
+      padding: 2px 6px;  
+      border-radius: 3px;  
+      font-size: 11px;  
+      z-index: 10;  
+    }  
+    </style>  
+  `);  
+  
+  $('body').append(Lampa.Template.get('custom_episodes_css', {}, true));  
+  
+  // Запускаем обработку  
+  processCards();  
+})();
