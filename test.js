@@ -21,14 +21,30 @@
     const badge = document.createElement('div');  
     badge.className = 'card__watched';  
   
-    // Для сериалов - формат E7S2  
+    // Для сериалов - формат E7S2 с расширенной проверкой  
     if (data.original_name) {  
       try {  
-        // Проверяем доступность Timetable и корректные данные  
-        if (Lampa.Timetable && typeof Lampa.Timetable.get === 'function' && typeof data.id === 'number') {  
+        // Расширенная проверка данных  
+        const hasValidId = typeof data.id === 'number';  
+        const hasValidSource = data.source === 'tmdb' || data.source === 'cub';  
+        const timetableAvailable = Lampa.Timetable && typeof Lampa.Timetable.get === 'function';  
+  
+        console.log('Custom Episodes: Serial check:', {  
+          id: data.id,  
+          source: data.source,  
+          hasValidId,  
+          hasValidSource,  
+          timetableAvailable,  
+          title: data.title || data.name  
+        });  
+  
+        if (timetableAvailable && hasValidId && hasValidSource) {  
           Lampa.Timetable.get(data, (episodes) => {  
             try {  
-              if (!episodes || !Array.isArray(episodes) || !episodes.length) return;  
+              if (!episodes || !Array.isArray(episodes) || !episodes.length) {  
+                console.log('Custom Episodes: No episodes found for:', data.title || data.name);  
+                return;  
+              }  
   
               let viewed = null;  
   
@@ -44,13 +60,23 @@
               if (viewed && viewed.ep) {  
                 badge.innerText = 'E' + viewed.ep.episode_number + 'S' + viewed.ep.season_number;  
                 cardView.appendChild(badge);  
+                console.log('Custom Episodes: Rendered badge for:', data.title || data.name);  
+              } else {  
+                console.log('Custom Episodes: No viewed episodes found for:', data.title || data.name);  
               }  
             } catch (e) {  
               console.error('Custom Episodes: Error processing episodes', e);  
             }  
           });  
         } else {  
-          console.log('Custom Episodes: Skipping serial - no valid id or Timetable unavailable');  
+          console.log('Custom Episodes: Skipping serial - requirements not met:', {  
+            title: data.title || data.name,  
+            reasons: [  
+              !timetableAvailable ? 'Timetable unavailable' : null,  
+              !hasValidId ? 'Invalid ID (not number)' : null,  
+              !hasValidSource ? 'Invalid source (not tmdb/cub)' : null  
+            ].filter(Boolean)  
+          });  
         }  
       } catch (e) {  
         console.error('Custom Episodes: Error with Timetable', e);  
