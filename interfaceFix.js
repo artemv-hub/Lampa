@@ -3,12 +3,12 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.4.5',
+    version: '3.4.6',
     name: 'UI Fix',
     component: 'ui_fix'
-  }
+  };
 
-  Lampa.Manifest.plugins = manifest
+  Lampa.Manifest.plugins = manifest;
 
   function addTitle() {
     Lampa.Listener.follow('full', function (e) {
@@ -22,19 +22,6 @@
           titleElement.before(originalTitleHtml);
           titleElement.text(title);
         }
-      }
-    });
-  }
-
-  function fixSyncBookmarks() {
-    Lampa.Activity.listener.follow('create', function (e) {
-      if (e.component === 'bookmarks' || e.component === 'favorite') {
-        Lampa.Api.request('{localhost}/bookmark/list', '', function (data) {
-          if (data && !data.dbInNotInitialization) {
-            Lampa.Storage.set('favorite', data);
-            Lampa.Activity.active().activity.render();
-          }
-        });
       }
     });
   }
@@ -109,6 +96,14 @@
         }
       }
     })
+  }
+
+  function fixSyncBookmarks() {
+    Lampa.Api.request('{localhost}/bookmark/list', '', function (data) {
+      if (data && !data.dbInNotInitialization) {
+        Lampa.Storage.set('favorite', data);
+      }
+    });
   }
 
   function fixLabelsTV(cards) {
