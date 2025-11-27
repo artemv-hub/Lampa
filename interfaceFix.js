@@ -3,14 +3,14 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.4.9',
+    version: '3.4.10',
     name: 'UI Fix',
     component: 'ui_fix'
   };
 
   Lampa.Manifest.plugins = manifest;
 
-  function addTitle() {
+  function fixTitle() {
     Lampa.Listener.follow('full', function (e) {
       if (e.type == 'complite') {
         let titleElement = e.body.find('.full-start-new__title');
@@ -105,34 +105,26 @@ function fixSyncBookmarks() {
   });  
 }
 
-  function fixLabelsTV(cards) {
-    cards.forEach(card => {
-      const typeElem = card.querySelector('.card__type');
-      if (typeElem) typeElem.textContent = 'Сериал';
-    });
-  }
-
-  function startPlugin() {
-    addTitle();
-    fixSize();
-    fixButtons();
-    fixSyncBookmarks();
-    fixLabelsTV(document.querySelectorAll('.card--tv'));
-
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach(mutation => {
-        mutation.addedNodes.forEach(node => {
-          if (node.nodeType === 1) {
-            const cards = node.matches?.('.card--tv') ? [node] : node.querySelectorAll?.('.card--tv');
-            if (cards?.length) fixLabelsTV(cards);
-          }
-        });
-      });
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
-
+function fixLabelsTV() {    
+    document.querySelectorAll('.card__type').forEach(elem => {    
+        if (elem.textContent === 'TV') elem.textContent = 'Сериал';    
+    });    
+}  
+  
+function startPlugin() {  
+    fixTitle();  
+    fixSize();  
+    fixButtons();  
+    fixSyncBookmarks();  
+    fixLabelsTV();  
+  
+    const observer = new MutationObserver(() => {  
+        fixLabelsTV();  
+    });  
+  
+    observer.observe(document.body, { childList: true, subtree: true });  
+}
+  
   if (window.appready) { startPlugin(); }
   else {
     Lampa.Listener.follow("app", function (e) {
