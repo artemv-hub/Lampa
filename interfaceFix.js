@@ -3,12 +3,12 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.4.2',
+    version: '3.4.3',
     name: 'UI Fix',
     component: 'ui_fix'
-  };
+  }
 
-  Lampa.Manifest.plugins = manifest;
+  Lampa.Manifest.plugins = manifest
 
   function addTitle() {
     Lampa.Listener.follow('full', function (e) {
