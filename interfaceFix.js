@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.4.7',
+    version: '3.4.8',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -115,9 +115,9 @@
 
   function startPlugin() {
     addTitle();
-    fixSyncBookmarks();
     fixSize();
     fixButtons();
+  //  fixSyncBookmarks();
     fixLabelsTV(document.querySelectorAll('.card--tv'));
 
     const observer = new MutationObserver((mutations) => {
