@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.4.8',
+    version: '3.4.9',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -98,13 +98,12 @@
     })
   }
 
-  function fixSyncBookmarks() {
-    Lampa.Api.request('{localhost}/bookmark/list', '', function (data) {
-      if (data && !data.dbInNotInitialization) {
-        Lampa.Storage.set('favorite', data);
-      }
-    });
-  }
+function fixSyncBookmarks() {  
+  // Триггерим событие, которое уже обрабатывается в bookmark.js  
+  Lampa.Listener.send('lampac', {  
+    name: 'bookmark_pullFromServer'  
+  });  
+}
 
   function fixLabelsTV(cards) {
     cards.forEach(card => {
@@ -117,7 +116,7 @@
     addTitle();
     fixSize();
     fixButtons();
-  //  fixSyncBookmarks();
+    fixSyncBookmarks();
     fixLabelsTV(document.querySelectorAll('.card--tv'));
 
     const observer = new MutationObserver((mutations) => {
