@@ -1,14 +1,14 @@
 (function () {
   "use strict";
-
-  let manifest = {
-    type: 'interface',
-    version: '3.3.2',
-    name: 'UI Style',
-    component: 'ui_style'
-  };
-
-  Lampa.Manifest.plugins = manifest;
+  
+  let manifest = {  
+    type: 'interface',  
+    version: '3.4.0',  
+    name: 'UI Style',  
+    component: 'ui_style'  
+  }  
+    
+  Lampa.Manifest.plugins = manifest  
 
   const style = document.createElement('style');
   style.textContent = `
@@ -24,140 +24,70 @@
     `;
   document.head.appendChild(style);
 
-  function addTitle() {
-    Lampa.Listener.follow('full', function (e) {
-      if (e.type == 'complite') {
-        let titleElement = e.body.find('.full-start-new__title');
-        let title = e.data.movie.title || e.data.movie.name;
-        let originalTitle = e.data.movie.original_title || e.data.movie.original_name;
-
-        if (title && originalTitle && title !== originalTitle) {
-          let originalTitleHtml = '<div class="full-start__title-original">' + originalTitle + '</div>';
-          titleElement.before(originalTitleHtml);
-          titleElement.text(title);
-        }
-      }
-    });
-  }
-
-  function fixSyncBookmarks() {
-    Lampa.Activity.listener.follow('create', function (e) {
-      if (e.component === 'bookmarks' || e.component === 'favorite') {
-        Lampa.Api.request('{localhost}/bookmark/list', '', function (data) {
-          if (data && !data.dbInNotInitialization) {
-            Lampa.Storage.set('favorite', data);
-            Lampa.Activity.active().activity.render();
-          }
-        });
-      }
-    });
-  }
-
-  function fixSize() {
-    let originalLineInit = Lampa.Maker.map('Line').Items.onInit
-    Lampa.Maker.map('Line').Items.onInit = function () {
-      originalLineInit.call(this)
-      this.view = 12
-    }
-
-    let originalCategoryInit = Lampa.Maker.map('Category').Items.onInit
-    Lampa.Maker.map('Category').Items.onInit = function () {
-      originalCategoryInit.call(this)
-      this.limit_view = 12
-    }
-
-    Lampa.SettingsApi.addParam({
-      component: 'interface',
-      param: {
-        name: 'interface_fixsize',
-        type: 'select',
-        default: '12',
-        values: {
-          '10': '10',
-          '12': '12',
-          '14': '14'
-        }
-      },
-      field: { name: 'Фиксированный размер' },
-      onChange: function onChange() {
-        var name = Lampa.Controller.enabled().name;
-        Lampa.Layer.update();
-        Lampa.Controller.toggle(name);
-      }
-    });
-
-    Lampa.Settings.listener.follow('open', function (e) {
-      if (e.name == 'interface') {
-        var item = e.body.find('[data-name="interface_fixsize"]');
-        item.detach();
-        item.insertAfter(e.body.find('[data-name="interface_size"]'));
-      }
-    });
-
-    var layer_update = Lampa.Layer.update;
-
-    Lampa.Layer.update = function (where) {
-      var font_size = parseInt(Lampa.Storage.field('interface_fixsize')) || 12;
-      if (Lampa.Platform.screen('mobile')) { font_size = 10; }
-      $('body').css({ fontSize: font_size + 'px' });
-      layer_update(where);
+  function colorRating() {
+    const colorR = rating => {
+      if (rating >= 9) return "#3498db";
+      if (rating >= 7) return "#2ecc71";
+      if (rating >= 6) return "#f1c40f";
+      if (rating >= 4) return "#e67e22";
+      if (rating >= 0) return "#e74c3c";
+      return null;
     };
-
-    Lampa.Layer.update();
-  }
-
-  function fixButtons() {
-    Lampa.Listener.follow('full', (e) => {
-      if (e.type == 'complite') {
-        let render = e.object.activity.render()
-        let buttonsContainer = render.find('.full-start-new__buttons')
-        buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options').remove()
-
-        let torrentBtn = render.find('.view--torrent')
-        let onlineBtn = render.find('.view--online').removeClass('hide')
-
-        buttonsContainer.prepend(onlineBtn[0])
-        if (Lampa.Storage.field('parser_use')) {
-          torrentBtn.removeClass('hide')
-          buttonsContainer.prepend(torrentBtn[0])
-        }
-      }
-    })
-  }
-
-  function fixLabelsTV(cards) {
-    cards.forEach(card => {
-      const typeElem = card.querySelector('.card__type');
-      if (typeElem) typeElem.textContent = 'Сериал';
+    
+    const elements = document.querySelectorAll(".card__vote, .full-start__rate > div, .info__rate > span");
+    
+    elements.forEach(el => {
+      const rating = parseFloat(el.textContent.trim());
+      const color = colorR(rating);
+      if (color) el.style.color = color;
     });
   }
-
+  
+  function colorQuality() {
+    const colorQ = [
+      { qualities: ["2160p"], color: "#3498db" },
+      { qualities: ["1080p"], color: "#2ecc71" },
+      { qualities: ["1080i", "720p", "bdrip", "hdrip", "dvdrip", "web-dl", "webrip", "iptv", "hdtv", "tv"], color: "#f1c40f" },
+      { qualities: ["480p", "camrip", "vhsrip", "tc", "ts"], color: "#e67e22" },
+    ];
+    
+    const elements = document.querySelectorAll(".card__quality");
+    
+    elements.forEach(el => {
+      const quality = el.textContent.trim().toLowerCase();
+      const found = colorQ.find(qc => qc.qualities.some(q => quality.includes(q)));
+      if (found) {
+        el.style.color = found.color;
+      }
+    });
+  }
+  
   function startPlugin() {
-    addTitle();
-    fixSyncBookmarks();
-    fixSize();
-    fixButtons();
-    fixLabelsTV(document.querySelectorAll('.card--tv'));
-
+    colorRating();
+    colorQuality();
+    
     const observer = new MutationObserver((mutations) => {
       mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
           if (node.nodeType === 1) {
-            const cards = node.matches?.('.card--tv') ? [node] : node.querySelectorAll?.('.card--tv');
-            if (cards?.length) fixLabelsTV(cards);
+            colorRating();
+            colorQuality();
           }
         });
       });
     });
-
+    
     observer.observe(document.body, { childList: true, subtree: true });
+    
+    document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(() => { colorRating(); colorQuality(); }, 200);
+    });
   }
-
+  
   if (window.appready) { startPlugin(); }
   else {
     Lampa.Listener.follow("app", function (e) {
       if (e.type === "ready") { startPlugin(); }
     });
   }
-
 })();
