@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.4.1',
+    version: '3.4.2',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -27,12 +27,15 @@
   }
 
   function fixSyncBookmarks() {
-    Lampa.Activity.listener.follow('create', function (e) {
-      if (e.component === 'bookmarks' || e.component === 'favorite') {
+    Lampa.WebSocket.on('bookmark', function (event) {
+      if (event.type === 'set' || event.type === 'add' || event.type === 'remove') {
         Lampa.Api.request('{localhost}/bookmark/list', '', function (data) {
           if (data && !data.dbInNotInitialization) {
             Lampa.Storage.set('favorite', data);
-            Lampa.Activity.active().activity.render();
+            const active = Lampa.Activity.active();
+            if (active && (active.component === 'bookmarks' || active.component === 'favorite')) {
+              active.activity.render();
+            }
           }
         });
       }
