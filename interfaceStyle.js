@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.0',
+    version: '3.5.1',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -36,7 +36,6 @@
     };
 
     const elements = document.querySelectorAll(".card__vote, .full-start__rate > div, .info__rate > span");
-
     elements.forEach(el => {
       const rating = parseFloat(el.textContent.trim());
       const color = colorR(rating);
@@ -54,13 +53,10 @@
     ];
 
     const elements = document.querySelectorAll(".card__quality");
-
     elements.forEach(el => {
       const quality = el.textContent.trim().toLowerCase();
       const found = colorQ.find(qc => qc.qualities.some(q => quality.includes(q)));
-      if (found) {
-        el.style.color = found.color;
-      }
+      if (found) el.style.color = found.color;
     });
   }
 
