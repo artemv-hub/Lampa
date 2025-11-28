@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.19',
+    version: '3.5.20',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -52,20 +52,6 @@
   }
 
 function fixSize() {  
-  // Создаем компоненты с нужными параметрами  
-  function createMyLine() {  
-    let line = Lampa.Maker.map('Line').create();  
-    line.view = 12;  
-    return line;  
-  }  
-  
-  function createMyCategory() {  
-    let category = Lampa.Maker.map('Category').create();  
-    category.limit_view = 12;  
-    return category;  
-  }  
-  
-  // Настройки интерфейса  
   Lampa.SettingsApi.addParam({  
     component: 'interface',  
     param: {  
@@ -103,11 +89,6 @@ function fixSize() {
   };  
     
   Lampa.Layer.update();  
-  
-  // Возвращаем функции для создания компонентов  
-  return {  
-    createLine: createMyLine,  
-    createCategory: createMyCategory  
   };  
 }
 
