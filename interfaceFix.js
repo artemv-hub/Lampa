@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.18',
+    version: '3.5.19',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -51,52 +51,65 @@
     });
   }
 
-  function fixSize() {
-  let line = Lampa.Maker.map('Line').create();  
-  line.view = 12;  
-  return line;  
-
-  let category = Lampa.Maker.map('Category').create();  
-  category.limit_view = 12;  
-  return category;  
-
-    Lampa.SettingsApi.addParam({
-      component: 'interface',
-      param: {
-        name: 'interface_fixsize',
-        type: 'select',
-        default: '12',
-        values: {
-          '10': '10',
-          '12': '12',
-          '14': '14'
-        }
-      },
-      field: { name: 'Фиксированный размер' },
-      onChange: function onChange() {
-        var name = Lampa.Controller.enabled().name;
-        Lampa.Layer.update();
-        Lampa.Controller.toggle(name);
-      }
-    });
-
-    Lampa.Settings.listener.follow('open', function (e) {
-      if (e.name == 'interface') {
-        var item = e.body.find('[data-name="interface_fixsize"]');
-        item.detach();
-        item.insertAfter(e.body.find('[data-name="interface_size"]'));
-      }
-    });
-
-    var layer_update = Lampa.Layer.update;
-    Lampa.Layer.update = function (where) {
-      var font_size = parseInt(Lampa.Storage.field('interface_fixsize')) || 12;
-      if (Lampa.Platform.screen('mobile')) { font_size = 6; }
-      $('body').css({ fontSize: font_size + 'px' });
-      layer_update(where);
-    };
-    Lampa.Layer.update();
-  }
+function fixSize() {  
+  // Создаем компоненты с нужными параметрами  
+  function createMyLine() {  
+    let line = Lampa.Maker.map('Line').create();  
+    line.view = 12;  
+    return line;  
+  }  
+  
+  function createMyCategory() {  
+    let category = Lampa.Maker.map('Category').create();  
+    category.limit_view = 12;  
+    return category;  
+  }  
+  
+  // Настройки интерфейса  
+  Lampa.SettingsApi.addParam({  
+    component: 'interface',  
+    param: {  
+      name: 'interface_fixsize',  
+      type: 'select',  
+      default: '12',  
+      values: {  
+        '10': '10',  
+        '12': '12',  
+        '14': '14'  
+      }  
+    },  
+    field: { name: 'Фиксированный размер' },  
+    onChange: function onChange() {  
+      var name = Lampa.Controller.enabled().name;  
+      Lampa.Layer.update();  
+      Lampa.Controller.toggle(name);  
+    }  
+  });  
+  
+  Lampa.Settings.listener.follow('open', function (e) {  
+    if (e.name == 'interface') {  
+      var item = e.body.find('[data-name="interface_fixsize"]');  
+      item.detach();  
+      item.insertAfter(e.body.find('[data-name="interface_size"]'));  
+    }  
+  });  
+  
+  var layer_update = Lampa.Layer.update;  
+  Lampa.Layer.update = function (where) {  
+    var font_size = parseInt(Lampa.Storage.field('interface_fixsize')) || 12;  
+    if (Lampa.Platform.screen('mobile')) { font_size = 6; }  
+    $('body').css({ fontSize: font_size + 'px' });  
+    layer_update(where);  
+  };  
+    
+  Lampa.Layer.update();  
+  
+  // Возвращаем функции для создания компонентов  
+  return {  
+    createLine: createMyLine,  
+    createCategory: createMyCategory  
+  };  
+}
 
   function startPlugin() {
     fixLabelsTV();
