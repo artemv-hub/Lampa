@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.3'',
+    version: '3.5.4',
     name: 'UI Fix',
     component: 'ui_fix'
   };
