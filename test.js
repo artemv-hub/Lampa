@@ -82,26 +82,28 @@
       }
     });
 
-    // Загрузка данных для всех карточек
-    uniqueCards.forEach((cardData, index) => {
-      Lampa.Storage.set('activity', {
-        movie: cardData,
-        card: cardData
-      });
+    // Создаем массив Promise для отслеживания загрузки
+    const loadPromises = uniqueCards.map((cardData, index) => {
+      return new Promise((resolve) => {
+        Lampa.Storage.set('activity', {
+          movie: cardData,
+          card: cardData
+        });
 
-      Lampa.Listener.send('lampac', {
-        type: 'timecode_pullFromServer'
+        Lampa.Listener.send('lampac', {
+          type: 'timecode_pullFromServer'
+        });
       });
     });
 
-    // Отображение бейджей после загрузки
-    setTimeout(() => {
+    // Ждем завершения всех загрузок перед отображением
+    Promise.all(loadPromises).then(() => {
       document.querySelectorAll('.card:not([data-watched-processed])').forEach(card => {
         card.setAttribute('data-watched-processed', 'true');
         if (card.card_data)
           renderWatchedBadge(card, card.card_data);
       });
-    }, uniqueCards.length * 100);
+    });
   }
 
   // События
