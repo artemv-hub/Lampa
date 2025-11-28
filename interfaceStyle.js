@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.2',
+    version: '3.5.3',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -25,7 +25,7 @@
     `;
   document.head.appendChild(style);
 
-  function colorRating() {
+  function styleColors() {
     const colorRating = [
       { ratings: 9, color: "#3498db" },
       { ratings: 7, color: "#2ecc71" },
@@ -40,9 +40,7 @@
       const colorMatch = colorRating.find(colorRule => ratingValue >= colorRule.ratings);
       if (colorMatch) element.style.color = colorMatch.color;
     });
-  }
 
-  function colorQuality() {
     const colorQuality = [
       { qualities: ["2160p", "blu-ray", "bdremux"], color: "#3498db" },
       { qualities: ["1080p", "bdrip", "hdrip", "dvdrip", "web-dl"], color: "#2ecc71" },
@@ -60,15 +58,13 @@
   }
 
   function startPlugin() {
-    colorRating();
-    colorQuality();
+    styleColors();
 
     const observer = new MutationObserver((mutations) => {
       mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
           if (node.nodeType === 1) {
-            colorRating();
-            colorQuality();
+            styleColors();
           }
         });
       });
@@ -77,7 +73,7 @@
     observer.observe(document.body, { childList: true, subtree: true });
 
     document.addEventListener("DOMContentLoaded", () => {
-      setTimeout(() => { colorRating(); colorQuality(); }, 200);
+      setTimeout(() => { styleColors(); }, 200);
     });
   }
 
