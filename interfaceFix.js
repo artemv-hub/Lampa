@@ -3,12 +3,43 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.4.10',
+    version: '3.5.0',
     name: 'UI Fix',
     component: 'ui_fix'
   };
 
   Lampa.Manifest.plugins = manifest;
+
+  function fixSyncBookmarks() {
+    Lampa.Listener.send('lampac', {
+      name: 'bookmark_pullFromServer'
+    });
+  }
+
+  function fixLabelsTV() {
+    document.querySelectorAll('.card__type').forEach(elem => {
+      if (elem.textContent === 'TV') elem.textContent = 'Сериал';
+    });
+  }
+
+  function fixButtons() {
+    Lampa.Listener.follow('full', function (e) {
+      if (e.type == 'complite') {
+        let render = e.object.activity.render()
+        let buttonsContainer = render.find('.full-start-new__buttons')
+        buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options').remove()
+
+        let torrentBtn = render.find('.view--torrent')
+        let onlineBtn = render.find('.view--online').removeClass('hide')
+
+        buttonsContainer.prepend(onlineBtn[0])
+        if (Lampa.Storage.field('parser_use')) {
+          torrentBtn.removeClass('hide')
+          buttonsContainer.prepend(torrentBtn[0])
+        }
+      }
+    })
+  }
 
   function fixTitle() {
     Lampa.Listener.follow('full', function (e) {
@@ -68,63 +99,29 @@
     });
 
     var layer_update = Lampa.Layer.update;
-
     Lampa.Layer.update = function (where) {
       var font_size = parseInt(Lampa.Storage.field('interface_fixsize')) || 12;
       if (Lampa.Platform.screen('mobile')) { font_size = 10; }
       $('body').css({ fontSize: font_size + 'px' });
       layer_update(where);
     };
-
     Lampa.Layer.update();
   }
 
-  function fixButtons() {
-    Lampa.Listener.follow('full', (e) => {
-      if (e.type == 'complite') {
-        let render = e.object.activity.render()
-        let buttonsContainer = render.find('.full-start-new__buttons')
-        buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options').remove()
+  function startPlugin() {
+    fixSyncBookmarks();
+    fixLabelsTV();
+    fixButtons();
+    fixTitle();
+    fixSize();
 
-        let torrentBtn = render.find('.view--torrent')
-        let onlineBtn = render.find('.view--online').removeClass('hide')
+    const observer = new MutationObserver(() => {
+      fixLabelsTV();
+    });
 
-        buttonsContainer.prepend(onlineBtn[0])
-        if (Lampa.Storage.field('parser_use')) {
-          torrentBtn.removeClass('hide')
-          buttonsContainer.prepend(torrentBtn[0])
-        }
-      }
-    })
+    observer.observe(document.body, { childList: true, subtree: true });
   }
 
-function fixSyncBookmarks() {  
-  // Триггерим событие, которое уже обрабатывается в bookmark.js  
-  Lampa.Listener.send('lampac', {  
-    name: 'bookmark_pullFromServer'  
-  });  
-}
-
-function fixLabelsTV() {    
-    document.querySelectorAll('.card__type').forEach(elem => {    
-        if (elem.textContent === 'TV') elem.textContent = 'Сериал';    
-    });    
-}  
-  
-function startPlugin() {  
-    fixTitle();  
-    fixSize();  
-    fixButtons();  
-    fixSyncBookmarks();  
-    fixLabelsTV();  
-  
-    const observer = new MutationObserver(() => {  
-        fixLabelsTV();  
-    });  
-  
-    observer.observe(document.body, { childList: true, subtree: true });  
-}
-  
   if (window.appready) { startPlugin(); }
   else {
     Lampa.Listener.follow("app", function (e) {
