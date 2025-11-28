@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.16',
+    version: '3.5.17',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -52,22 +52,6 @@
   }
 
   function fixSize() {
-let originalMake = Lampa.Maker.make  
-Lampa.Maker.make = function(class_name, data, createModule){  
-    if(class_name === 'Line'){  
-        data.params = data.params || {}  
-        data.params.items = data.params.items || {}  
-        data.params.items.view = 12  
-    }  
-    if(class_name === 'Category'){  
-        data.params = data.params || {}  
-        data.params.items = data.params.items || {}  
-        data.params.items.limit_view = 12  
-    }  
-      
-    return originalMake.call(this, class_name, data, createModule)  
-}
-
     Lampa.SettingsApi.addParam({
       component: 'interface',
       param: {
@@ -99,7 +83,7 @@ Lampa.Maker.make = function(class_name, data, createModule){
     var layer_update = Lampa.Layer.update;
     Lampa.Layer.update = function (where) {
       var font_size = parseInt(Lampa.Storage.field('interface_fixsize')) || 12;
-      if (Lampa.Platform.screen('mobile')) { font_size = 6; }
+      if (Lampa.Platform.screen('mobile')) { font_size = 10; }
       $('body').css({ fontSize: font_size + 'px' });
       layer_update(where);
     };
