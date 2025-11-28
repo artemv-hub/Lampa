@@ -3,18 +3,12 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.4',
+    version: '3.5.5',
     name: 'UI Fix',
     component: 'ui_fix'
   };
 
   Lampa.Manifest.plugins = manifest;
-
-  function fixSyncBookmarks() {
-    Lampa.Listener.send('lampac', {
-      name: 'bookmark_pullFromServer'
-    });
-  }
 
   function fixLabelsTV() {
     document.querySelectorAll('.card__type').forEach(elem => {
@@ -109,7 +103,6 @@
   }
 
   function startPlugin() {
-    //fixSyncBookmarks();
     fixLabelsTV();
     fixButtons();
     fixTitle();
