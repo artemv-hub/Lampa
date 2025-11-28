@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.5.0',
+    version: '3.5.1',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -84,7 +84,7 @@
 
   function parseQuality(title) {
     const patterns = [
-      [/2160p|\b4k\b/i, '2160p'],
+      [/2160p|\buhd\b|\b4k\b/i, '2160p'],
       [/1080p|\bfhd\b/i, '1080p'],
       [/1080i/i, '1080i'],
       [/720p|\bhd\b/i, '720p'],
