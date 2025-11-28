@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.14',
+    version: '3.5.15',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -52,12 +52,20 @@
   }
 
   function fixSize() {
-Lampa.Arrays.extend(Lampa.Maker.map('Line').Items.params || {}, {  
-    items: { view: 12 }  
+Lampa.Arrays.extend(Lampa.Maker.map('Line').Items, {  
+    params: {  
+        items: {  
+            view: 12  
+        }  
+    }  
 })  
   
-Lampa.Arrays.extend(Lampa.Maker.map('Category').Items.params || {}, {  
-    items: { limit_view: 12 }  
+Lampa.Arrays.extend(Lampa.Maker.map('Category').Items, {  
+    params: {  
+        items: {  
+            limit_view: 12  
+        }  
+    }  
 })
 
     Lampa.SettingsApi.addParam({
