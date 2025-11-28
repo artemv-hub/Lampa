@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.0',
+    version: '3.5.1'',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -109,7 +109,7 @@
   }
 
   function startPlugin() {
-    fixSyncBookmarks();
+    //fixSyncBookmarks();
     fixLabelsTV();
     fixButtons();
     fixTitle();
