@@ -139,24 +139,5 @@
     }
   });
 
-  var observer = new MutationObserver(function (mutations) {
-    mutations.forEach(function (mutation) {
-      mutation.addedNodes.forEach(function (node) {
-        if (node.nodeType === 1 && node.classList && node.classList.contains('card')) {
-          node.addEventListener('visible', function () {
-            if (!node.hasAttribute('data-watched-processed')) {
-              processCards();
-            }
-          });
-        }
-      });
-    });
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
-
   processCards();
 })();
