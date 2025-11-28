@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.17',
+    version: '3.5.18',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -52,6 +52,14 @@
   }
 
   function fixSize() {
+  let line = Lampa.Maker.map('Line').create();  
+  line.view = 12;  
+  return line;  
+
+  let category = Lampa.Maker.map('Category').create();  
+  category.limit_view = 12;  
+  return category;  
+
     Lampa.SettingsApi.addParam({
       component: 'interface',
       param: {
@@ -83,7 +91,7 @@
     var layer_update = Lampa.Layer.update;
     Lampa.Layer.update = function (where) {
       var font_size = parseInt(Lampa.Storage.field('interface_fixsize')) || 12;
-      if (Lampa.Platform.screen('mobile')) { font_size = 10; }
+      if (Lampa.Platform.screen('mobile')) { font_size = 6; }
       $('body').css({ fontSize: font_size + 'px' });
       layer_update(where);
     };
