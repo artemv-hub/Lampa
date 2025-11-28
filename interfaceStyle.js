@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.3',
+    version: '3.5.4',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -71,10 +71,6 @@
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
-
-    document.addEventListener("DOMContentLoaded", () => {
-      setTimeout(() => { styleColors(); }, 200);
-    });
   }
 
   if (window.appready) { startPlugin(); }
