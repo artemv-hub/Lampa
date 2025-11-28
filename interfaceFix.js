@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.12',
+    version: '3.5.13',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -52,12 +52,12 @@
   }
 
   function fixSize() {
-Lampa.Listener.follow('component', (e)=>{  
-    if(e.type === 'line' && e.component){  
-        e.component.params.items.view = 12  
+Lampa.Listener.follow('activity', (e)=>{  
+    if(e.type === 'create' && e.object.component === 'line'){  
+        e.object.activity.component.params.items.view = 12  
     }  
-    if(e.type === 'category' && e.component){  
-        e.component.params.items.limit_view = 12  
+    if(e.type === 'create' && e.object.component === 'category'){  
+        e.object.activity.component.params.items.limit_view = 12  
     }  
 })
 
