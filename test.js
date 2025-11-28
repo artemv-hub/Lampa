@@ -33,12 +33,22 @@
   }
 
   // === 2. ФОРМАТ ОТОБРАЖЕНИЯ ===
-  function formatWatched(timeData) {
+  function formatWatched(timeData, cardData, callback) {
     if (!timeData)
       return null;
 
     if (timeData.episode && timeData.season) {
-      return `E${timeData.episode} S${timeData.season || 1}`;
+      // Получаем данные о сезоне через API
+      Lampa.Api.seasons(cardData, [timeData.season], (seasonsData) => {
+        const seasonData = seasonsData[timeData.season];
+        const episodesInSeason = seasonData && seasonData.episodes ? seasonData.episodes.length : '?';
+        const totalSeasons = cardData.number_of_seasons || '?';
+
+        const displayText = `E${timeData.episode}/${episodesInSeason} S${timeData.season}/${totalSeasons}`;
+        callback(displayText);
+      });
+
+      return null; // Возвращаем null, так как текст будет получен асинхронно
     } else if (timeData.time && timeData.duration) {
       const currentTime = Lampa.Utils.secondsToTime(timeData.time, true);
       const totalTime = Lampa.Utils.secondsToTime(timeData.duration, true);
@@ -58,13 +68,26 @@
       oldBadge.remove();
 
     const timeData = getData(data);
-    const displayText = formatWatched(timeData);
 
-    if (displayText) {
-      const badge = document.createElement('div');
-      badge.className = 'card__watched';
-      badge.innerText = displayText;
-      cardView.appendChild(badge);
+    if (timeData && timeData.episode && timeData.season) {
+      // Для сериалов используем асинхронный вызов
+      formatWatched(timeData, data, (displayText) => {
+        if (displayText) {
+          const badge = document.createElement('div');
+          badge.className = 'card__watched';
+          badge.innerText = displayText;
+          cardView.appendChild(badge);
+        }
+      });
+    } else {
+      // Для фильмов используем синхронный вызов
+      const displayText = formatWatched(timeData, data);
+      if (displayText) {
+        const badge = document.createElement('div');
+        badge.className = 'card__watched';
+        badge.innerText = displayText;
+        cardView.appendChild(badge);
+      }
     }
   }
 
@@ -93,6 +116,9 @@
         Lampa.Listener.send('lampac', {
           type: 'timecode_pullFromServer'
         });
+
+        // Небольшая задержка для инициализации загрузки
+        setTimeout(resolve, 50);
       });
     });
 
