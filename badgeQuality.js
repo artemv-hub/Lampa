@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.4.8',
+    version: '3.5.0',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -29,12 +29,11 @@
     'HDRip': 54,
     'DVDRip': 52,
     'WEB-DL': 50,
-    'WEBRip': 48,
     'VHSRip': 40,
     'CAMRip': 30,
     'TV': 20,
-    'TC': 10,
-    'TS': 8
+    'TC': 18,
+    'TS': 10
   };
 
   function fetchQuality(title, year, callback) {
@@ -95,8 +94,7 @@
       [/bd-?rip/i, 'BDRip'],
       [/hd-?rip/i, 'HDRip'],
       [/dvd-?rip/i, 'DVDRip'],
-      [/web-?dl/i, 'WEB-DL'],
-      [/web-?rip|webdl-?rip/i, 'WEBRip'],
+      [/web-?dl|webdl-?rip|web-?rip/i, 'WEB-DL'],
       [/vhs-?rip/i, 'VHSRip'],
       [/cam-?rip/i, 'CAMRip'],
       [/hdtv|iptv|sat|dvb|\btv\b|tvrip/i, 'TV'],

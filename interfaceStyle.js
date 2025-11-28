@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.4.3',
+    version: '3.5.0',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -46,10 +46,11 @@
 
   function colorQuality() {
     const colorQ = [
-      { qualities: ["2160p"], color: "#3498db" },
-      { qualities: ["1080p"], color: "#2ecc71" },
-      { qualities: ["1080i", "720p", "bdrip", "hdrip", "dvdrip", "web-dl", "webrip", "iptv", "hdtv", "tv"], color: "#f1c40f" },
-      { qualities: ["480p", "camrip", "vhsrip", "tc", "ts"], color: "#e67e22" },
+      { qualities: ["2160p", "blu-ray", "bdremux"], color: "#3498db" },
+      { qualities: ["1080p", "bdrip", "hdrip", "dvdrip", "web-dl"], color: "#2ecc71" },
+      { qualities: ["1080i", "720p"], color: "#f1c40f" },
+      { qualities: ["480p", "tv", "tc"], color: "#e67e22" },
+      { qualities: ["vhsrip", "camrip", "ts"], color: "#e74c3c" },
     ];
 
     const elements = document.querySelectorAll(".card__quality");
