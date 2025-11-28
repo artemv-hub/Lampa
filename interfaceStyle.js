@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.1',
+    version: '3.5.2',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -26,37 +26,36 @@
   document.head.appendChild(style);
 
   function colorRating() {
-    const colorR = rating => {
-      if (rating >= 9) return "#3498db";
-      if (rating >= 7) return "#2ecc71";
-      if (rating >= 6) return "#f1c40f";
-      if (rating >= 4) return "#e67e22";
-      if (rating >= 0) return "#e74c3c";
-      return null;
-    };
+    const colorRating = [
+      { ratings: 9, color: "#3498db" },
+      { ratings: 7, color: "#2ecc71" },
+      { ratings: 6, color: "#f1c40f" },
+      { ratings: 4, color: "#e67e22" },
+      { ratings: 0, color: "#e74c3c" }
+    ];
 
-    const elements = document.querySelectorAll(".card__vote, .full-start__rate > div, .info__rate > span");
-    elements.forEach(el => {
-      const rating = parseFloat(el.textContent.trim());
-      const color = colorR(rating);
-      if (color) el.style.color = color;
+    const ratingElements = document.querySelectorAll(".card__vote, .full-start__rate > div, .info__rate > span");
+    ratingElements.forEach(element => {
+      const ratingValue = parseFloat(element.textContent.trim());
+      const colorMatch = colorRating.find(colorRule => ratingValue >= colorRule.ratings);
+      if (colorMatch) element.style.color = colorMatch.color;
     });
   }
 
   function colorQuality() {
-    const colorQ = [
+    const colorQuality = [
       { qualities: ["2160p", "blu-ray", "bdremux"], color: "#3498db" },
       { qualities: ["1080p", "bdrip", "hdrip", "dvdrip", "web-dl"], color: "#2ecc71" },
       { qualities: ["1080i", "720p"], color: "#f1c40f" },
       { qualities: ["480p", "tv", "tc"], color: "#e67e22" },
-      { qualities: ["vhsrip", "camrip", "ts"], color: "#e74c3c" },
+      { qualities: ["vhsrip", "camrip", "ts"], color: "#e74c3c" }
     ];
 
-    const elements = document.querySelectorAll(".card__quality");
-    elements.forEach(el => {
-      const quality = el.textContent.trim().toLowerCase();
-      const found = colorQ.find(qc => qc.qualities.some(q => quality.includes(q)));
-      if (found) el.style.color = found.color;
+    const qualityElements = document.querySelectorAll(".card__quality");
+    qualityElements.forEach(element => {
+      const qualityText = element.textContent.trim().toLowerCase();
+      const colorMatch = colorQuality.find(colorRule => colorRule.qualities.some(q => qualityText.includes(q)));
+      if (colorMatch) element.style.color = colorMatch.color;
     });
   }
 
