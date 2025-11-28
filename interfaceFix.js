@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.11',
+    version: '3.5.12',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -92,7 +92,7 @@ Lampa.Listener.follow('component', (e)=>{
     var layer_update = Lampa.Layer.update;
     Lampa.Layer.update = function (where) {
       var font_size = parseInt(Lampa.Storage.field('interface_fixsize')) || 12;
-      if (Lampa.Platform.screen('mobile')) { font_size = 10; }
+      if (Lampa.Platform.screen('mobile')) { font_size = 6; }
       $('body').css({ fontSize: font_size + 'px' });
       layer_update(where);
     };
