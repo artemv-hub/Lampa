@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.27',
+    version: '3.5.28',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -52,46 +52,36 @@
   }
 
   function fixSize() {
-if (Lampa.Maker.map('Line').Items && Lampa.Maker.map('Line').Items.params) {  
-  Lampa.Arrays.extend(Lampa.Maker.map('Line').Items.params, {  
-    items: {  
-      view: 12  
-    }  
-  })  
-}  
+// Сохраняем оригинальные модули  
+let originalLineItems = Lampa.Maker.map('Line').Items  
+let originalCategoryItems = Lampa.Maker.map('Category').Items  
   
-if (Lampa.Maker.map('Category').Items && Lampa.Maker.map('Category').Items.params) {  
-  Lampa.Arrays.extend(Lampa.Maker.map('Category').Items.params, {  
-    items: {  
-      limit_view: 12  
-    }  
-  })  
-}  
+// Создаем новые модули на основе оригинальных  
+Lampa.Maker.map('Line').Items = Object.assign({}, originalLineItems, {  
+  onInit: function() {  
+    // Вызываем все оригинальные методы из модуля  
+    if (originalLineItems.onInit) originalLineItems.onInit.call(this)  
+    if (originalLineItems.onCreate) originalLineItems.onCreate.call(this)  
+    if (originalLineItems.onAppend) originalLineItems.onAppend.call(this)  
+    if (originalLineItems.onScroll) originalLineItems.onScroll.call(this)  
+      
+    // Устанавливаем наше значение  
+    this.view = 12  
+  }  
+})  
   
-// Обновляем уже существующие компоненты  
-function updateExistingComponents() {  
-  // Обновляем все Line компоненты на странице  
-  $('.line').each(function() {  
-    let component = $(this).data('component')  
-    if (component && component.view !== undefined) {  
-      component.view = 12  
-      // Перерисовываем если нужно  
-      if (component.update) component.update()  
-    }  
-  })  
-    
-  // Обновляем все Category компоненты  
-  $('.category').each(function() {  
-    let component = $(this).data('component')  
-    if (component && component.limit_view !== undefined) {  
-      component.limit_view = 12  
-      if (component.update) component.update()  
-    }  
-  })  
-}  
-  
-// Выполняем обновление  
-updateExistingComponents();
+Lampa.Maker.map('Category').Items = Object.assign({}, originalCategoryItems, {  
+  onInit: function() {  
+    // Вызываем все оригинальные методы  
+    if (originalCategoryItems.onInit) originalCategoryItems.onInit.call(this)  
+    if (originalCategoryItems.onCreate) originalCategoryItems.onCreate.call(this)  
+    if (originalCategoryItems.onAppend) originalCategoryItems.onAppend.call(this)  
+    if (originalCategoryItems.onScroll) originalCategoryItems.onScroll.call(this)  
+      
+    // Устанавливаем наше значение  
+    this.limit_view = 12  
+  }  
+})
     
     Lampa.SettingsApi.addParam({
       component: 'interface',
