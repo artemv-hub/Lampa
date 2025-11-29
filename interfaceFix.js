@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.28',
+    version: '3.5.29',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -52,37 +52,6 @@
   }
 
   function fixSize() {
-// Сохраняем оригинальные модули  
-let originalLineItems = Lampa.Maker.map('Line').Items  
-let originalCategoryItems = Lampa.Maker.map('Category').Items  
-  
-// Создаем новые модули на основе оригинальных  
-Lampa.Maker.map('Line').Items = Object.assign({}, originalLineItems, {  
-  onInit: function() {  
-    // Вызываем все оригинальные методы из модуля  
-    if (originalLineItems.onInit) originalLineItems.onInit.call(this)  
-    if (originalLineItems.onCreate) originalLineItems.onCreate.call(this)  
-    if (originalLineItems.onAppend) originalLineItems.onAppend.call(this)  
-    if (originalLineItems.onScroll) originalLineItems.onScroll.call(this)  
-      
-    // Устанавливаем наше значение  
-    this.view = 12  
-  }  
-})  
-  
-Lampa.Maker.map('Category').Items = Object.assign({}, originalCategoryItems, {  
-  onInit: function() {  
-    // Вызываем все оригинальные методы  
-    if (originalCategoryItems.onInit) originalCategoryItems.onInit.call(this)  
-    if (originalCategoryItems.onCreate) originalCategoryItems.onCreate.call(this)  
-    if (originalCategoryItems.onAppend) originalCategoryItems.onAppend.call(this)  
-    if (originalCategoryItems.onScroll) originalCategoryItems.onScroll.call(this)  
-      
-    // Устанавливаем наше значение  
-    this.limit_view = 12  
-  }  
-})
-    
     Lampa.SettingsApi.addParam({
       component: 'interface',
       param: {
