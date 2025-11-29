@@ -3,7 +3,7 @@
   
   let manifest = {
     type: 'other',
-    version: '3.4.13',
+    version: '3.4.14',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -15,7 +15,7 @@
       const hash = Lampa.Utils.hash([cardData.original_name || cardData.name].join(''));
       return Lampa.Storage.get('online_watched_last', {})[hash];
     } else {
-      const hash = Lampa.Utils.hash([cardData.original_title || cardData.title || cardData.name].join(''));
+      const hash = Lampa.Utils.hash([cardData.original_title || cardData.title].join(''));
       return Lampa.Timeline.view(hash);
     }
   }
@@ -135,3 +135,4 @@
     });
   }
 })();
+
