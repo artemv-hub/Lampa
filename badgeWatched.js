@@ -3,7 +3,7 @@
   
   let manifest = {  
     type: 'other',  
-    version: '3.4.9',  
+    version: '3.4.10',  
     name: 'Watched Badge',  
     component: 'watched_badge'  
   };  
@@ -11,7 +11,6 @@
   Lampa.Manifest.plugins = manifest;  
   
   function getData(cardData) {  
-    // Убраны вызовы timecode_pullFromServer  
     if (cardData.original_name) {  
       const hash = Lampa.Utils.hash([cardData.original_name || cardData.name].join(''));  
       return Lampa.Storage.get('online_watched_last', {})[hash];  
@@ -71,7 +70,6 @@
     }  
   }  
   
-  // Упрощенная processCards() без промисов  
   function processCards() {  
     document.querySelectorAll('.card:not([data-watched-processed])').forEach(card => {  
       card.setAttribute('data-watched-processed', 'true');  
@@ -102,17 +100,10 @@
   
   observer.observe(document.body, { childList: true, subtree: true });  
   
-  // Инициализация без промисов  
   const firstCard = document.querySelector('.card');  
   if (firstCard && firstCard.card_data) {  
     Lampa.Storage.set('activity', { movie: firstCard.card_data, card: firstCard.card_data });  
     Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });  
-      
-    // Ждем загрузки данных и рендерим бейджи  
-    setTimeout(() => {  
-      processCards();  
-    }, 1000);  
-  } else {  
-    processCards();  
-  }  
+
+  processCards();
 })();
