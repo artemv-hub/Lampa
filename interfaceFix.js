@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.22',
+    version: '3.5.23',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -52,23 +52,41 @@
   }
 
   function fixSize() {
-    let originalLineInit = Lampa.Maker.map('Line').Items.onInit  
-Lampa.Maker.map('Line').Items.onInit = function () {  
-  let result = originalLineInit.call(this)  
-  if (this && typeof this.view !== 'undefined') {  
-    this.view = 12  
+    let originalLineItems = Lampa.Maker.map('Line').Items  
+Lampa.Arrays.extend(originalLineItems, {  
+  onInit: function() {  
+    this.tv = Lampa.Platform.screen('tv')  
+    this.items = []  
+    this.active = 0  
+    this.view = 12  // Ваше значение  
   }  
-  return result  
-}  
+})  
   
-let originalCategoryInit = Lampa.Maker.map('Category').Items.onInit  
-Lampa.Maker.map('Category').Items.onInit = function () {  
-  let result = originalCategoryInit.call(this)  
-  if (this && typeof this.limit_view !== 'undefined') {  
-    this.limit_view = 12  
+// Для Category компонентов    
+let originalCategoryItems = Lampa.Maker.map('Category').Items  
+Lampa.Arrays.extend(originalCategoryItems, {  
+  onInit: function() {  
+    this.items = []  
+    this.pages = {}  
+    this.active = 0  
+    this.added = 0  
+    this.screen = Lampa.Platform.screen('tv')  
+    this.loaded = []  
+      
+    Lampa.Arrays.extend(this.params, {  
+      items: {  
+        mapping: 'grid',  
+        cols: 6,  
+        limit_view: 12,  // Ваше значение  
+        limit_collection: 36  
+      }  
+    })  
+      
+    this.total_pages = 1  
+    this.limit_view = this.params.items.limit_view  
+    this.limit_collection = this.params.items.limit_collection  
   }  
-  return result  
-}
+})
     Lampa.SettingsApi.addParam({
       component: 'interface',
       param: {
