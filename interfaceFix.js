@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.26',
+    version: '3.5.27',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -52,25 +52,47 @@
   }
 
   function fixSize() {
-// Для Line  
-let originalLineItems = Lampa.Maker.map('Line').Items  
-let originalLineInit = originalLineItems.onInit  
-originalLineItems.onInit = function() {  
-  originalLineInit.call(this)  
-  if (this.params && this.params.items) {  
-    this.params.items.view = 12  
-  }  
+if (Lampa.Maker.map('Line').Items && Lampa.Maker.map('Line').Items.params) {  
+  Lampa.Arrays.extend(Lampa.Maker.map('Line').Items.params, {  
+    items: {  
+      view: 12  
+    }  
+  })  
 }  
   
-// Для Category  
-let originalCategoryItems = Lampa.Maker.map('Category').Items  
-let originalCategoryInit = originalCategoryItems.onInit  
-originalCategoryInit = function() {  
-  originalCategoryInit.call(this)  
-  if (this.params && this.params.items) {  
-    this.params.items.limit_view = 12  
-  }  
-}
+if (Lampa.Maker.map('Category').Items && Lampa.Maker.map('Category').Items.params) {  
+  Lampa.Arrays.extend(Lampa.Maker.map('Category').Items.params, {  
+    items: {  
+      limit_view: 12  
+    }  
+  })  
+}  
+  
+// Обновляем уже существующие компоненты  
+function updateExistingComponents() {  
+  // Обновляем все Line компоненты на странице  
+  $('.line').each(function() {  
+    let component = $(this).data('component')  
+    if (component && component.view !== undefined) {  
+      component.view = 12  
+      // Перерисовываем если нужно  
+      if (component.update) component.update()  
+    }  
+  })  
+    
+  // Обновляем все Category компоненты  
+  $('.category').each(function() {  
+    let component = $(this).data('component')  
+    if (component && component.limit_view !== undefined) {  
+      component.limit_view = 12  
+      if (component.update) component.update()  
+    }  
+  })  
+}  
+  
+// Выполняем обновление  
+updateExistingComponents();
+    
     Lampa.SettingsApi.addParam({
       component: 'interface',
       param: {
