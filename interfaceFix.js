@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.45',
+    version: '3.5.46',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -51,42 +51,21 @@
     });
   }
 
-  function fixSize() {  
-    let originalLineInit = Lampa.Maker.map('Line').Items.onInit;  
-    Lampa.Maker.map('Line').Items.onInit = function () {  
-      originalLineInit.call(this);  
-      this.view = 12;  
-    };  
-      
-    let originalCategoryInit = Lampa.Maker.map('Category').Items.onInit;
-    Lampa.Maker.map('Category').Items.onInit = function () {  
-      originalCategoryInit.call(this);  
-      this.limit_view = 12;  
-    };  
-
-    Lampa.SettingsApi.addParam({  
-        component: 'interface',  
-        param: {  
-            name: 'interface_size',  // То же имя для UI - заменит существующий  
-            type: 'select',  
-            values: {  
-                'small': '#{settings_param_interface_size_small}',  
-                'normal': '#{settings_param_interface_size_normal}',  
-                'bigger': '#{settings_param_interface_size_bigger}'  
-            },  
-            default: 'normal'  
-        },  
-        field: {  
-            name: '#{settings_interface_size}',  // Стандартное название  
-        },  
-        onChange: (value) => {  
-            // Сохраняем в наш параметр, но UI показывает interface_size  
-            Lampa.Storage.set('interface_fixsize', value)  
-            fixSize()  
-        }  
-    })  
+    function fixView() {  
+        let originalLineInit = Lampa.Maker.map('Line').Items.onInit;    
+        Lampa.Maker.map('Line').Items.onInit = function () {    
+            originalLineInit.call(this);    
+            this.view = 12;    
+        };    
+            
+        let originalCategoryInit = Lampa.Maker.map('Category').Items.onInit;  
+        Lampa.Maker.map('Category').Items.onInit = function () {    
+            originalCategoryInit.call(this);    
+            this.limit_view = 12;    
+        };  
+    }  
   
-    // Ваша функция использует interface_fixsize  
+    // Функция для изменения размера интерфейса  
     function fixSize() {  
         Lampa.Layer.size = function() {  
             let selectedLevel = Lampa.Storage.field('interface_fixsize')  
@@ -99,12 +78,34 @@
             $('body').css({ fontSize: fontSize + 'px' })  
         }  
         Lampa.Layer.size()  
-  }
+    }  
+  
+    Lampa.SettingsApi.addParam({  
+        component: 'interface',  
+        param: {  
+            name: 'interface_size',  
+            type: 'select',  
+            values: {  
+                'small': '#{settings_param_interface_size_small}',  
+                'normal': '#{settings_param_interface_size_normal}',  
+                'bigger': '#{settings_param_interface_size_bigger}'  
+            },  
+            default: 'normal'  
+        },  
+        field: {  
+            name: '#{settings_interface_size}',  
+        },  
+        onChange: (value) => {  
+            Lampa.Storage.set('interface_fixsize', value)  
+            fixSize()  
+        }  
+    })  
 
   function startPlugin() {
     fixLabelsTV();
     fixButtons();
     fixTitle();
+    fixView();
     fixSize();
 
     const observer = new MutationObserver(() => {
