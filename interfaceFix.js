@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.37',
+    version: '3.5.38',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -63,7 +63,8 @@
       originalCategoryInit.call(this);  
       this.limit_view = 12;  
     };  
-      
+
+    Lampa.Storage.listener.remove('change', Lampa.Layer.size);
     Lampa.Layer.size = function() {  
       let selectedLevel = Lampa.Storage.field('interface_size');  
       let sizeMap = {  
