@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.38',
+    version: '3.5.39',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -64,18 +64,34 @@
       this.limit_view = 12;  
     };  
 
-    Lampa.Storage.listener.remove('change', Lampa.Layer.size);
+    let originalUpdate = Lampa.Layer.update;  
+      
+    // Переопределяем size() для установки ваших размеров  
     Lampa.Layer.size = function() {  
-      let selectedLevel = Lampa.Storage.field('interface_size');  
-      let sizeMap = {  
-        small: 10,  
-        normal: 12,  
-        bigger: 14  
-      }; 
-      let fontSize = Lampa.Platform.screen('mobile') ? 10 : sizeMap[selectedLevel];
-      $('body').css({ fontSize: fontSize + 'px' });  
-    };
-    Lampa.Layer.size();
+        let selectedLevel = Lampa.Storage.field('interface_size');  
+        let sizeMap = {  
+            small: 10,  
+            normal: 12,  
+            bigger: 14  
+        };  
+        let fontSize = Lampa.Platform.screen('mobile') ? 10 : sizeMap[selectedLevel];  
+        $('body').css({ fontSize: fontSize + 'px' })  
+                  .removeClass('size--small size--normal size--bigger')  
+                  .addClass('size--' + selectedLevel);  
+    };  
+      
+    // Переопределяем update() чтобы он не вызывал оригинальный size()  
+    Lampa.Layer.update = function(where) {  
+        Lampa.Layer.size(); // Сначала устанавливаем наш размер  
+        originalUpdate(where); // Затем обновляем элементы  
+    };  
+      
+    // Удаляем оригинальный слушатель событий  
+    Lampa.Storage.listener.remove('change', Lampa.Layer.size);  
+      
+    // Применяем наши настройки  
+    Lampa.Layer.size();  
+    Lampa.Layer.update();  
   }
 
   function startPlugin() {
