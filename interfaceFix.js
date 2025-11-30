@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.40',
+    version: '3.5.41',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -76,8 +76,7 @@
         };  
         let fontSize = Lampa.Platform.screen('mobile') ? 10 : sizeMap[selectedLevel];  
         $('body').css({ fontSize: fontSize + 'px' })  
-                  .removeClass('size--small size--normal size--bigger')  
-                  .addClass('size--' + selectedLevel);  
+                  .removeClass('size--small size--normal size--bigger');  
     };  
       
     // Вызываем только один раз  
