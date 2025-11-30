@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.44',
+    version: '3.5.45',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -64,17 +64,41 @@
       this.limit_view = 12;  
     };  
 
-    Lampa.Layer.size = function() {  
-        let selectedLevel = Lampa.Storage.field('interface_size');  
-        let sizeMap = {  
-            small: 10,  
-            normal: 12,  
-            bigger: 14  
-        };  
-        let fontSize = Lampa.Platform.screen('mobile') ? 10 : sizeMap[selectedLevel];  
-        $('body').css({ fontSize: fontSize + 'px' });
-    };  
-    Lampa.Layer.size();  
+    Lampa.SettingsApi.addParam({  
+        component: 'interface',  
+        param: {  
+            name: 'interface_size',  // То же имя для UI - заменит существующий  
+            type: 'select',  
+            values: {  
+                'small': '#{settings_param_interface_size_small}',  
+                'normal': '#{settings_param_interface_size_normal}',  
+                'bigger': '#{settings_param_interface_size_bigger}'  
+            },  
+            default: 'normal'  
+        },  
+        field: {  
+            name: '#{settings_interface_size}',  // Стандартное название  
+        },  
+        onChange: (value) => {  
+            // Сохраняем в наш параметр, но UI показывает interface_size  
+            Lampa.Storage.set('interface_fixsize', value)  
+            fixSize()  
+        }  
+    })  
+  
+    // Ваша функция использует interface_fixsize  
+    function fixSize() {  
+        Lampa.Layer.size = function() {  
+            let selectedLevel = Lampa.Storage.field('interface_fixsize')  
+            let sizeMap = {  
+                small: 10,  
+                normal: 12,  
+                bigger: 14  
+            }  
+            let fontSize = Lampa.Platform.screen('mobile') ? 10 : sizeMap[selectedLevel]  
+            $('body').css({ fontSize: fontSize + 'px' })  
+        }  
+        Lampa.Layer.size()  
   }
 
   function startPlugin() {
