@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.46',
+    version: '3.5.47',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -67,39 +67,18 @@
   
     // Функция для изменения размера интерфейса  
     function fixSize() {  
-        Lampa.Layer.size = function() {  
-            let selectedLevel = Lampa.Storage.field('interface_fixsize')  
-            let sizeMap = {  
-                small: 10,  
-                normal: 12,  
-                bigger: 14  
-            }  
-            let fontSize = Lampa.Platform.screen('mobile') ? 10 : sizeMap[selectedLevel]  
-            $('body').css({ fontSize: fontSize + 'px' })  
-        }  
-        Lampa.Layer.size()  
-    }  
-  
-    Lampa.SettingsApi.addParam({  
-        component: 'interface',  
-        param: {  
-            name: 'interface_size',  
-            type: 'select',  
-            values: {  
-                'small': '#{settings_param_interface_size_small}',  
-                'normal': '#{settings_param_interface_size_normal}',  
-                'bigger': '#{settings_param_interface_size_bigger}'  
-            },  
-            default: 'normal'  
-        },  
-        field: {  
-            name: '#{settings_interface_size}',  
-        },  
-        onChange: (value) => {  
-            Lampa.Storage.set('interface_fixsize', value)  
-            fixSize()  
-        }  
-    })  
+            Lampa.Layer.size = function() {  
+        let selectedLevel = Lampa.Storage.field('interface_size');  
+        let sizeMap = {  
+            small: 10,  
+            normal: 12,  
+            bigger: 14  
+        };  
+        let fontSize = Lampa.Platform.screen('mobile') ? 10 : sizeMap[selectedLevel];  
+        $('body').css({ fontSize: fontSize + 'px' });
+    };  
+    Lampa.Layer.size();  
+  })  
 
   function startPlugin() {
     fixLabelsTV();
