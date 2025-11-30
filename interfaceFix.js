@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.33',
+    version: '3.5.34',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -19,20 +19,20 @@
   function fixButtons() {
     Lampa.Listener.follow('full', function (e) {
       if (e.type == 'complite') {
-        let render = e.object.activity.render()
-        let buttonsContainer = render.find('.full-start-new__buttons')
-        buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options').remove()
+        let render = e.object.activity.render();
+        let buttonsContainer = render.find('.full-start-new__buttons');
+        buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options').remove();
 
-        let torrentBtn = render.find('.view--torrent')
-        let onlineBtn = render.find('.view--online').removeClass('hide')
+        let torrentBtn = render.find('.view--torrent');
+        let onlineBtn = render.find('.view--online').removeClass('hide');
 
-        buttonsContainer.prepend(onlineBtn[0])
+        buttonsContainer.prepend(onlineBtn[0]);
         if (Lampa.Storage.field('parser_use')) {
-          torrentBtn.removeClass('hide')
-          buttonsContainer.prepend(torrentBtn[0])
+          torrentBtn.removeClass('hide');
+          buttonsContainer.prepend(torrentBtn[0]);
         }
       }
-    })
+    });
   }
 
   function fixTitle() {
@@ -77,8 +77,8 @@
       if (Lampa.Platform.screen('mobile')) {   
         fontSize = 10;   
       }
-      $('body').css({ fontSize: fontSize + 'px' })  
-    }
+      $('body').css({ fontSize: fontSize + 'px' });  
+    };
     Lampa.Layer.size();
   }
 
@@ -93,9 +93,11 @@
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
-  }
+  };
 
-  if (window.appready) { startPlugin(); }
+  if (window.appready) { 
+    startPlugin(); 
+  }
   else {
     Lampa.Listener.follow("app", function (e) {
       if (e.type === "ready") { startPlugin(); }
