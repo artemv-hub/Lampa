@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.39',
+    version: '3.5.40',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -64,9 +64,9 @@
       this.limit_view = 12;  
     };  
 
-    let originalUpdate = Lampa.Layer.update;  
+    Lampa.Storage.listener.remove('change', Lampa.Layer.size);  
       
-    // Переопределяем size() для установки ваших размеров  
+    // Переопределяем size()  
     Lampa.Layer.size = function() {  
         let selectedLevel = Lampa.Storage.field('interface_size');  
         let sizeMap = {  
@@ -80,18 +80,8 @@
                   .addClass('size--' + selectedLevel);  
     };  
       
-    // Переопределяем update() чтобы он не вызывал оригинальный size()  
-    Lampa.Layer.update = function(where) {  
-        Lampa.Layer.size(); // Сначала устанавливаем наш размер  
-        originalUpdate(where); // Затем обновляем элементы  
-    };  
-      
-    // Удаляем оригинальный слушатель событий  
-    Lampa.Storage.listener.remove('change', Lampa.Layer.size);  
-      
-    // Применяем наши настройки  
+    // Вызываем только один раз  
     Lampa.Layer.size();  
-    Lampa.Layer.update();  
   }
 
   function startPlugin() {
