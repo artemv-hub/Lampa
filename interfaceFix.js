@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.43',
+    version: '3.5.44',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -64,8 +64,6 @@
       this.limit_view = 12;  
     };  
 
-    Lampa.Storage.listener.remove('change', Lampa.Layer.size);
-    // Переопределяем size()  
     Lampa.Layer.size = function() {  
         let selectedLevel = Lampa.Storage.field('interface_size');  
         let sizeMap = {  
@@ -74,11 +72,8 @@
             bigger: 14  
         };  
         let fontSize = Lampa.Platform.screen('mobile') ? 10 : sizeMap[selectedLevel];  
-        $('body').css({ fontSize: fontSize + 'px' })  
-                  .removeClass('size--small size--normal size--bigger').addClass('size--' + selectedLevel);  
+        $('body').css({ fontSize: fontSize + 'px' });
     };  
-      
-    // Вызываем только один раз  
     Lampa.Layer.size();  
   }
 
