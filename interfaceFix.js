@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.29',
+    version: '3.5.30',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -52,8 +52,20 @@
   }
 
   function fixSize() {
+    let originalLineInit = Lampa.Maker.map('Line').Items.onInit;
+    Lampa.Maker.map('Line').Items.onInit = function () {
+      originalLineInit.call(this);
+      this.view = 12;
+    };
+
+    let originalCategoryInit = Lampa.Maker.map('Category').Items.onInit;
+    Lampa.Maker.map('Category').Items.onInit = function () {
+      originalCategoryInit.call(this);
+      this.limit_view = 12;
+    };
     Lampa.SettingsApi.addParam({
       component: 'interface',
+      field: { name: 'Фиксированный размер' },
       param: {
         name: 'interface_fixsize',
         type: 'select',
@@ -64,7 +76,6 @@
           '14': '14'
         }
       },
-      field: { name: 'Фиксированный размер' },
       onChange: function onChange() {
         var name = Lampa.Controller.enabled().name;
         Lampa.Layer.update();
