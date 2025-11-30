@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.47',
+    version: '3.5.48',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -67,7 +67,7 @@
   
     // Функция для изменения размера интерфейса  
     function fixSize() {  
-            Lampa.Layer.size = function() {  
+      Lampa.Layer.size = function() {  
         let selectedLevel = Lampa.Storage.field('interface_size');  
         let sizeMap = {  
             small: 10,  
@@ -78,7 +78,7 @@
         $('body').css({ fontSize: fontSize + 'px' });
     };  
     Lampa.Layer.size();  
-  })  
+  }
 
   function startPlugin() {
     fixLabelsTV();
