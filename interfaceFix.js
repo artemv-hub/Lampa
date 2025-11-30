@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.30',
+    version: '3.5.31',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -51,54 +51,39 @@
     });
   }
 
-  function fixSize() {
-    let originalLineInit = Lampa.Maker.map('Line').Items.onInit;
-    Lampa.Maker.map('Line').Items.onInit = function () {
-      originalLineInit.call(this);
-      this.view = 12;
-    };
-
+  function fixSize() {  
+    let originalLineInit = Lampa.Maker.map('Line').Items.onInit;  
+    Lampa.Maker.map('Line').Items.onInit = function () {  
+      originalLineInit.call(this);  
+      this.view = 12;  
+    };  
+      
     let originalCategoryInit = Lampa.Maker.map('Category').Items.onInit;
-    Lampa.Maker.map('Category').Items.onInit = function () {
-      originalCategoryInit.call(this);
-      this.limit_view = 12;
-    };
-    Lampa.SettingsApi.addParam({
-      component: 'interface',
-      field: { name: 'Фиксированный размер' },
-      param: {
-        name: 'interface_fixsize',
-        type: 'select',
-        default: '12',
-        values: {
-          '10': '10',
-          '12': '12',
-          '14': '14'
-        }
-      },
-      onChange: function onChange() {
-        var name = Lampa.Controller.enabled().name;
-        Lampa.Layer.update();
-        Lampa.Controller.toggle(name);
-      }
-    });
-
-    Lampa.Settings.listener.follow('open', function (e) {
-      if (e.name == 'interface') {
-        var item = e.body.find('[data-name="interface_fixsize"]');
-        item.detach();
-        item.insertAfter(e.body.find('[data-name="interface_size"]'));
-      }
-    });
-
-    var layer_update = Lampa.Layer.update;
-    Lampa.Layer.update = function (where) {
-      var font_size = parseInt(Lampa.Storage.field('interface_fixsize')) || 12;
-      if (Lampa.Platform.screen('mobile')) { font_size = 10; }
-      $('body').css({ fontSize: font_size + 'px' });
-      layer_update(where);
-    };
-    Lampa.Layer.update();
+    Lampa.Maker.map('Category').Items.onInit = function () {  
+      originalCategoryInit.call(this);  
+      this.limit_view = 12;  
+    };  
+      
+    Lampa.Layer.size = function() {  
+      let selectedLevel = Lampa.Storage.field('interface_size');  
+      let sizeMap = {  
+        small: 10,  
+        normal: 12,  
+        bigger: 14  
+      };  
+        
+      let fontSize = sizeMap[selectedLevel];  
+        
+      if (Lampa.Platform.screen('mobile')) {   
+        fontSize = 10;   
+      }  
+        
+      $('body').css({  
+        fontSize: fontSize + 'px'  
+      }).removeClass('size--small size--normal size--bigger').addClass('size--'+selectedLevel);  
+    };  
+      
+    Lampa.Layer.size();  
   }
 
   function startPlugin() {
