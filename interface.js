@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.6.4',
+    version: '3.7.0',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -15,13 +15,11 @@
     .full-start__title-original { font-size: 1.6em; margin-bottom: 0em; }
     .full-start-new__buttons .full-start__button:not(.focus) span { display: unset; }
 
-    .card__watched {position: absolute; bottom: 0.8em; right: 0.2em; color: #fff; background: rgba(0, 0, 0, 0.5); padding: 0.2em 0.5em; border-radius: 1em; font-size: 1.2em; }  
-    .card__quality { font-weight: bold; font-size: 1.2em; left: 0.2em; bottom: 0.2em; border-radius: 1em; padding: 0.2em 0.5em; color: #fff; background: rgba(0, 0, 0, 0.5); text-transform: none; }
-    .card__vote { font-weight: bold; font-size: 1.2em; right: 0.2em; bottom: 0.2em; }
-    .card__type { top: 2.2em; }
-    .card__icons { top: 1.6em; }
-    .card__marker { top: 0.1em; bottom: unset; left: 50%; transform: translate(-50%); }
-    .card__marker > span { font-size: 0.8em; max-width: 16em; }
+    .card__watched { position: absolute; font-weight: bold; font-size: 1em; left: 0.2em; bottom: 0.2em; border-radius: 0.4em; padding: 0.2em 0.4em; color: #fff; background: rgb(50, 50, 50); left: 50%; transform: translate(-50%); white-space: nowrap; }
+    .card__quality { font-weight: bold; font-size: 1.2em; left: unset; right: 0.2em; top: 2.6em; bottom: unset; border-radius: 0.2em; padding: 0.2em 0.2em; color: #000; text-transform: none; }
+    .card__vote { font-weight: bold; font-size: 1.4em; right: 0.2em; top: 0.6em; bottom: unset; border-radius: 0.2em; padding: 0.2em 0.2em; color: #000; }
+    .card__type { font-size: 0.9em; top: 1.1em; }
+    .card__marker { display: none; }
     `;
   document.head.appendChild(style);
 
