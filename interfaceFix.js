@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.48',
+    version: '3.5.49',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -85,7 +85,7 @@
     fixButtons();
     fixTitle();
     fixView();
-    fixSize();
+    //fixSize();
 
     const observer = new MutationObserver(() => {
       fixLabelsTV();
