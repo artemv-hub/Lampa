@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.49',
+    version: '3.5.50',
     name: 'UI Fix',
     component: 'ui_fix'
   };
@@ -51,33 +51,36 @@
     });
   }
 
-    function fixView() {  
-        let originalLineInit = Lampa.Maker.map('Line').Items.onInit;    
-        Lampa.Maker.map('Line').Items.onInit = function () {    
-            originalLineInit.call(this);    
-            this.view = 12;    
-        };    
-            
-        let originalCategoryInit = Lampa.Maker.map('Category').Items.onInit;  
-        Lampa.Maker.map('Category').Items.onInit = function () {    
-            originalCategoryInit.call(this);    
-            this.limit_view = 12;    
-        };  
-    }  
-  
-    // Функция для изменения размера интерфейса  
-    function fixSize() {  
-      Lampa.Layer.size = function() {  
-        let selectedLevel = Lampa.Storage.field('interface_size');  
-        let sizeMap = {  
-            small: 10,  
-            normal: 12,  
-            bigger: 14  
-        };  
-        let fontSize = Lampa.Platform.screen('mobile') ? 10 : sizeMap[selectedLevel];  
-        $('body').css({ fontSize: fontSize + 'px' });
-    };  
-    Lampa.Layer.size();  
+  function fixView() {
+    let originalLineInit = Lampa.Maker.map('Line').Items.onInit;
+    Lampa.Maker.map('Line').Items.onInit = function () {
+      originalLineInit.call(this);
+      this.view = 12;
+    };
+
+    let originalCategoryInit = Lampa.Maker.map('Category').Items.onInit;
+    Lampa.Maker.map('Category').Items.onInit = function () {
+      originalCategoryInit.call(this);
+      this.limit_view = 12;
+    };
+  }
+
+  function fixSize() {
+    Lampa.Params.select('interface_size', {
+      '10': '10',
+      '12': '12',
+      '14': '14'
+    });
+
+    function updateSize() {
+      var fontSize = Lampa.Platform.screen('mobile') ? 10 : (parseInt(Lampa.Storage.field('interface_size')) || 12);
+      $('body').css({ fontSize: fontSize + 'px' });
+    }
+
+    Lampa.Storage.listener.follow('change', function (e) {
+      if (e.name == 'interface_size') updateSize();
+    });
+    updateSize();
   }
 
   function startPlugin() {
@@ -94,8 +97,8 @@
     observer.observe(document.body, { childList: true, subtree: true });
   };
 
-  if (window.appready) { 
-    startPlugin(); 
+  if (window.appready) {
+    startPlugin();
   }
   else {
     Lampa.Listener.follow("app", function (e) {
