@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.5.4',
+    version: '3.5.5',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -17,11 +17,11 @@
   };
 
   var QUALITY_PRIORITY = {
-    '2160p': 100,
-    '1080p': 90,
+    '2160': 100,
+    '1080': 90,
     '1080i': 88,
-    '720p': 80,
-    '480p': 70,
+    '720': 80,
+    '480': 70,
     'Blu-Ray': 60,
     'BDRemux': 58,
     'BDRip': 56,
@@ -83,11 +83,11 @@
 
   function parseQuality(title) {
     const patterns = [
-      [/2160p|\buhd\b|\b4k\b/i, '2160p'],
-      [/1080p|\bfhd\b/i, '1080p'],
+      [/2160p|\buhd\b|\b4k\b/i, '2160'],
+      [/1080p|\bfhd\b/i, '1080'],
       [/1080i/i, '1080i'],
-      [/720p|\bhd\b/i, '720p'],
-      [/480p|\bsd\b/i, '480p'],
+      [/720p|\bhd\b/i, '720'],
+      [/480p|\bsd\b/i, '480'],
       [/blu-?ray remux|bd-?remux/i, 'BDRemux'],
       [/blu-?ray|\bbd\b/i, 'Blu-Ray'],
       [/bd-?rip/i, 'BDRip'],
