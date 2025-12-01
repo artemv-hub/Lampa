@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.7.2',
+    version: '3.7.3',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -110,7 +110,7 @@
     ratingElements.forEach(element => {
       const ratingValue = parseFloat(element.textContent.trim());
       const colorMatch = colorRating.find(colorRule => ratingValue >= colorRule.ratings);
-      if (colorMatch) element.style.color = colorMatch.color;
+      if (colorMatch) element.style.backgroundColor = colorMatch.color;
     });
 
     const colorQuality = [
@@ -126,7 +126,7 @@
     qualityElements.forEach(element => {
       const qualityText = element.textContent.trim().toLowerCase();
       const colorMatch = colorQuality.find(colorRule => colorRule.qualities.some(q => qualityText.includes(q)));
-      if (colorMatch) element.style.color = colorMatch.color;
+      if (colorMatch) element.style.backgroundColor = colorMatch.color;
     });
   }
 
