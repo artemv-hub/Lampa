@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.5.4',
+    version: '3.6.0',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -24,6 +24,80 @@
     .card__marker > span { font-size: 0.8em; max-width: 16em; }
     `;
   document.head.appendChild(style);
+
+  function styleLabelsTV() {
+    document.querySelectorAll('.card__type').forEach(elem => {
+      if (elem.textContent === 'TV') elem.textContent = 'Сериал';
+    });
+  }
+
+  function styleButtons() {
+    Lampa.Listener.follow('full', function (e) {
+      if (e.type == 'complite') {
+        let render = e.object.activity.render();
+        let buttonsContainer = render.find('.full-start-new__buttons');
+        buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options').remove();
+
+        let torrentBtn = render.find('.view--torrent');
+        let onlineBtn = render.find('.view--online').removeClass('hide');
+
+        buttonsContainer.prepend(onlineBtn[0]);
+        if (Lampa.Storage.field('parser_use')) {
+          torrentBtn.removeClass('hide');
+          buttonsContainer.prepend(torrentBtn[0]);
+        }
+      }
+    });
+  }
+
+  function styleTitle() {
+    Lampa.Listener.follow('full', function (e) {
+      if (e.type == 'complite') {
+        let titleElement = e.body.find('.full-start-new__title');
+        let title = e.data.movie.title || e.data.movie.name;
+        let originalTitle = e.data.movie.original_title || e.data.movie.original_name;
+
+        if (title && originalTitle && title !== originalTitle) {
+          let originalTitleHtml = '<div class="full-start__title-original">' + originalTitle + '</div>';
+          titleElement.before(originalTitleHtml);
+          titleElement.text(title);
+        }
+      }
+    });
+  }
+
+  function styleView() {
+    let originalLineInit = Lampa.Maker.map('Line').Items.onInit;
+    Lampa.Maker.map('Line').Items.onInit = function () {
+      originalLineInit.call(this);
+      this.view = 12;
+    };
+
+    let originalCategoryInit = Lampa.Maker.map('Category').Items.onInit;
+    Lampa.Maker.map('Category').Items.onInit = function () {
+      originalCategoryInit.call(this);
+      this.limit_view = 12;
+    };
+  }
+
+  function styleSize() {
+    Lampa.Params.select('interface_size', {
+      'Меньше': '10',
+      'Нормальный': '12',
+      'Больше': '14'
+    }, '12');
+
+    function updateSize() {
+      let selectedLevel = parseInt(Lampa.Storage.field('interface_size')) || 12;
+      let fontSize = Lampa.Platform.screen('mobile') ? 10 : selectedLevel;
+      $('body').css({ fontSize: fontSize + 'px' });
+    }
+
+    Lampa.Storage.listener.follow('change', function (e) {
+      if (e.name == 'interface_size') updateSize();
+    });
+    updateSize();
+  }
 
   function styleColors() {
     const colorRating = [
@@ -58,18 +132,23 @@
   }
 
   function startPlugin() {
+    styleLabelsTV();
+    styleButtons();
+    styleTitle();
+    styleView();
+    styleSize();
     styleColors();
 
     const observer = new MutationObserver((mutations) => {
       mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
           if (node.nodeType === 1) {
+            styleLabelsTV();
             styleColors();
           }
         });
       });
     });
-
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
