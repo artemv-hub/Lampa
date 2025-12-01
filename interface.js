@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.6.1',
+    version: '3.6.2',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -85,7 +85,7 @@
       'Меньше': '10',
       'Нормальный': '12',
       'Больше': '14'
-    }, '12');
+    }, 'Нормальный');
 
     function updateSize() {
       let selectedLevel = parseInt(Lampa.Storage.field('interface_size')) || 12;
