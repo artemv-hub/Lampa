@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.5.3',
+    version: '3.5.4',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -13,8 +13,7 @@
   var CONFIG = {
     CACHE_KEY: 'lampa_quality_cache',
     CACHE_TTL_MS: 24 * 60 * 60 * 1000,
-    JACRED_URL: 'https://jacred.xyz/api/v1.0/torrents',
-    TIMEOUT_MS: 5000
+    JACRED_URL: 'https://jacred.xyz/api/v1.0/torrents'
   };
 
   var QUALITY_PRIORITY = {
@@ -41,7 +40,7 @@
     var url = CONFIG.JACRED_URL + '?search=' + encodeURIComponent(title) + '&year=' + year + '&exact=true&uid=' + userId;
 
     var network = new Lampa.Reguest();
-    network.timeout(CONFIG.TIMEOUT_MS);
+    network.timeout(5000);
 
     network.silent(url, function (torrents) {
       if (!torrents || !torrents.length) return callback(null);
