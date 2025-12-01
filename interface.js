@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.6.3',
+    version: '3.6.4',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -82,9 +82,9 @@
 
   function styleSize() {
     Lampa.Params.select('interface_size', {
-      'Меньше': '10',
-      'Нормальный': '12',
-      'Больше': '14'
+      '10': '10',
+      '12': '12',
+      '14': '14'
     }, '12');
 
     function updateSize() {
