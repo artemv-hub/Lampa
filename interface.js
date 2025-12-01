@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.7.1',
+    version: '3.7.2',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -114,10 +114,11 @@
     });
 
     const colorQuality = [
-      { qualities: ["2160p", "blu-ray", "bdremux"], color: "#3498db" },
-      { qualities: ["1080p", "bdrip", "hdrip", "dvdrip", "web-dl"], color: "#2ecc71" },
-      { qualities: ["1080i", "720p"], color: "#f1c40f" },
-      { qualities: ["480p", "tv", "tc"], color: "#e67e22" },
+      { qualities: ["/ts"], color: "#e74c3c" },
+      { qualities: ["2160", "blu-ray", "bdremux"], color: "#3498db" },
+      { qualities: ["1080", "bdrip", "hdrip", "dvdrip", "web-dl"], color: "#2ecc71" },
+      { qualities: ["1080i", "720"], color: "#f1c40f" },
+      { qualities: ["480", "tv", "tc"], color: "#e67e22" },
       { qualities: ["vhsrip", "camrip", "ts"], color: "#e74c3c" }
     ];
 
