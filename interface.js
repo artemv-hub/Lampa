@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.6.0',
+    version: '3.6.1',
     name: 'UI Style',
     component: 'ui_style'
   };
