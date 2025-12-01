@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.7.3',
+    version: '3.7.4',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -24,8 +24,8 @@
   document.head.appendChild(style);
 
   function styleLabelsTV() {
-    document.querySelectorAll('.card__type').forEach(elem => {
-      if (elem.textContent === 'TV') elem.textContent = 'Сериал';
+    document.querySelectorAll('.card__type').forEach(function (e) {
+      if (e.textContent === 'TV') e.textContent = 'Сериал';
     });
   }
 
@@ -107,10 +107,10 @@
     ];
 
     const ratingElements = document.querySelectorAll(".card__vote, .full-start__rate > div, .info__rate > span");
-    ratingElements.forEach(element => {
-      const ratingValue = parseFloat(element.textContent.trim());
+    ratingElements.forEach(function (e) {
+      const ratingValue = parseFloat(e.textContent.trim());
       const colorMatch = colorRating.find(colorRule => ratingValue >= colorRule.ratings);
-      if (colorMatch) element.style.backgroundColor = colorMatch.color;
+      if (colorMatch) e.style.backgroundColor = colorMatch.color;
     });
 
     const colorQuality = [
@@ -123,10 +123,10 @@
     ];
 
     const qualityElements = document.querySelectorAll(".card__quality");
-    qualityElements.forEach(element => {
-      const qualityText = element.textContent.trim().toLowerCase();
+    qualityElements.forEach(function (e) {
+      const qualityText = e.textContent.trim().toLowerCase();
       const colorMatch = colorQuality.find(colorRule => colorRule.qualities.some(q => qualityText.includes(q)));
-      if (colorMatch) element.style.backgroundColor = colorMatch.color;
+      if (colorMatch) e.style.backgroundColor = colorMatch.color;
     });
   }
 
