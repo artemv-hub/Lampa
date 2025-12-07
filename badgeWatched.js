@@ -3,7 +3,7 @@
   
   let manifest = {
     type: 'other',
-    version: '3.5.5',
+    version: '3.5.6',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -93,17 +93,17 @@
     });
     
     Promise.all(loadPromises).then(() => {
-      document.querySelectorAll('.card:not([data-watched-processed])').forEach(card => {
+      document.querySelectorAll('.card').forEach(card => {
         card.setAttribute('data-watched-processed', 'true');
         if (card.card_data) renderWatchedBadge(card, card.card_data);
       });
     });
   }
   
-  Lampa.Listener.follow('activity', function (e) {  
-    if (e.type == 'start' || e.type == 'page' || e.type == 'complite') {  
-      processCards();  
-    }  
+  Lampa.Listener.follow('activity', function (e) {
+    if (e.type == 'start' || e.type == 'page' || e.type == 'complite') {
+      processCards();
+    }
   });
   
   var observer = new MutationObserver(function (mutations) {
@@ -135,5 +135,6 @@
     });
   }
 })();
+
 
 
