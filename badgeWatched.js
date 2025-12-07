@@ -3,7 +3,7 @@
   
   let manifest = {
     type: 'other',
-    version: '3.5.3',
+    version: '3.5.4',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -126,6 +126,7 @@
   if (firstCard && firstCard.card_data) {
     Lampa.Storage.set('activity', { movie: firstCard.card_data, card: firstCard.card_data });
     Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
+    Lampa.Listener.send('lampac', { type: 'bookmark_pullFromServer' });
   }
   
   if (window.appready) { processCards(); }
@@ -135,3 +136,4 @@
     });
   }
 })();
+
