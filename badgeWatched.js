@@ -3,7 +3,7 @@
   
   let manifest = {
     type: 'other',
-    version: '3.5.7',
+    version: '3.5.8',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -84,7 +84,7 @@
       }
     });
     
-    const loadPromises = uniqueCards.map((cardData, index) => {
+    const loadPromises = uniqueCards.map((cardData) => {
       return new Promise((resolve) => {
         Lampa.Storage.set('activity', { movie: cardData, card: cardData });
         Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
