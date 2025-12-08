@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.6.0',
+    version: '3.6.1',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -109,11 +109,7 @@
     mutations.forEach(function (mutation) {
       mutation.addedNodes.forEach(function (node) {
         if (node.nodeType === 1 && node.classList && node.classList.contains('card')) {
-          node.addEventListener('visible', function () {
-            if (!node.hasAttribute('data-watched-processed')) {
-              processCards();
-            }
-          });
+          processCards();
         }
       });
     });
@@ -128,6 +124,3 @@
     });
   }
 })();
-
-
-
