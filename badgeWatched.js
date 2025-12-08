@@ -3,7 +3,7 @@
   
   let manifest = {
     type: 'other',
-    version: '3.5.6',
+    version: '3.5.7',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -101,7 +101,7 @@
   }
   
   Lampa.Listener.follow('activity', function (e) {
-    if (e.type == 'start' || e.type == 'page' || e.type == 'complite') {
+    if (e.type == 'start' || e.type == 'page') {
       processCards();
     }
   });
@@ -121,13 +121,7 @@
   });
   
   observer.observe(document.body, { childList: true, subtree: true });
-  
-  const firstCard = document.querySelector('.card');
-  if (firstCard && firstCard.card_data) {
-    Lampa.Storage.set('activity', { movie: firstCard.card_data, card: firstCard.card_data });
-    Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
-  }
-  
+
   if (window.appready) { processCards(); }
   else {
     Lampa.Listener.follow("app", function (e) {
