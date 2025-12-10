@@ -1,112 +1,123 @@
 (function() {
     'use strict';
     
-    // Ждем Lampa
-    const waitLampa = setInterval(() => {
-        if (typeof Lampa !== 'undefined') {
-            clearInterval(waitLampa);
-            initPlugin();
-        }
-    }, 500);
+    Lampa.Params.select('favorite_extend', 'custom_favs', {
+        title: 'Категории закладок',
+        items: [
+            {title: 'Создать', separator: true},
+            {title: 'Переименовать'},
+            {title: 'Удалить'}
+        ],
+        onclick: manageCategories
+    });
 
-    function initPlugin() {
-        // ✅ ПРЯМОЕ добавление в DOM настроек (как делают плагины Lampa)
-        addToSettings();
-    }
-
-    function addToSettings() {
-        // Хук на открытие настроек
-        Lampa.Listener.follow('settings', function(e) {
-            if (e.type == 'open') {
-                setTimeout(() => {
-                    // Ищем контейнер настроек и добавляем
-                    const container = $('.settings-panel .layer--wheight .selector');
-                    if (container.length && !container.find('.custom-categories').length) {
-                        container.append(`
-                            <div class="selector-item custom-categories selector" onclick="showCategoriesMenu()">
-                                <div class="selector-item__title">⭐ Категории закладок</div>
-                                <div class="selector-item__descr">${getCategoriesCount()} категорий</div>
-                            </div>
-                        `);
-                    }
-                }, 300);
-            }
-        });
-
-        // Открытие меню категорий
-        window.showCategoriesMenu = function() {
+    // Кнопка в меню "Избранное"
+    Lampa.Listener.follow('menu', function(e) {
+        if(e.type == 'add' && Array.from(e.object).find(item => item.page == 'favorite')){
             const cats = Lampa.Storage.get('custom_categories', []);
-            Lampa.Select.show({
-                title: 'Категории закладок',
-                items: [
-                    {title: '➕ Создать', onclick: createCategory},
-                    {title: '✏️ Переименовать', onclick: renameCategory, separator: !cats.length},
-                    {title: '🗑️ Удалить', onclick: deleteCategory, separator: !cats.length},
-                    {title: '🔄 Обновить', onclick: () => {Lampa.Noty.show('✅ Готово');}}
-                ]
+            cats.forEach(cat => {
+                e.object.unshift({
+                    title: cat.title,
+                    subtitle: getCount(cat.id),
+                    page: 'favorite',
+                    filter: cat.id,
+                    role: 'category'
+                });
             });
-        };
-    }
+        }
+    });
 
-    function getCategoriesCount() {
-        return Lampa.Storage.get('custom_categories', []).length;
-    }
-
-    window.createCategory = function() {
-        Lampa.Input.edit({
-            title: 'Название категории',
-            onReturn: name => {
-                if (name.trim()) {
-                    const cats = Lampa.Storage.get('custom_categories', []);
-                    cats.push({id: 'cat_' + Date.now(), title: name.trim()});
-                    Lampa.Storage.set('custom_categories', cats);
-                    Lampa.Noty.show('✅ ' + name);
-                }
-            }
-        });
-    };
-
-    window.renameCategory = function() {
+    function manageCategories() {
         const cats = Lampa.Storage.get('custom_categories', []);
-        if (!cats.length) return Lampa.Noty.show('Нет категорий');
-        
         Lampa.Select.show({
-            title: 'Переименовать',
+            title: 'Категории',
+            items: [
+                {
+                    title: '➕ Создать',
+                    onclick: () => {
+                        Lampa.Input.edit({
+                            title: 'Название',
+                            onReturn: name => {
+                                if(name){
+                                    const cats = Lampa.Storage.get('custom_categories', []);
+                                    cats.push({id: Date.now(), title: name});
+                                    Lampa.Storage.set('custom_categories', cats);
+                                    Lampa.Noty.show('Создано');
+                                }
+                            }
+                        });
+                    }
+                },
+                {
+                    title: '✏️ Переименовать',
+                    onclick: () => renameCategory(cats)
+                },
+                {
+                    title: '🗑️ Удалить', 
+                    onclick: () => deleteCategory(cats)
+                }
+            ]
+        });
+    }
+
+    function renameCategory(cats) {
+        Lampa.Select.show({
+            title: 'Выберите',
             items: cats.map(cat => ({
                 title: cat.title,
                 onclick: () => {
                     Lampa.Input.edit({
                         title: 'Новое название',
                         value: cat.title,
-                        onReturn: newName => {
-                            if (newName.trim()) {
-                                cat.title = newName.trim();
+                        onReturn: name => {
+                            if(name) {
+                                cat.title = name;
                                 Lampa.Storage.set('custom_categories', cats);
-                                Lampa.Noty.show('✅ Сохранено');
                             }
                         }
                     });
                 }
             }))
         });
-    };
+    }
 
-    window.deleteCategory = function() {
-        const cats = Lampa.Storage.get('custom_categories', []);
-        if (!cats.length) return;
-        
+    function deleteCategory(cats) {
         Lampa.Select.show({
             title: 'Удалить',
             items: cats.map(cat => ({
-                title: `🗑️ ${cat.title}`,
+                title: cat.title,
                 onclick: () => {
-                    if (confirm('Удалить категорию?')) {
-                        const newCats = cats.filter(c => c.id !== cat.id);
-                        Lampa.Storage.set('custom_categories', newCats);
-                        Lampa.Noty.show('🗑️ Удалено');
+                    if(confirm('Удалить?')){
+                        Lampa.Storage.set('custom_categories', cats.filter(c => c.id !== cat.id));
                     }
                 }
             }))
         });
-    };
+    }
+
+    function getCount(cat_id) {
+        const favs = Lampa.Storage.get('favorite','[]');
+        return favs.filter(fav => fav.category == cat_id).length;
+    }
+
+    // Контекстное меню при добавлении в избранное
+    const originalAdd = Lampa.Storage.field('favorite_add');
+    Lampa.Storage.field('favorite_add', function(item){
+        const cats = Lampa.Storage.get('custom_categories', []);
+        if(cats.length){
+            Lampa.Select.show({
+                title: 'Категория',
+                items: cats.map(cat => ({
+                    title: cat.title,
+                    onclick: () => {
+                        item.category = cat.id;
+                        originalAdd(item);
+                    }
+                })),
+                onBack: () => originalAdd(item)
+            });
+        } else {
+            originalAdd(item);
+        }
+    });
 })();
