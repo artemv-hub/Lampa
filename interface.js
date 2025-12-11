@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.7.6',
+    version: '3.7.7',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -23,6 +23,7 @@
     .card__marker { display: none; }
 
     .time-line > div,
+    .torrent-serial__progress,
     .player-panel__position,
     .player-panel__position > div:after { background-color: #ffc800 }
 
