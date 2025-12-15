@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.8.0',
+    version: '3.8.1',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -133,7 +133,7 @@
       mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
           if (node.nodeType === 1) {
-            styleLabelsTV();
+            styleCard();
             styleColors();
           }
         });
