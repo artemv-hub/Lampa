@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.8.1',
+    version: '3.8.2',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -30,7 +30,7 @@
   `;
   document.head.appendChild(style);
 
-  function styleCard() {
+  function styleCardType() {
     document.querySelectorAll('.card__type').forEach(function (e) {
       if (e.textContent === 'TV') e.textContent = 'Сериал';
     });
@@ -39,10 +39,9 @@
   function styleCardFull() {
     Lampa.Listener.follow('full', function (e) {
       if (e.type == 'complite') {
-        let render = e.object.activity.render();
-        let buttonsContainer = render.find('.full-start-new__buttons');
-        let buttonTorrent = render.find('.view--torrent').removeClass('hide');
-        let buttonOnline = render.find('.view--online').removeClass('hide');
+        let buttonsContainer = e.body.find('.full-start-new__buttons');
+        let buttonTorrent = e.body.find('.view--torrent').removeClass('hide');
+        let buttonOnline = e.body.find('.view--online').removeClass('hide');
         buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options').remove();
         buttonsContainer.prepend(buttonTorrent[0], buttonOnline[0]);
         buttonTorrent.toggleClass('hide', !Lampa.Storage.field('parser_use'));
@@ -94,29 +93,16 @@
 
   function styleSize() {
     let originalLineInit = Lampa.Maker.map('Line').Items.onInit;
-    Lampa.Maker.map('Line').Items.onInit = function () {
-      originalLineInit.call(this);
-      this.view = 12;
-    };
-
+    Lampa.Maker.map('Line').Items.onInit = function () { originalLineInit.call(this); this.view = 12; };
     let originalCategoryInit = Lampa.Maker.map('Category').Items.onInit;
-    Lampa.Maker.map('Category').Items.onInit = function () {
-      originalCategoryInit.call(this);
-      this.limit_view = 12;
-    };
+    Lampa.Maker.map('Category').Items.onInit = function () { originalCategoryInit.call(this); this.limit_view = 12; };
 
-    Lampa.Params.select('interface_size', {
-      '10': '10',
-      '12': '12',
-      '14': '14'
-    }, '12');
-
+    Lampa.Params.select('interface_size', { '10': '10', '12': '12', '14': '14' }, '12');
     function updateSize() {
       let selectedLevel = parseInt(Lampa.Storage.field('interface_size')) || 12;
       let fontSize = Lampa.Platform.screen('mobile') ? 10 : selectedLevel;
       $('body').css({ fontSize: fontSize + 'px' });
     }
-
     Lampa.Storage.listener.follow('change', function (e) {
       if (e.name == 'interface_size') updateSize();
     });
@@ -124,7 +110,7 @@
   }
 
   function startPlugin() {
-    styleCard();
+    styleCardType();
     styleCardFull();
     styleColors();
     styleSize();
@@ -133,7 +119,7 @@
       mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
           if (node.nodeType === 1) {
-            styleCard();
+            styleCardType();
             styleColors();
           }
         });
