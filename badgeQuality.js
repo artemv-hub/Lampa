@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.5.5',
+    version: '3.6.0',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -28,11 +28,11 @@
     'HDRip': 54,
     'DVDRip': 52,
     'WEB-DL': 50,
-    'VHSRip': 40,
-    'CAMRip': 30,
-    'TV': 20,
-    'TC': 18,
-    'TS': 10
+    'TVRip': 40,
+    'VHSRip': 30,
+    'CAMRip': 20,
+    'TC': 10,
+    'TS': 8
   };
 
   function fetchQuality(title, year, callback) {
@@ -52,33 +52,22 @@
   }
 
   function findBestQuality(torrents, targetYear) {
+    const TS_audio = /звук с ts|audio ts/i;
+
     const result = torrents.reduce((best, t) => {
       const title = (t.title || '').toLowerCase();
 
       const yearMatch = title.match(/\b(19|20)\d{2}\b/);
-      if (yearMatch) {
-        const torrentYear = parseInt(yearMatch[0]);
-        if (Math.abs(torrentYear - targetYear) > 1) return best;
-      }
+      if (yearMatch && Math.abs(parseInt(yearMatch[0]) - targetYear) > 1) return best;
 
       const quality = parseQuality(title);
       if (!quality) return best;
 
-      const priority = QUALITY_PRIORITY[quality] || 0;
-      if (priority > best.priority) {
-        return { priority, quality, title };
-      }
-      return best;
+      const priority = TS_audio.test(title) ? 8 : (QUALITY_PRIORITY[quality] || 0);
+      return priority > best.priority ? { priority, quality, title } : best;
     }, { priority: -1, quality: null, title: '' });
 
-    if (!result.quality) return null;
-
-    let displayQuality = result.quality;
-    const hasTSAudio = /звук с ts|audio ts/i.test(result.title);
-    if (hasTSAudio) {
-      displayQuality = displayQuality + '/TS';
-    }
-    return displayQuality;
+    return result.quality ? (TS_audio.test(result.title) ? result.quality + '/TS' : result.quality) : null;
   }
 
   function parseQuality(title) {
@@ -199,7 +188,7 @@
   observer.observe(document.body, { childList: true, subtree: true });
 
   cleanCache();
-  
+
   if (window.appready) { processCards(); }
   else {
     Lampa.Listener.follow("app", function (e) {
