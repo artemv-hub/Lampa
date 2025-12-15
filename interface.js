@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.7.13',
+    version: '3.7.14',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -16,19 +16,11 @@
     .full-start-new__buttons .full-start__button:not(.focus) span { display: unset; }
     .full-start__title-original { font-size: 1.6em; margin-bottom: 0em; }
 
-    .card__watched        { position: absolute; left: 50%; bottom: -0.8em; transform: translate(-50%);
-                            font-size: 1.2em; font-weight: bold; white-space: nowrap;
-                            border-radius: 1em; padding: 0.2em 0.4em; background: rgb(29, 31, 32); }
-    .card__quality        { left: -0.4em; top: 2.4em; bottom: unset;
-                            font-size: 1.2em; font-weight: bold; text-transform: none;
-                            border-radius: 0.2em; padding: 0.2em 0.2em; color: #000; }
-    .card__vote           { left: -0.4em; right: unset; top: 0.8em; bottom: unset;
-                            font-size: 1.2em; font-weight: bold;
-                            border-radius: 0.2em; padding: 0.2em 0.2em; color: #000; }
-    .card--tv .card__type { left: 50%; top: -0.8em; transform: translate(-50%);
-                            font-size: 1em;
-                            border-radius: 1em; padding: 0.2em 0.4em; color: #fff; background: rgb(29, 31, 32); }
-    .card__marker         { display: none; }
+    .card__vote { font-size: 1.2em; font-weight: bold; border-radius: 0.2em; padding: 0.2em 0.2em; color: #000; left: -0.4em; right: unset; top: 0.8em; bottom: unset; }
+    .card__quality { font-size: 1.2em; font-weight: bold; border-radius: 0.2em; padding: 0.2em 0.2em; color: #000; left: -0.4em; top: 2.4em; bottom: unset; text-transform: none; }
+    .card__watched { font-size: 1.2em; font-weight: bold; border-radius: 1em; padding: 0.2em 0.4em; background: rgb(29, 31, 32); left: 50%; bottom: -0.8em; position: absolute; transform: translate(-50%); white-space: nowrap; }
+    .card--tv .card__type { font-size: 1em; border-radius: 1em; padding: 0.2em 0.4em; background: rgb(29, 31, 32); left: 50%; top: -0.8em; transform: translate(-50%); }
+    .card__marker { display: none; }
 
     .time-line > div,
     .torrent-serial__progress,
