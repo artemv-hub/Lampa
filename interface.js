@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.7.14',
+    version: '3.8.0',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -30,38 +30,26 @@
   `;
   document.head.appendChild(style);
 
-  function styleLabelsTV() {
+  function styleCard() {
     document.querySelectorAll('.card__type').forEach(function (e) {
       if (e.textContent === 'TV') e.textContent = 'Сериал';
     });
   }
 
-  function styleButtons() {
+  function styleCardFull() {
     Lampa.Listener.follow('full', function (e) {
       if (e.type == 'complite') {
         let render = e.object.activity.render();
         let buttonsContainer = render.find('.full-start-new__buttons');
+        let buttonTorrent = render.find('.view--torrent').removeClass('hide');
+        let buttonOnline = render.find('.view--online').removeClass('hide');
         buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options').remove();
+        buttonsContainer.prepend(buttonTorrent[0], buttonOnline[0]);
+        buttonTorrent.toggleClass('hide', !Lampa.Storage.field('parser_use'));
 
-        let torrentBtn = render.find('.view--torrent');
-        let onlineBtn = render.find('.view--online').removeClass('hide');
-
-        buttonsContainer.prepend(onlineBtn[0]);
-        if (Lampa.Storage.field('parser_use')) {
-          torrentBtn.removeClass('hide');
-          buttonsContainer.prepend(torrentBtn[0]);
-        }
-      }
-    });
-  }
-
-  function styleTitle() {
-    Lampa.Listener.follow('full', function (e) {
-      if (e.type == 'complite') {
         let titleElement = e.body.find('.full-start-new__title');
         let title = e.data.movie.title || e.data.movie.name;
         let originalTitle = e.data.movie.original_title || e.data.movie.original_name;
-
         if (title && originalTitle && title !== originalTitle) {
           let originalTitleHtml = '<div class="full-start__title-original">' + originalTitle + '</div>';
           titleElement.before(originalTitleHtml);
@@ -69,39 +57,6 @@
         }
       }
     });
-  }
-
-  function styleView() {
-    let originalLineInit = Lampa.Maker.map('Line').Items.onInit;
-    Lampa.Maker.map('Line').Items.onInit = function () {
-      originalLineInit.call(this);
-      this.view = 12;
-    };
-
-    let originalCategoryInit = Lampa.Maker.map('Category').Items.onInit;
-    Lampa.Maker.map('Category').Items.onInit = function () {
-      originalCategoryInit.call(this);
-      this.limit_view = 12;
-    };
-  }
-
-  function styleSize() {
-    Lampa.Params.select('interface_size', {
-      '10': '10',
-      '12': '12',
-      '14': '14'
-    }, '12');
-
-    function updateSize() {
-      let selectedLevel = parseInt(Lampa.Storage.field('interface_size')) || 12;
-      let fontSize = Lampa.Platform.screen('mobile') ? 10 : selectedLevel;
-      $('body').css({ fontSize: fontSize + 'px' });
-    }
-
-    Lampa.Storage.listener.follow('change', function (e) {
-      if (e.name == 'interface_size') updateSize();
-    });
-    updateSize();
   }
 
   function styleColors() {
@@ -137,13 +92,42 @@
     });
   }
 
+  function styleSize() {
+    let originalLineInit = Lampa.Maker.map('Line').Items.onInit;
+    Lampa.Maker.map('Line').Items.onInit = function () {
+      originalLineInit.call(this);
+      this.view = 12;
+    };
+
+    let originalCategoryInit = Lampa.Maker.map('Category').Items.onInit;
+    Lampa.Maker.map('Category').Items.onInit = function () {
+      originalCategoryInit.call(this);
+      this.limit_view = 12;
+    };
+
+    Lampa.Params.select('interface_size', {
+      '10': '10',
+      '12': '12',
+      '14': '14'
+    }, '12');
+
+    function updateSize() {
+      let selectedLevel = parseInt(Lampa.Storage.field('interface_size')) || 12;
+      let fontSize = Lampa.Platform.screen('mobile') ? 10 : selectedLevel;
+      $('body').css({ fontSize: fontSize + 'px' });
+    }
+
+    Lampa.Storage.listener.follow('change', function (e) {
+      if (e.name == 'interface_size') updateSize();
+    });
+    updateSize();
+  }
+
   function startPlugin() {
-    styleLabelsTV();
-    styleButtons();
-    styleTitle();
-    styleView();
-    styleSize();
+    styleCard();
+    styleCardFull();
     styleColors();
+    styleSize();
 
     const observer = new MutationObserver((mutations) => {
       mutations.forEach(mutation => {
