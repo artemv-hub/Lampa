@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.6.0',
+    version: '3.6.1',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -29,10 +29,10 @@
     'DVDRip': 52,
     'WEB-DL': 50,
     'TVRip': 40,
-    'VHSRip': 30,
-    'CAMRip': 20,
-    'TC': 10,
-    'TS': 8
+    'VHSRip': 38,
+    'CAMRip': 36,
+    'TC': 30,
+    'TS': 20
   };
 
   function fetchQuality(title, year, callback) {
@@ -63,7 +63,7 @@
       const quality = parseQuality(title);
       if (!quality) return best;
 
-      const priority = TS_audio.test(title) ? 8 : (QUALITY_PRIORITY[quality] || 0);
+      const priority = TS_audio.test(title) ? 22 : (QUALITY_PRIORITY[quality] || 0);
       return priority > best.priority ? { priority, quality, title } : best;
     }, { priority: -1, quality: null, title: '' });
 
