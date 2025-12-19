@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.7.1',
+    version: '3.7.2',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -17,7 +17,7 @@
         for (let episode = 160; episode >= 1; episode--) {
           let hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''))
           let timelineData = Lampa.Timeline.view(hash)
-          if (timelineData?.time > 0) return { episode, season }
+          if (timelineData?.time > 0 || (timelineData?.percent > 0)) return { episode, season }
         }
       }
     } else {
@@ -129,4 +129,5 @@
     });
   }
 })();
+
 
