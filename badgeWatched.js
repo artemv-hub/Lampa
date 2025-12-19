@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.6.1',
+    version: '3.7.0',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -12,8 +12,14 @@
 
   function getData(cardData) {
     if (cardData.original_name) {
-      const hash = Lampa.Utils.hash([cardData.original_name || cardData.name].join(''));
-      return Lampa.Storage.get('online_watched_last', {})[hash];
+      const totalSeasons = cardData.number_of_seasons;
+      for (let season = totalSeasons; season >= 1; season--) {
+        for (let episode = 400; episode >= 1; episode--) {
+          let hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''))
+          let timelineData = Lampa.Timeline.view(hash)
+          if (timelineData?.time > 0) return { episode, season }
+        }
+      }
     } else {
       const hash = Lampa.Utils.hash([cardData.original_title || cardData.title].join(''));
       return Lampa.Timeline.view(hash);
@@ -21,14 +27,14 @@
   }
 
   function formatWatched(timeData, cardData, callback) {
-    if (!timeData) return null;
+    if (!timeData)
+      return null;
 
     if (timeData.episode && timeData.season) {
       Lampa.Api.seasons(cardData, [timeData.season], (seasonsData) => {
-        const seasonData = seasonsData[timeData.season];
-        const episodesInSeason = seasonData && seasonData.episodes ? seasonData.episodes.length : '?';
         const totalSeasons = cardData.number_of_seasons || '?';
-        const displayText = `E${timeData.episode}/${episodesInSeason} S${timeData.season}/${totalSeasons}`;
+        const totalEpisodes = seasonsData[timeData.season]?.episodes.length || '?';
+        const displayText = `S${timeData.season}/${totalSeasons} E${timeData.episode}/${totalEpisodes}`;
         callback(displayText);
       });
       return null;
@@ -37,7 +43,6 @@
       const totalTime = Lampa.Utils.secondsToTime(timeData.duration, true);
       return `${currentTime}/${totalTime}`;
     }
-
     return null;
   }
 
@@ -87,7 +92,7 @@
       return new Promise((resolve) => {
         Lampa.Storage.set('activity', { movie: cardData, card: cardData });
         Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
-        setTimeout(resolve, 100);
+        setTimeout(resolve, 80);
       });
     });
 
