@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.6.1',
+    version: '3.6.2',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -38,10 +38,8 @@
   function fetchQuality(title, year, callback) {
     var userId = Lampa.Storage.get('lampac_unic_id', '');
     var url = CONFIG.JACRED_URL + '?search=' + encodeURIComponent(title) + '&year=' + year + '&exact=true&uid=' + userId;
-
     var network = new Lampa.Reguest();
     network.timeout(5000);
-
     network.silent(url, function (torrents) {
       if (!torrents || !torrents.length) return callback(null);
       var best = findBestQuality(torrents, year);
@@ -53,20 +51,16 @@
 
   function findBestQuality(torrents, targetYear) {
     const TS_audio = /звук с ts|audio ts/i;
-
+    const trailer = /трейлер|trailer/i;
+    if (torrents.every(t => trailer.test(t.title || ''))) return null;
     const result = torrents.reduce((best, t) => {
       const title = (t.title || '').toLowerCase();
-
       const yearMatch = title.match(/\b(19|20)\d{2}\b/);
-      if (yearMatch && Math.abs(parseInt(yearMatch[0]) - targetYear) > 1) return best;
-
       const quality = parseQuality(title);
-      if (!quality) return best;
-
       const priority = TS_audio.test(title) ? 22 : (QUALITY_PRIORITY[quality] || 0);
+      if ((yearMatch && Math.abs(parseInt(yearMatch[0]) - targetYear) > 1) || !quality) return best;
       return priority > best.priority ? { priority, quality, title } : best;
     }, { priority: -1, quality: null, title: '' });
-
     return result.quality ? (TS_audio.test(result.title) ? result.quality + '/TS' : result.quality) : null;
   }
 
@@ -90,9 +84,7 @@
       [/telesync|\bts\b/i, 'TS']
     ];
 
-    for (const [pattern, quality] of patterns) {
-      if (pattern.test(title)) return quality;
-    }
+    for (const [pattern, quality] of patterns) { if (pattern.test(title)) return quality; }
     return null;
   }
 
@@ -105,9 +97,7 @@
   function getCache(key) {
     var cache = Lampa.Storage.get(CONFIG.CACHE_KEY) || {};
     var item = cache[key];
-    if (item && Date.now() - item.ts < CONFIG.CACHE_TTL_MS) {
-      return item.quality;
-    }
+    if (item && Date.now() - item.ts < CONFIG.CACHE_TTL_MS) return item.quality;
     return null;
   }
 
@@ -115,13 +105,7 @@
     var cache = Lampa.Storage.get(CONFIG.CACHE_KEY) || {};
     var now = Date.now();
     var cleaned = {};
-
-    Object.keys(cache).forEach(key => {
-      if (now - cache[key].ts < CONFIG.CACHE_TTL_MS) {
-        cleaned[key] = cache[key];
-      }
-    });
-
+    Object.keys(cache).forEach(key => { if (now - cache[key].ts < CONFIG.CACHE_TTL_MS) cleaned[key] = cache[key]; });
     Lampa.Storage.set(CONFIG.CACHE_KEY, cleaned);
   }
 
@@ -167,7 +151,7 @@
 
   Lampa.Listener.follow('activity', function (e) {
     if (e.type == 'start' || e.type == 'page') {
-      setTimeout(processCards, 100);
+      setTimeout(processCards, 80);
     }
   });
 
