@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.8.2',
+    version: '3.8.3',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -42,7 +42,7 @@
         let buttonsContainer = e.body.find('.full-start-new__buttons');
         let buttonTorrent = e.body.find('.view--torrent').removeClass('hide');
         let buttonOnline = e.body.find('.view--online').removeClass('hide');
-        buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options').remove();
+        buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options, .shots-view-button').remove();
         buttonsContainer.prepend(buttonTorrent[0], buttonOnline[0]);
         buttonTorrent.toggleClass('hide', !Lampa.Storage.field('parser_use'));
 
