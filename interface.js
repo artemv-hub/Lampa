@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.8.5',
+    version: '3.8.6',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -13,6 +13,7 @@
   const style = document.createElement('style');
   style.textContent = `
 
+    .shots-view-button { display: none; }
     .full-start-new__buttons .full-start__button:not(.focus) span { display: unset; }
     .full-start__title-original { font-size: 1.6em; margin-bottom: 0em; }
 
