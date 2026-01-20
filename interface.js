@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.8.6',
+    version: '3.8.7',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -13,7 +13,6 @@
   const style = document.createElement('style');
   style.textContent = `
 
-    .shots-view-button { display: none; }
     .full-start-new__buttons .full-start__button:not(.focus) span { display: unset; }
     .full-start__title-original { font-size: 1.6em; margin-bottom: 0em; }
 
@@ -43,7 +42,7 @@
         let buttonsContainer = e.body.find('.full-start-new__buttons');
         let buttonTorrent = e.body.find('.view--torrent').removeClass('hide');
         let buttonOnline = e.body.find('.view--online').removeClass('hide');
-        buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options, .shots-view-button').remove();
+        buttonsContainer.find('.button--play, .button--reaction, .button--subscribe, .button--options').remove();
         buttonsContainer.prepend(buttonTorrent[0], buttonOnline[0]);
         buttonTorrent.toggleClass('hide', !Lampa.Storage.field('parser_use'));
 
