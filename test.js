@@ -64,24 +64,25 @@
     }  
   }  
   
-function processCards() {  
-  const cards = document.querySelectorAll('.card:not([data-watched-processed="true"])');  
-    
-  cards.forEach(card => {  
-    const data = card.card_data;  
-    if (!data || !data.id) return;  
+function processCards() {    
+  const cards = document.querySelectorAll('.card:not([data-watched-processed="true"])');    
       
-    card.setAttribute('data-watched-processed', 'true');  
-      
-    // Используем тот же подход что и в card/module/watched.js  
-    if (data.original_name) {  
-      Lampa.Timetable.get(data, (episodes) => {  
-        renderWatchedBadge(card, data);  
-      });  
-    } else {  
-      renderWatchedBadge(card, data);  
-    }  
-  });  
+  cards.forEach(card => {    
+    const data = card.card_data;    
+    if (!data || !data.id) return;    
+        
+    card.setAttribute('data-watched-processed', 'true');    
+        
+    if (data.original_name && !data.seasons) {    
+      Lampa.Api.get(data, (fullData) => {    
+        const fullMovieData = fullData.movie || fullData;    
+        card.card_data = fullMovieData;    
+        renderWatchedBadge(card, fullMovieData);    
+      });    
+    } else {    
+      renderWatchedBadge(card, data);    
+    }    
+  });    
 }
   
   Lampa.Listener.follow('activity', function (e) {  
@@ -109,6 +110,7 @@ function processCards() {
     });  
   }  
 })();
+
 
 
 
