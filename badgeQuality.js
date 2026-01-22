@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.6.2',
+    version: '3.6.3',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -13,7 +13,7 @@
   var CONFIG = {
     CACHE_KEY: 'lampa_quality_cache',
     CACHE_TTL_MS: 24 * 60 * 60 * 1000,
-    JACRED_URL: 'https://jacred.xyz/api/v1.0/torrents'
+    JACRED_URL: 'http://redapi.cfhttp.top/api/v1.0/torrents'
   };
 
   var QUALITY_PRIORITY = {
