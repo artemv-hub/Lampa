@@ -64,34 +64,44 @@
     }  
   }  
   
-  function processCards() {  
-    const cards = document.querySelectorAll('.card');  
-    const uniqueCards = [];  
-    const seen = new Set();  
+function processCards() {  
+  const cards = document.querySelectorAll('.card');  
+  const uniqueCards = [];  
+  const seen = new Set();  
   
-    cards.forEach(card => {  
-      const data = card.card_data;  
-      if (data && data.id && !seen.has(data.id)) {  
-        seen.add(data.id);  
-        uniqueCards.push(data);  
-      }  
-    });  
+  cards.forEach(card => {  
+    const data = card.card_data;  
+    if (data && data.id && !seen.has(data.id)) {  
+      seen.add(data.id);  
+      uniqueCards.push(data);  
+    }  
+  });  
   
-    const loadPromises = uniqueCards.map((cardData) => {  
-      return new Promise((resolve) => {  
+  const loadPromises = uniqueCards.map((cardData) => {  
+    return new Promise((resolve) => {  
+      // Загружаем полные данные, если это сериал без данных о сезонах  
+      if (cardData.original_name && !cardData.seasons) {  
+        Lampa.Api.get(cardData, (fullData) => {  
+          cardData = fullData.movie || fullData;  
+          Lampa.Storage.set('activity', { movie: cardData, card: cardData });  
+          Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });  
+          setTimeout(resolve, 80);  
+        });  
+      } else {  
         Lampa.Storage.set('activity', { movie: cardData, card: cardData });  
         Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });  
         setTimeout(resolve, 80);  
-      });  
+      }  
     });  
+  });  
   
-    Promise.all(loadPromises).then(() => {  
-      document.querySelectorAll('.card').forEach(card => {  
-        card.setAttribute('data-watched-processed', 'true');  
-        if (card.card_data) renderWatchedBadge(card, card.card_data);  
-      });  
+  Promise.all(loadPromises).then(() => {  
+    document.querySelectorAll('.card').forEach(card => {  
+      card.setAttribute('data-watched-processed', 'true');  
+      if (card.card_data) renderWatchedBadge(card, card.card_data);  
     });  
-  }  
+  });  
+}
   
   Lampa.Listener.follow('activity', function (e) {  
     if (e.type == 'start' || e.type == 'page') {  
@@ -118,3 +128,4 @@
     });  
   }  
 })();
+
