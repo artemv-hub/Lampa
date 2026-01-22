@@ -73,17 +73,19 @@ function processCards() {
     const data = card.card_data;  
     if (data && data.id && !seen.has(data.id)) {  
       seen.add(data.id);  
-      uniqueCards.push(data);  
+      uniqueCards.push({card, data});  
     }  
   });  
   
-  const loadPromises = uniqueCards.map((cardData) => {  
+  const loadPromises = uniqueCards.map(({card, cardData}) => {  
     return new Promise((resolve) => {  
       // Загружаем полные данные, если это сериал без данных о сезонах  
       if (cardData.original_name && !cardData.seasons) {  
         Lampa.Api.get(cardData, (fullData) => {  
-          cardData = fullData.movie || fullData;  
-          Lampa.Storage.set('activity', { movie: cardData, card: cardData });  
+          const fullMovieData = fullData.movie || fullData;  
+          // Обновляем данные на карточке  
+          card.card_data = fullMovieData;  
+          Lampa.Storage.set('activity', { movie: fullMovieData, card: fullMovieData });  
           Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });  
           setTimeout(resolve, 80);  
         });  
@@ -128,4 +130,5 @@ function processCards() {
     });  
   }  
 })();
+
 
