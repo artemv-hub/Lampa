@@ -3,76 +3,67 @@
 
   let manifest = {
     type: 'other',
-    version: '3.7.5',
+    version: '3.7.6',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
 
   Lampa.Manifest.plugins = manifest;
 
-  function getData(cardData) {
+  function getData(cardData, callback) {
     if (cardData.original_name) {
-      const totalSeasons = cardData.number_of_seasons;
-      for (let season = totalSeasons; season >= 1; season--) {
-        for (let episode = 120; episode >= 1; episode--) {
-          let hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''))
-          let timelineData = Lampa.Timeline.view(hash)
-          if (timelineData?.time > 0 || (timelineData?.percent > 0)) return { episode, season }
+      let seasons = Array.from({ length: cardData.number_of_seasons }, (_, i) => i + 1);
+      Lampa.Api.seasons(cardData, seasons, (seasonsData) => {
+        for (let season of seasons.reverse()) {
+          let episodes = seasonsData[season]?.episodes || [];
+          for (let { episode_number: episode } of episodes.reverse()) {
+            let hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''));
+            let timelineData = Lampa.Timeline.view(hash);
+            if (timelineData?.time > 0 || timelineData?.percent > 0) {
+              callback({ episode, season, seasonsData });
+              return;
+            }
+          }
         }
-      }
+        callback(null);
+      });
     } else {
       const hash = Lampa.Utils.hash([cardData.original_title || cardData.title].join(''));
-      return Lampa.Timeline.view(hash);
+      callback(Lampa.Timeline.view(hash));
     }
   }
 
   function formatWatched(timeData, cardData, callback) {
-    if (!timeData)
-      return null;
+    if (!timeData || (!timeData.episode && !timeData.time)) {
+      callback(null);
+      return;
+    }
 
     if (timeData.episode && timeData.season) {
-      Lampa.Api.seasons(cardData, [timeData.season], (seasonsData) => {
-        const totalSeasons = cardData.number_of_seasons || '?';
-        const totalEpisodes = seasonsData[timeData.season]?.episodes.length || '?';
-        const displayText = `S${timeData.season}/${totalSeasons} E${timeData.episode}/${totalEpisodes}`;
-        callback(displayText);
-      });
-      return null;
+      const seasonsData = timeData.seasonsData || {};
+      const totalSeasons = cardData.number_of_seasons || '?';
+      const totalEpisodes = seasonsData[timeData.season]?.episodes?.length || '?';
+      callback(`S${timeData.season}/${totalSeasons} E${timeData.episode}/${totalEpisodes}`);
     } else if (timeData.time && timeData.duration) {
       const currentTime = Lampa.Utils.secondsToTime(timeData.time, true);
       const totalTime = Lampa.Utils.secondsToTime(timeData.duration, true);
-      return `${currentTime}/${totalTime}`;
+      callback(`${currentTime}/${totalTime}`);
     }
-    return null;
   }
 
   function renderWatchedBadge(cardElement, data) {
-    const cardView = cardElement.querySelector('.card__view');
-    if (!cardView) return;
+    cardElement.querySelector('.card__view .card__watched')?.remove();
 
-    const oldBadge = cardView.querySelector('.card__watched');
-    if (oldBadge) oldBadge.remove();
+    getData(data, (timeData) => {
+      formatWatched(timeData, data, (text) => {
+        if (!text) return;
 
-    const timeData = getData(data);
-
-    if (timeData && timeData.episode && timeData.season) {
-      formatWatched(timeData, data, (displayText) => {
-        if (displayText) {
-          const badge = document.createElement('div');
-          badge.className = 'card__watched';
-          badge.innerText = displayText;
-          cardView.appendChild(badge);
-        }
-      });
-    } else {
-      const displayText = formatWatched(timeData, data);
-      if (displayText) {
         const badge = document.createElement('div');
         badge.className = 'card__watched';
-        badge.innerText = displayText;
-        cardView.appendChild(badge);
-      }
-    }
+        badge.innerText = text;
+        cardElement.querySelector('.card__view').appendChild(badge);
+      });
+    });
   }
 
   function processCards() {
@@ -129,8 +120,3 @@
     });
   }
 })();
-
-
-
-
-
