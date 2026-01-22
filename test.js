@@ -65,43 +65,22 @@
   }  
   
 function processCards() {  
-  const cards = document.querySelectorAll('.card');  
-  const uniqueCards = [];  
-  const seen = new Set();  
-  
+  const cards = document.querySelectorAll('.card:not([data-watched-processed="true"])');  
+    
   cards.forEach(card => {  
     const data = card.card_data;  
-    if (data && data.id && !seen.has(data.id)) {  
-      seen.add(data.id);  
-      uniqueCards.push({card, data});  
+    if (!data || !data.id) return;  
+      
+    card.setAttribute('data-watched-processed', 'true');  
+      
+    // Используем тот же подход что и в card/module/watched.js  
+    if (data.original_name) {  
+      Lampa.Timetable.get(data, (episodes) => {  
+        renderWatchedBadge(card, data);  
+      });  
+    } else {  
+      renderWatchedBadge(card, data);  
     }  
-  });  
-  
-  const loadPromises = uniqueCards.map(({card, cardData}) => {  
-    return new Promise((resolve) => {  
-      // Загружаем полные данные, если это сериал без данных о сезонах  
-      if (cardData.original_name && !cardData.seasons) {  
-        Lampa.Api.get(cardData, (fullData) => {  
-          const fullMovieData = fullData.movie || fullData;  
-          // Обновляем данные на карточке  
-          card.card_data = fullMovieData;  
-          Lampa.Storage.set('activity', { movie: fullMovieData, card: fullMovieData });  
-          Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });  
-          setTimeout(resolve, 80);  
-        });  
-      } else {  
-        Lampa.Storage.set('activity', { movie: cardData, card: cardData });  
-        Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });  
-        setTimeout(resolve, 80);  
-      }  
-    });  
-  });  
-  
-  Promise.all(loadPromises).then(() => {  
-    document.querySelectorAll('.card').forEach(card => {  
-      card.setAttribute('data-watched-processed', 'true');  
-      if (card.card_data) renderWatchedBadge(card, card.card_data);  
-    });  
   });  
 }
   
@@ -130,5 +109,6 @@ function processCards() {
     });  
   }  
 })();
+
 
 
