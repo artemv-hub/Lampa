@@ -10,43 +10,43 @@
   
   Lampa.Manifest.plugins = manifest;  
   
-  function getData(cardData) {  
-    if (cardData.original_name) {  
-      const totalSeasons = cardData.number_of_seasons;  
-      for (let season = totalSeasons; season >= 1; season--) {  
-        // Используем точное количество эпизодов из cardData.seasons  
-        const episodeCount = cardData.seasons?.find(s => s.season_number === season)?.episode_count || 120;  
-        for (let episode = episodeCount; episode >= 1; episode--) {  
-          let hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''))  
-          let timelineData = Lampa.Timeline.view(hash)  
-          if (timelineData?.time > 0 || (timelineData?.percent > 0)) {  
-            return { episode, season };  
-          }  
+function getData(cardData) {  
+  if (cardData.original_name) {  
+    const seasonCount = cardData.number_of_seasons;  
+    for (let season = seasonCount; season >= 1; season--) {  
+      const episodeCount = cardData.seasons?.find(s => s.season_number === season)?.episode_count || 120;  
+      for (let episode = episodeCount; episode >= 1; episode--) {  
+        let hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''));  
+        let timelineData = Lampa.Timeline.view(hash);  
+          
+        if (timelineData?.time > 0 || timelineData?.percent > 0) {  
+          return { episode, season, seasonCount, episodeCount };  
         }  
       }  
-    } else {  
-      const hash = Lampa.Utils.hash([cardData.original_title || cardData.title].join(''));  
-      return Lampa.Timeline.view(hash);  
     }  
+  } else {  
+    const hash = Lampa.Utils.hash([cardData.original_title || cardData.title].join(''));  
+    return Lampa.Timeline.view(hash);  
+  }  
+  return null;  
+}  
+  
+function formatWatched(timeData, cardData) {  
+  if (!timeData || (!timeData.episode && !timeData.time)) {  
     return null;  
   }  
   
-  function formatWatched(timeData, cardData) {  
-    if (!timeData || (!timeData.episode && !timeData.time)) {  
-      return null;  
-    }  
-  
-    if (timeData.episode && timeData.season) {  
-      const totalSeasons = cardData.number_of_seasons || '?';  
-      const totalEpisodes = cardData.seasons?.find(s => s.season_number === timeData.season)?.episode_count || '?';  
-      return `S${timeData.season}/${totalSeasons} E${timeData.episode}/${totalEpisodes}`;  
-    } else if (timeData.time && timeData.duration) {  
-      const currentTime = Lampa.Utils.secondsToTime(timeData.time, true);  
-      const totalTime = Lampa.Utils.secondsToTime(timeData.duration, true);  
-      return `${currentTime}/${totalTime}`;  
-    }  
-    return null;  
+  if (timeData.episode && timeData.season) {  
+    const totalSeasons = timeData.seasonCount || '?';  
+    const totalEpisodes = timeData.episodeCount || '?';  
+    return `S${timeData.season}/${totalSeasons} E${timeData.episode}/${totalEpisodes}`;  
+  } else if (timeData.time && timeData.duration) {  
+    const currentTime = Lampa.Utils.secondsToTime(timeData.time, true);  
+    const totalTime = Lampa.Utils.secondsToTime(timeData.duration, true);  
+    return `${currentTime}/${totalTime}`;  
   }  
+  return null;  
+}
   
   function renderWatchedBadge(cardElement, data) {  
     let badge = cardElement.querySelector('.card__view .card__watched');  
@@ -123,6 +123,7 @@ function processCards() {
     });  
   }  
 })();
+
 
 
 
