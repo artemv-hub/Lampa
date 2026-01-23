@@ -65,52 +65,45 @@
   }  
   
 function processCards() {  
-  const cards = document.querySelectorAll('.card');  
-  const uniqueCards = [];  
-  const seen = new Set();  
-  
-  cards.forEach(card => {  
-    const data = card.card_data;  
-    if (data && data.id && !seen.has(data.id)) {  
-      seen.add(data.id);  
-      uniqueCards.push({card, data});  
-    }  
-  });  
-  
-  const loadPromises = uniqueCards.map(({card, data}) => {  
-    return new Promise((resolve) => {  
-      // Загружаем данные о сезонах для сериалов  
-      if (data.original_name && !data.seasons && data.number_of_seasons) {  
-        const seasonNumbers = Array.from({length: data.number_of_seasons}, (_, i) => i + 1);  
+  // Получаем уникальные карточки с данными  
+  const cardsWithData = Array.from(document.querySelectorAll('.card'))  
+    .map(card => ({ card, data: card.card_data }))  
+    .filter(({ data }) => data?.id && !card.hasAttribute('data-watched-processed'));  
+    
+  // Обрабатываем каждую карточку  
+  const processCard = ({ card, data }) => {  
+    // Устанавливаем активность и получаем таймкоды  
+    Lampa.Storage.set('activity', { movie: data, card: data });  
+    Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });  
+      
+    // Загружаем данные о сезонах для сериалов если нужно  
+    if (data.original_name && !data.seasons && data.number_of_seasons) {  
+      return new Promise(resolve => {  
+        const seasonNumbers = Array.from({ length: data.number_of_seasons }, (_, i) => i + 1);  
           
-        Lampa.Api.seasons(data, seasonNumbers, (seasonsData) => {  
-          // Преобразуем в формат seasons массива  
-          const seasonsArray = seasonNumbers.map(seasonNum => ({  
+        Lampa.Api.seasons(data, seasonNumbers, seasonsData => {  
+          data.seasons = seasonNumbers.map(seasonNum => ({  
             season_number: seasonNum,  
             episode_count: seasonsData[seasonNum]?.episodes?.length || 0  
           }));  
             
-          data.seasons = seasonsArray;  
           card.card_data = data;  
-            
-          Lampa.Storage.set('activity', { movie: data, card: data });  
-          Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });  
           setTimeout(resolve, 80);  
         });  
-      } else {  
-        Lampa.Storage.set('activity', { movie: data, card: data });  
-        Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });  
-        setTimeout(resolve, 80);  
-      }  
+      });  
+    }  
+      
+    return Promise.resolve();  
+  };  
+    
+  // Обрабатываем все карточки и рендерим значки  
+  Promise.all(cardsWithData.map(processCard))  
+    .then(() => {  
+      cardsWithData.forEach(({ card, data }) => {  
+        card.setAttribute('data-watched-processed', 'true');  
+        renderWatchedBadge(card, data);  
+      });  
     });  
-  });  
-  
-  Promise.all(loadPromises).then(() => {  
-    document.querySelectorAll('.card').forEach(card => {  
-      card.setAttribute('data-watched-processed', 'true');  
-      if (card.card_data) renderWatchedBadge(card, card.card_data);  
-    });  
-  });  
 }
   
   Lampa.Listener.follow('activity', function (e) {  
@@ -138,6 +131,7 @@ function processCards() {
     });  
   }  
 })();
+
 
 
 
