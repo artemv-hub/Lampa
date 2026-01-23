@@ -62,15 +62,20 @@ function formatWatched(timeData, cardData) {
     }  
   }  
   
+function fetchTimecodes(data) {  
+  Lampa.Storage.set('activity', { movie: data, card: data });  
+  Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });  
+}  
+  
 function processCards() {  
   const cards = Array.from(document.querySelectorAll('.card'))  
     .filter(card => card.card_data?.id && !card.hasAttribute('data-watched-processed'));  
-    
+      
   const loadSeasonsIfNeeded = data => {  
     if (!data.original_name || data.seasons || !data.number_of_seasons) {  
       return Promise.resolve();  
     }  
-      
+        
     return new Promise(resolve => {  
       const seasons = Array.from({ length: data.number_of_seasons }, (_, i) => i + 1);  
       Lampa.Api.seasons(data, seasons, seasonsData => {  
@@ -82,11 +87,10 @@ function processCards() {
       });  
     });  
   };  
-    
+      
   Promise.all(cards.map(card => {  
     const data = card.card_data;  
-    Lampa.Storage.set('activity', { movie: data, card: data });  
-    Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });  
+    fetchTimecodes(data); // Используем новую функцию  
     return loadSeasonsIfNeeded(data);  
   })).then(() => {  
     cards.forEach(card => {  
@@ -94,13 +98,22 @@ function processCards() {
       renderWatchedBadge(card, card.card_data);  
     });  
   });  
-}
-  
-  Lampa.Listener.follow('activity', function (e) {  
-    if (e.type == 'start' || e.type == 'page') {  
-      processCards();  
-    }  
-  });  
+}  
+
+// В activity listener  
+Lampa.Listener.follow('activity', function (e) {  
+  if (e.type == 'start' || e.type == 'page') {  
+    // Для обновления существующих карточек  
+    document.querySelectorAll('.card[data-watched-processed]').forEach(card => {  
+      if (card.card_data) {  
+        fetchTimecodes(card.card_data);  
+      }  
+    });  
+      
+    // Для новых карточек  
+    processCards();  
+  }  
+});
   
   var observer = new MutationObserver(function (mutations) {  
     mutations.forEach(function (mutation) {  
@@ -121,6 +134,7 @@ function processCards() {
     });  
   }  
 })();
+
 
 
 
