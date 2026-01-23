@@ -14,13 +14,13 @@ function getData(cardData) {
   if (cardData.original_name) {  
     const seasonCount = cardData.number_of_seasons;  
     for (let season = seasonCount; season >= 1; season--) {  
-      const episodeCount = cardData.seasons?.find(s => s.season_number === season)?.episode_count || 120;  
+      const episodeCount = cardData.seasons?.find(s => s.season_number === season)?.episode_count;  
       for (let episode = episodeCount; episode >= 1; episode--) {  
         let hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''));  
         let timelineData = Lampa.Timeline.view(hash);  
           
         if (timelineData?.time > 0 || timelineData?.percent > 0) {  
-          return { episode, season, seasonCount, episodeCount };  
+          return { season, seasonCount, episode, episodeCount };  
         }  
       }  
     }  
@@ -37,9 +37,7 @@ function formatWatched(timeData, cardData) {
   }  
   
   if (timeData.episode && timeData.season) {  
-    const totalSeasons = timeData.seasonCount || '?';  
-    const totalEpisodes = timeData.episodeCount || '?';  
-    return `S${timeData.season}/${totalSeasons} E${timeData.episode}/${totalEpisodes}`;  
+    return `S${timeData.season}/${timeData.seasonCount} E${timeData.episode}/${timeData.episodeCount}`;  
   } else if (timeData.time && timeData.duration) {  
     const currentTime = Lampa.Utils.secondsToTime(timeData.time, true);  
     const totalTime = Lampa.Utils.secondsToTime(timeData.duration, true);  
@@ -123,6 +121,7 @@ function processCards() {
     });  
   }  
 })();
+
 
 
 
