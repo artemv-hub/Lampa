@@ -15,7 +15,7 @@
       const totalSeasons = cardData.number_of_seasons;  
       for (let season = totalSeasons; season >= 1; season--) {  
         // Используем точное количество эпизодов из cardData.seasons  
-        const episodeCount = cardData.seasons?.find(s => s.season_number === season)?.episode_count || 120;  
+        const episodeCount = cardData.seasons?.[season - 1]?.episode_count || 120;  
         for (let episode = episodeCount; episode >= 1; episode--) {  
           let hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''))  
           let timelineData = Lampa.Timeline.view(hash)  
@@ -38,7 +38,7 @@
   
     if (timeData.episode && timeData.season) {  
       const totalSeasons = cardData.number_of_seasons || '?';  
-      const totalEpisodes = cardData.seasons?.find(s => s.season_number === timeData.season)?.episode_count || '?';  
+      const totalEpisodes = cardData.seasons?.[timeData.season - 1]?.episode_count || '?';  
       return `S${timeData.season}/${totalSeasons} E${timeData.episode}/${totalEpisodes}`;  
     } else if (timeData.time && timeData.duration) {  
       const currentTime = Lampa.Utils.secondsToTime(timeData.time, true);  
@@ -123,6 +123,7 @@ function processCards() {
     });  
   }  
 })();
+
 
 
 
