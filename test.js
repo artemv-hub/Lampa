@@ -104,9 +104,9 @@ Lampa.Listener.follow('activity', function (e) {
   var observer = new MutationObserver(function (mutations) {  
     mutations.forEach(function (mutation) {  
       mutation.addedNodes.forEach(function (node) {  
-        if (node.nodeType === 1 && node.classList && node.classList.contains('card')) {  
-          processCards();  
-        }  
+        if (node.nodeType === 1 && node.matches('.card:not([data-watched-processed])')) {  
+  processCards();  
+}
       });  
     });  
   });  
@@ -120,5 +120,6 @@ Lampa.Listener.follow('activity', function (e) {
     });  
   }  
 })();
+
 
 
