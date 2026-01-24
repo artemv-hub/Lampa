@@ -95,21 +95,21 @@ function processCards() {
 }
   
 Lampa.Listener.follow('activity', function (e) {  
-  if ((e.type == 'start' || e.type == 'page') &&   
-      (e.object.component == 'bookmarks' || e.object.component == 'favorite')) {  
+  if (e.type == 'start' || e.type == 'page') {  
     processCards();  
   }  
-});
+});  
   
-  var observer = new MutationObserver(function (mutations) {  
-    mutations.forEach(function (mutation) {  
-      mutation.addedNodes.forEach(function (node) {  
-        if (node.nodeType === 1 && node.matches('.card:not([data-watched-processed])')) {  
-  processCards();  
-}
-      });  
-    });  
-  });  
+var observer = new MutationObserver(function (mutations) {    
+  mutations.forEach(function (mutation) {    
+    mutation.addedNodes.forEach(function (node) {    
+      if (node.nodeType === 1 && node.classList?.contains('card') &&   
+          !node.hasAttribute('data-watched-processed')) {  
+        processCards();    
+      }    
+    });    
+  });    
+});    
   
   observer.observe(document.body, { childList: true, subtree: true });  
   
@@ -120,6 +120,7 @@ Lampa.Listener.follow('activity', function (e) {
     });  
   }  
 })();
+
 
 
 
