@@ -94,11 +94,12 @@ function processCards() {
   });  
 }
   
-  Lampa.Listener.follow('activity', function (e) {  
-    if (e.type == 'start' || e.type == 'page') {  
-      processCards();  
-    }  
-  });  
+Lampa.Listener.follow('activity', function (e) {  
+  if ((e.type == 'start' || e.type == 'page') &&   
+      (e.object.component == 'bookmarks' || e.object.component == 'favorite')) {  
+    processCards();  
+  }  
+});
   
   var observer = new MutationObserver(function (mutations) {  
     mutations.forEach(function (mutation) {  
@@ -119,4 +120,5 @@ function processCards() {
     });  
   }  
 })();
+
 
