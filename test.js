@@ -86,12 +86,7 @@ function processCards() {
         setTimeout(resolve, 80);  
       });  
     });  
-  })).then(() => {  
-    cards.forEach(card => {  
-      card.setAttribute('data-watched-processed', 'true');  
-      renderWatchedBadge(card, card.card_data);  
-    });  
-  });  
+  })).then(() => cards.forEach(card => renderWatchedBadge(card, card.card_data)))
 }
   
 Lampa.Listener.follow('activity', function (e) {  
@@ -103,8 +98,7 @@ Lampa.Listener.follow('activity', function (e) {
 var observer = new MutationObserver(function (mutations) {    
   mutations.forEach(function (mutation) {    
     mutation.addedNodes.forEach(function (node) {    
-      if (node.nodeType === 1 && node.classList?.contains('card') &&   
-          !node.hasAttribute('data-watched-processed')) {  
+      if (node.nodeType === 1 && node.classList?.contains('card') {  
         processCards();    
       }    
     });    
@@ -120,6 +114,7 @@ var observer = new MutationObserver(function (mutations) {
     });  
   }  
 })();
+
 
 
 
