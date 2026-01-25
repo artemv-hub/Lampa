@@ -77,7 +77,7 @@ if (data.original_name && !data.seasons && data.number_of_seasons) {
         season_number: num,      
         episode_count: seasonsData[num]?.episodes?.length || 0      
       }));  
-      setTimeout(resolve, 20);  
+      setTimeout(resolve, 80);  
     });  
   });  
 }  
@@ -112,6 +112,7 @@ var observer = new MutationObserver(function (mutations) {
     });  
   }  
 })();
+
 
 
 
