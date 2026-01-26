@@ -16,7 +16,7 @@
     JACRED_URL: 'http://redapi.cfhttp.top/api/v1.0/torrents'  
   };  
   
-  // Простая структура как в исходном плагине  
+  // Точно как в исходном плагине - простые массивы  
   var QUALITY_PRIORITY = {  
     '2160': 100,  
     '1080': 90,  
@@ -36,7 +36,7 @@
     'TS': 20  
   };  
   
-  // === Функции кэширования (базовый кэш Lampa) ===  
+  // === Функции кэширования ===  
     
   function setCache(key, quality) {  
     const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 1000, {});  
@@ -50,7 +50,7 @@
     return (item && Date.now() - item.ts < CONFIG.CACHE_TTL_MS) ? item.quality : null;  
   }  
   
-  // === Работа с качеством (простая архитектура) ===  
+  // === Работа с качеством (точно как в исходнике) ===  
     
   function getData(title, year, callback) {  
     const userId = Lampa.Storage.get('lampac_unic_id', '');  
