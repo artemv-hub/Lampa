@@ -3,7 +3,7 @@
   
   let manifest = {  
     type: 'other',  
-    version: '3.6.4',  
+    version: '3.7.8',  
     name: 'Quality Badge',  
     component: 'quality_badge'  
   };  
@@ -66,12 +66,15 @@
         
       const quality = findBestQuality(torrents, year);  
       callback(quality);  
-    }, callback); // Объединённая обработка ошибок  
+    }, callback);  
   }  
   
   function processQualityData(title) {  
-    for (const { pattern, quality, priority } of QUALITY_PATTERNS) {  
-      if (pattern.test(title)) return { quality, priority };  
+    // Объединённая функция - возвращает и качество, и приоритет  
+    for (const item of QUALITY_PATTERNS) {  
+      if (item.pattern.test(title)) {  
+        return { quality: item.quality, priority: item.priority };  
+      }  
     }  
     return { quality: null, priority: 0 };  
   }  
@@ -111,7 +114,7 @@
       const year = (data.release_date || data.first_air_date || '').substring(0, 4);  
         
       if (!title || !year) {  
-        return; // Убран лишний вызов renderQualityBadge  
+        return;  
       }  
         
       const cacheKey = `${data.id}_${year}`;  
@@ -135,7 +138,7 @@
   function renderQualityBadge(cardElement, quality) {  
     if (!quality) {   
       cardElement.querySelector('.card__view .card__quality')?.remove();  
-      return; // Ранний выход  
+      return;   
     }  
       
     let badge = cardElement.querySelector('.card__view .card__quality');  
@@ -152,7 +155,7 @@
   
   Lampa.Listener.follow('activity', function (e) {  
     if (e.type == 'start' || e.type == 'page') {  
-      setTimeout(processCards, 40);  
+      setTimeout(processCards, 80);  
     }  
   });  
   
