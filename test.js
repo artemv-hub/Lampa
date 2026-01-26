@@ -16,25 +16,25 @@
     JACRED_URL: 'http://redapi.cfhttp.top/api/v1.0/torrents'  
   };  
   
-  // Объединённая структура качества  
-  const QUALITY_PATTERNS = [  
-    { priority: 100, pattern: /2160p|\buhd\b|\b4k\b/i, quality: '2160' },  
-    { priority: 90, pattern: /1080p|\bfhd\b/i, quality: '1080' },  
-    { priority: 88, pattern: /1080i/i, quality: '1080i' },  
-    { priority: 80, pattern: /720p|\bhd\b/i, quality: '720' },  
-    { priority: 70, pattern: /480p|\bsd\b/i, quality: '480' },  
-    { priority: 58, pattern: /blu-?ray remux|bd-?remux/i, quality: 'BDRemux' },  
-    { priority: 60, pattern: /blu-?ray|\bbd\b/i, quality: 'Blu-Ray' },  
-    { priority: 56, pattern: /bd-?rip/i, quality: 'BDRip' },  
-    { priority: 54, pattern: /hd-?rip/i, quality: 'HDRip' },  
-    { priority: 52, pattern: /dvd-?rip/i, quality: 'DVDRip' },  
-    { priority: 50, pattern: /web-?dl|webdl-?rip|web-?rip/i, quality: 'WEB-DL' },  
-    { priority: 38, pattern: /vhs-?rip/i, quality: 'VHSRip' },  
-    { priority: 36, pattern: /cam-?rip/i, quality: 'CAMRip' },  
-    { priority: 40, pattern: /hdtv|iptv|sat|dvb|\btv\b|tvrip/i, quality: 'TV' },  
-    { priority: 30, pattern: /telecine|\btc\b/i, quality: 'TC' },  
-    { priority: 20, pattern: /telesync|\bts\b/i, quality: 'TS' }  
-  ];  
+  // Простая структура как в исходном плагине  
+  var QUALITY_PRIORITY = {  
+    '2160': 100,  
+    '1080': 90,  
+    '1080i': 88,  
+    '720': 80,  
+    '480': 70,  
+    'Blu-Ray': 60,  
+    'BDRemux': 58,  
+    'BDRip': 56,  
+    'HDRip': 54,  
+    'DVDRip': 52,  
+    'WEB-DL': 50,  
+    'TVRip': 40,  
+    'VHSRip': 38,  
+    'CAMRip': 36,  
+    'TC': 30,  
+    'TS': 20  
+  };  
   
   // === Функции кэширования (базовый кэш Lampa) ===  
     
@@ -50,7 +50,7 @@
     return (item && Date.now() - item.ts < CONFIG.CACHE_TTL_MS) ? item.quality : null;  
   }  
   
-  // === Работа с качеством ===  
+  // === Работа с качеством (простая архитектура) ===  
     
   function getData(title, year, callback) {  
     const userId = Lampa.Storage.get('lampac_unic_id', '');  
@@ -69,14 +69,30 @@
     }, callback);  
   }  
   
-  function processQualityData(title) {  
-    // Объединённая функция - возвращает и качество, и приоритет  
-    for (const item of QUALITY_PATTERNS) {  
-      if (item.pattern.test(title)) {  
-        return { quality: item.quality, priority: item.priority };  
-      }  
+  function parseQuality(title) {  
+    const patterns = [  
+      [/2160p|\buhd\b|\b4k\b/i, '2160'],  
+      [/1080p|\bfhd\b/i, '1080'],  
+      [/1080i/i, '1080i'],  
+      [/720p|\bhd\b/i, '720'],  
+      [/480p|\bsd\b/i, '480'],  
+      [/blu-?ray remux|bd-?remux/i, 'BDRemux'],  
+      [/blu-?ray|\bbd\b/i, 'Blu-Ray'],  
+      [/bd-?rip/i, 'BDRip'],  
+      [/hd-?rip/i, 'HDRip'],  
+      [/dvd-?rip/i, 'DVDRip'],  
+      [/web-?dl|webdl-?rip|web-?rip/i, 'WEB-DL'],  
+      [/vhs-?rip/i, 'VHSRip'],  
+      [/cam-?rip/i, 'CAMRip'],  
+      [/hdtv|iptv|sat|dvb|\btv\b|tvrip/i, 'TV'],  
+      [/telecine|\btc\b/i, 'TC'],  
+      [/telesync|\bts\b/i, 'TS']  
+    ];  
+  
+    for (const [pattern, quality] of patterns) {  
+      if (pattern.test(title)) return quality;  
     }  
-    return { quality: null, priority: 0 };  
+    return null;  
   }  
   
   function findBestQuality(torrents, targetYear) {  
@@ -85,24 +101,21 @@
       
     if (torrents.every(t => trailer.test(t.title || ''))) return null;  
       
-    const best = torrents.reduce((best, t) => {  
+    const result = torrents.reduce((best, t) => {  
       const title = (t.title || '').toLowerCase();  
       const yearMatch = title.match(/\b(19|20)\d{2}\b/);  
+      const quality = parseQuality(title);  
+      const priority = TS_audio.test(title) ? 22 : (QUALITY_PRIORITY[quality] || 0);  
         
-      if (yearMatch && Math.abs(parseInt(yearMatch[0]) - targetYear) > 1) return best;  
-        
-      const { quality, priority } = processQualityData(title);  
-      if (!quality) return best;  
-        
-      const finalPriority = TS_audio.test(title) ? 22 : priority;  
-      return finalPriority > best.priority ? { priority: finalPriority, quality, title } : best;  
+      if ((yearMatch && Math.abs(parseInt(yearMatch[0]) - targetYear) > 1) || !quality) return best;  
+      return priority > best.priority ? { priority, quality, title } : best;  
     }, { priority: -1, quality: null, title: '' });  
       
-    return best.quality ? (TS_audio.test(best.title) ? best.quality + '/TS' : best.quality) : null;  
+    return result.quality ? (TS_audio.test(result.title) ? result.quality + '/TS' : result.quality) : null;  
   }  
   
   // === Основная логика ===  
-  
+    
   function processCards() {  
     const cards = Array.from(document.querySelectorAll('.card:not([data-quality-processed])'));  
       
