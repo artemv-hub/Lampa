@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.7.7',
+    version: '3.7.8',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -31,17 +31,13 @@
     return null;
   }
 
-  function formatWatched(timeData, cardData) {
-    if (!timeData || (!timeData.episode && !timeData.time)) {
-      return null;
-    }
+  function formatWatched(timeData) {
+    if (!timeData || (!timeData.episode && !timeData.time)) return null;
 
-    if (timeData.episode && timeData.season) {
+    if (timeData.season && timeData.episode) {
       return `S${timeData.season}/${timeData.seasonCount} E${timeData.episode}/${timeData.episodeCount}`;
     } else if (timeData.time && timeData.duration) {
-      const currentTime = Lampa.Utils.secondsToTime(timeData.time, true);
-      const totalTime = Lampa.Utils.secondsToTime(timeData.duration, true);
-      return `${currentTime}/${totalTime}`;
+      return `${Lampa.Utils.secondsToTime(timeData.time, true)}/${Lampa.Utils.secondsToTime(timeData.duration, true)}`;
     }
     return null;
   }
@@ -55,12 +51,12 @@
       badge = document.createElement('div');
       badge.className = 'card__watched';
       cardElement.querySelector('.card__view').appendChild(badge);
-    } badge.innerText = text;
+    }
+    badge.innerText = text;
   }
 
   function processCards() {
     const cards = Array.from(document.querySelectorAll('.card'));
-
     Promise.all(cards.map(card => {
       const data = card.card_data;
       Lampa.Storage.set('activity', { movie: data, card: data });
@@ -78,9 +74,13 @@
           });
         });
       }
-
       return new Promise(resolve => setTimeout(resolve, 40));
-    })).then(() => cards.forEach(card => renderWatchedBadge(card, card.card_data)));
+    })).then(() => {
+      cards.forEach(card => {
+        card.setAttribute('data-watched-processed', 'true');
+        renderWatchedBadge(card, card.card_data);
+      });
+    });
   }
 
   Lampa.Listener.follow('activity', function (e) {
@@ -92,13 +92,12 @@
   var observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
       mutation.addedNodes.forEach(function (node) {
-        if (node.nodeType === 1 && node.classList?.contains('card')) {
+        if (node.nodeType === 1 && node.classList?.contains('card') && !node.hasAttribute('data-watched-processed')) {
           processCards();
         }
       });
     });
   });
-
   observer.observe(document.body, { childList: true, subtree: true });
 
   if (window.appready) { processCards(); }
