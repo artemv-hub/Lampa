@@ -3,96 +3,84 @@
 
   let manifest = {
     type: 'other',
-    version: '3.7.6',
+    version: '3.7.7',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
 
   Lampa.Manifest.plugins = manifest;
 
-  function getData(cardData, callback) {
+  function getData(cardData) {
     if (cardData.original_name) {
-      let seasons = Array.from({ length: cardData.number_of_seasons }, (_, i) => i + 1);
-      Lampa.Api.seasons(cardData, seasons, (seasonsData) => {
-        for (let season of seasons.reverse()) {
-          let episodes = seasonsData[season]?.episodes || [];
-          for (let { episode_number: episode } of episodes.reverse()) {
-            let hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''));
-            let timelineData = Lampa.Timeline.view(hash);
-            if (timelineData?.time > 0 || timelineData?.percent > 0) {
-              callback({ episode, season, seasonsData });
-              return;
-            }
+      const seasonCount = cardData.number_of_seasons;
+      for (let season = seasonCount; season >= 1; season--) {
+        const episodeCount = cardData.seasons?.find(s => s.season_number === season)?.episode_count;
+        for (let episode = episodeCount; episode >= 1; episode--) {
+          let hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''));
+          let timelineData = Lampa.Timeline.view(hash);
+
+          if (timelineData?.time > 0 || timelineData?.percent > 0) {
+            return { season, seasonCount, episode, episodeCount };
           }
         }
-        callback(null);
-      });
+      }
     } else {
       const hash = Lampa.Utils.hash([cardData.original_title || cardData.title].join(''));
-      callback(Lampa.Timeline.view(hash));
+      return Lampa.Timeline.view(hash);
     }
+    return null;
   }
 
-  function formatWatched(timeData, cardData, callback) {
+  function formatWatched(timeData, cardData) {
     if (!timeData || (!timeData.episode && !timeData.time)) {
-      callback(null);
-      return;
+      return null;
     }
 
     if (timeData.episode && timeData.season) {
-      const seasonsData = timeData.seasonsData || {};
-      const totalSeasons = cardData.number_of_seasons || '?';
-      const totalEpisodes = seasonsData[timeData.season]?.episodes?.length || '?';
-      callback(`S${timeData.season}/${totalSeasons} E${timeData.episode}/${totalEpisodes}`);
+      return `S${timeData.season}/${timeData.seasonCount} E${timeData.episode}/${timeData.episodeCount}`;
     } else if (timeData.time && timeData.duration) {
       const currentTime = Lampa.Utils.secondsToTime(timeData.time, true);
       const totalTime = Lampa.Utils.secondsToTime(timeData.duration, true);
-      callback(`${currentTime}/${totalTime}`);
+      return `${currentTime}/${totalTime}`;
     }
+    return null;
   }
 
   function renderWatchedBadge(cardElement, data) {
-    cardElement.querySelector('.card__view .card__watched')?.remove();
+    let badge = cardElement.querySelector('.card__view .card__watched');
+    const text = formatWatched(getData(data), data);
 
-    getData(data, (timeData) => {
-      formatWatched(timeData, data, (text) => {
-        if (!text) return;
-
-        const badge = document.createElement('div');
-        badge.className = 'card__watched';
-        badge.innerText = text;
-        cardElement.querySelector('.card__view').appendChild(badge);
-      });
-    });
+    if (!text) { badge?.remove(); return; }
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.className = 'card__watched';
+      cardElement.querySelector('.card__view').appendChild(badge);
+    } badge.innerText = text;
   }
 
   function processCards() {
-    const cards = document.querySelectorAll('.card');
-    const uniqueCards = [];
-    const seen = new Set();
+    const cards = Array.from(document.querySelectorAll('.card'));
 
-    cards.forEach(card => {
+    Promise.all(cards.map(card => {
       const data = card.card_data;
-      if (data && data.id && !seen.has(data.id)) {
-        seen.add(data.id);
-        uniqueCards.push(data);
+      Lampa.Storage.set('activity', { movie: data, card: data });
+      Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
+
+      if (data.original_name && data.number_of_seasons && !data.seasons) {
+        return new Promise(resolve => {
+          const seasons = Array.from({ length: data.number_of_seasons }, (_, i) => i + 1);
+          Lampa.Api.seasons(data, seasons, seasonsData => {
+            data.seasons = seasons.map(season => ({
+              season_number: season,
+              episode_count: seasonsData[season]?.episodes?.length || 0
+            }));
+            resolve();
+          });
+        });
       }
-    });
 
-    const loadPromises = uniqueCards.map((cardData) => {
-      return new Promise((resolve) => {
-        Lampa.Storage.set('activity', { movie: cardData, card: cardData });
-        Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
-        setTimeout(resolve, 40);
-      });
-    });
-
-    Promise.all(loadPromises).then(() => {
-      document.querySelectorAll('.card').forEach(card => {
-        card.setAttribute('data-watched-processed', 'true');
-        if (card.card_data) renderWatchedBadge(card, card.card_data);
-      });
-    });
+      return new Promise(resolve => setTimeout(resolve, 40));
+    })).then(() => cards.forEach(card => renderWatchedBadge(card, card.card_data)));
   }
 
   Lampa.Listener.follow('activity', function (e) {
@@ -104,7 +92,7 @@
   var observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
       mutation.addedNodes.forEach(function (node) {
-        if (node.nodeType === 1 && node.classList && node.classList.contains('card')) {
+        if (node.nodeType === 1 && node.classList?.contains('card')) {
           processCards();
         }
       });
