@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.7.8',
+    version: '3.7.9',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -42,21 +42,8 @@
     return null;
   }
 
-  function renderWatchedBadge(cardElement, data) {
-    let badge = cardElement.querySelector('.card__view .card__watched');
-    const text = formatWatched(getData(data), data);
-
-    if (!text) { badge?.remove(); return; }
-    if (!badge) {
-      badge = document.createElement('div');
-      badge.className = 'card__watched';
-      cardElement.querySelector('.card__view').appendChild(badge);
-    }
-    badge.innerText = text;
-  }
-
   function processCards() {
-    const cards = Array.from(document.querySelectorAll('.card'));
+    const cards = Array.from(document.querySelectorAll('.card')).filter(card => Lampa.Favorite.check(card.card_data).any );
     Promise.all(cards.map(card => {
       const data = card.card_data;
       Lampa.Storage.set('activity', { movie: data, card: data });
@@ -81,6 +68,19 @@
         renderWatchedBadge(card, card.card_data);
       });
     });
+  }
+
+  function renderWatchedBadge(cardElement, data) {
+    let badge = cardElement.querySelector('.card__view .card__watched');
+    const text = formatWatched(getData(data), data);
+
+    if (!text) { badge?.remove(); return; }
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.className = 'card__watched';
+      cardElement.querySelector('.card__view').appendChild(badge);
+    }
+    badge.innerText = text;
   }
 
   Lampa.Listener.follow('activity', function (e) {
