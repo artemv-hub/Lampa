@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.8.7',
+    version: '3.8.8',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -18,7 +18,7 @@
 
     .card__vote { font-size: 1.2em; font-weight: bold; border-radius: 0.2em; padding: 0.2em 0.2em; color: #000; left: -0.4em; right: unset; top: 0.8em; bottom: unset; }
     .card__quality { font-size: 1.2em; font-weight: bold; border-radius: 0.2em; padding: 0.2em 0.2em; color: #000; left: -0.4em; top: 2.4em; bottom: unset; text-transform: none; }
-    .card__watched { font-size: 1.2em; font-weight: bold; border-radius: 1em; padding: 0.2em 0.4em; background: rgb(29, 31, 32); left: 50%; bottom: -0.8em; position: absolute; transform: translate(-50%); white-space: nowrap; }
+    .card__watched { font-size: 1em; font-weight: bold; border-radius: 1em; padding: 0.2em 0.4em; background: rgb(29, 31, 32); left: 50%; bottom: -0.8em; position: absolute; transform: translate(-50%); white-space: nowrap; }
     .card--tv .card__type { font-size: 1em; border-radius: 1em; padding: 0.2em 0.4em; background: rgb(29, 31, 32); left: 50%; top: -0.8em; transform: translate(-50%); }
     .card__marker { display: none; }
 
