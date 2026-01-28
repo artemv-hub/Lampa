@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.7.9',
+    version: '3.8.0',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -35,7 +35,7 @@
     if (!timeData || (!timeData.episode && !timeData.time)) return null;
 
     if (timeData.season && timeData.episode) {
-      return `S${timeData.season}/${timeData.seasonCount} E${timeData.episode}/${timeData.episodeCount}`;
+      return `S ${timeData.season}/${timeData.seasonCount} • E ${timeData.episode}/${timeData.episodeCount}`;
     } else if (timeData.time && timeData.duration) {
       return `${Lampa.Utils.secondsToTime(timeData.time, true)}/${Lampa.Utils.secondsToTime(timeData.duration, true)}`;
     }
@@ -107,3 +107,4 @@
     });
   }
 })();
+
