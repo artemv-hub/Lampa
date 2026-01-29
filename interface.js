@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.8.8',
+    version: '3.8.9',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -29,12 +29,6 @@
 
   `;
   document.head.appendChild(style);
-
-  function styleCardType() {
-    document.querySelectorAll('.card__type').forEach(function (e) {
-      if (e.textContent === 'TV') e.textContent = 'Сериал';
-    });
-  }
 
   function styleCardFull() {
     Lampa.Listener.follow('full', function (e) {
@@ -110,19 +104,13 @@
   }
 
   function startPlugin() {
-    styleCardType();
     styleCardFull();
     styleColors();
     styleSize();
 
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach(mutation => {
-        mutation.addedNodes.forEach(node => {
-          if (node.nodeType === 1) {
-            styleCardType();
-            styleColors();
-          }
-        });
+    const observer = new MutationObserver(() => {
+      document.querySelectorAll('.card__type').forEach(e => {
+        if (e.innerText === 'TV') e.innerText = 'Сериал';
       });
     });
     observer.observe(document.body, { childList: true, subtree: true });
