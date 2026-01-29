@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.6.5',
+    version: '3.6.6',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -79,6 +79,16 @@
     return (item && Date.now() - item.ts < CONFIG.CACHE_TTL_MS) ? item.quality : null;
   }
 
+  function renderQualityBadge(cardElement, quality) {
+    let badge = cardElement.querySelector('.card__view .card__quality');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.className = 'card__quality';
+      cardElement.querySelector('.card__view').appendChild(badge);
+    }
+    badge.innerText = quality;
+  }
+
   function processCards() {
     document.querySelectorAll('.card:not([data-quality-processed])').forEach(cardElement => {
       const cardData = cardElement.card_data;
@@ -95,16 +105,6 @@
         quality && (setCache(cacheKey, quality), renderQualityBadge(cardElement, quality));
       });
     });
-  }
-
-  function renderQualityBadge(cardElement, quality) {
-    let badge = cardElement.querySelector('.card__view .card__quality');
-    if (!badge) {
-      badge = document.createElement('div');
-      badge.className = 'card__quality';
-      cardElement.querySelector('.card__view').appendChild(badge);
-    }
-    badge.innerText = quality;
   }
 
   Lampa.Listener.follow('activity', function (e) {
