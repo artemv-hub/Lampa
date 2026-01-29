@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.6.6',
+    version: '3.6.8',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
