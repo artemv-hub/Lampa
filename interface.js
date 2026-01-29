@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.8.9',
+    version: '3.9.0',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -46,12 +46,22 @@
     { qualities: ["vhsrip", "camrip", "ts"], color: "#e74c3c" }
   ];
 
-  const originalLineInit = Lampa.Maker.map('Line').Items.onInit;
-  Lampa.Maker.map('Line').Items.onInit = function () { originalLineInit.call(this); this.view = 12; };
-  const originalCategoryInit = Lampa.Maker.map('Category').Items.onInit;
-  Lampa.Maker.map('Category').Items.onInit = function () { originalCategoryInit.call(this); this.limit_view = 12; };
+  const originalLine = Lampa.Maker.map('Line').Items.onInit;
+  Lampa.Maker.map('Line').Items.onInit = function () { originalLine.call(this); this.view = 12; };
+  const originalCategory = Lampa.Maker.map('Category').Items.onInit;
+  Lampa.Maker.map('Category').Items.onInit = function () { originalCategory.call(this); this.limit_view = 12; };
 
-  function styleCardFull() {
+  function interfaceSize() {
+    Lampa.Params.select('interface_size', { '10': '10', '12': '12', '14': '14' }, '12');
+    const getSize = () => Lampa.Platform.screen('mobile') ? 10 : parseInt(Lampa.Storage.field('interface_size'));
+    const updateSize = () => $('body').css({ fontSize: getSize() + 'px' });
+    updateSize();
+    Lampa.Storage.listener.follow('change', e => {
+      if (e.name == 'interface_size') updateSize();
+    });
+  }
+
+  function styleFull() {
     Lampa.Listener.follow('full', e => {
       if (e.type == 'complite') {
         let buttonsContainer = e.body.find('.full-start-new__buttons');
@@ -73,22 +83,23 @@
     });
   }
 
-  function styleSize() {
-    Lampa.Params.select('interface_size', { '10': '10', '12': '12', '14': '14' }, '12');
-    function updateSize() {
-      let selectedLevel = parseInt(Lampa.Storage.field('interface_size')) || 12;
-      let fontSize = Lampa.Platform.screen('mobile') ? 10 : selectedLevel;
-      $('body').css({ fontSize: fontSize + 'px' });
-    }
-    Lampa.Storage.listener.follow('change', e => {
-      if (e.name == 'interface_size') updateSize();
+  function styleMenu() {
+    Lampa.Settings.listener.follow('open', function (e) {
+      e.body.find('[data-component="parental_control"]').remove();
+      e.body.find('[data-name="light_version"]').remove();
+      e.body.find('[data-name="jackett_url"]').hide();
+      e.body.find('[data-name="jackett_key"]').hide();
+      e.body.find('[data-name="torrserver_url"]').hide();
+      e.body.find('[data-name="torrserver_password"]').hide();
+      e.body.find('[data-name="card_quality"]').hide();
+      e.body.find('[data-name="card_episodes"]').hide();
     });
-    updateSize();
   }
 
   function startPlugin() {
-    styleCardFull();
-    styleSize();
+    interfaceSize();
+    styleFull();
+    styleMenu();
 
     const observer = new MutationObserver(() => {
       document.querySelectorAll('.card__type').forEach(e => {
