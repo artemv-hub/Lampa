@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.9.0',
+    version: '3.9.1',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -53,7 +53,7 @@
 
   function interfaceSize() {
     Lampa.Params.select('interface_size', { '10': '10', '12': '12', '14': '14' }, '12');
-    const getSize = () => Lampa.Platform.screen('mobile') ? 10 : parseInt(Lampa.Storage.field('interface_size'));
+    const getSize = () => Lampa.Platform.screen('mobile') ? 10 : parseInt(Lampa.Storage.field('interface_size')) || 12;
     const updateSize = () => $('body').css({ fontSize: getSize() + 'px' });
     updateSize();
     Lampa.Storage.listener.follow('change', e => {
@@ -105,13 +105,11 @@
       document.querySelectorAll('.card__type').forEach(e => {
         if (e.innerText === 'TV') e.innerText = 'Сериал';
       });
-
       document.querySelectorAll(".card__vote").forEach(e => {
         const ratingValue = parseFloat(e.textContent.trim());
         const colorMatch = colorRating.find(colorRule => ratingValue >= colorRule.ratings);
         if (colorMatch) e.style.backgroundColor = colorMatch.color;
       });
-
       document.querySelectorAll(".card__quality").forEach(e => {
         const qualityText = e.textContent.trim().toLowerCase();
         const colorMatch = colorQuality.find(colorRule => colorRule.qualities.some(q => qualityText.includes(q)));
