@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.8.0',
+    version: '3.8.1',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -43,7 +43,7 @@
   }
 
   function processCards() {
-    const cards = Array.from(document.querySelectorAll('.card')).filter(card => Lampa.Favorite.check(card.card_data).any );
+    const cards = Array.from(document.querySelectorAll('.card')).filter(card => Lampa.Favorite.check(card.card_data).any);
     Promise.all(cards.map(card => {
       const data = card.card_data;
       Lampa.Storage.set('activity', { movie: data, card: data });
@@ -65,22 +65,20 @@
     })).then(() => {
       cards.forEach(card => {
         card.setAttribute('data-watched-processed', 'true');
-        renderWatchedBadge(card, card.card_data);
+        const text = formatWatched(getData(card.card_data));
+        if (text) renderWatchedBadge(card, card.card_data);
       });
     });
   }
 
   function renderWatchedBadge(cardElement, data) {
     let badge = cardElement.querySelector('.card__view .card__watched');
-    const text = formatWatched(getData(data), data);
-
-    if (!text) { badge?.remove(); return; }
     if (!badge) {
       badge = document.createElement('div');
       badge.className = 'card__watched';
       cardElement.querySelector('.card__view').appendChild(badge);
     }
-    badge.innerText = text;
+    badge.innerText = formatWatched(getData(data));
   }
 
   Lampa.Listener.follow('activity', function (e) {
@@ -107,4 +105,3 @@
     });
   }
 })();
-
