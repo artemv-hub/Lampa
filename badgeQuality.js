@@ -13,7 +13,7 @@
   const CONFIG = {
     CACHE_KEY: 'lampa_quality_cache',
     CACHE_TTL_MS: 24 * 60 * 60 * 1000,
-    JACRED_URL: 'http://redapi.cfhttp.top/api/v1.0/torrents'
+    JACRED_URL: 'https://redapi.cfhttp.top/api/v1.0/torrents'
   };
 
   function getDate(title, year, callback) {
