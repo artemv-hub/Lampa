@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.6.9',
+    version: '3.7.0',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -13,7 +13,7 @@
   const CONFIG = {
     CACHE_KEY: 'lampa_quality_cache',
     CACHE_TTL_MS: 24 * 60 * 60 * 1000,
-    JACRED_URL: 'http://redapi.cfhttp.top/api/v1.0/torrents'
+    JACRED_URL: 'http://jacred.xyz/api/v1.0/torrents'
   };
 
   function getDate(title, year, callback) {
@@ -29,21 +29,21 @@
   function parseQuality(title) {
     const QUALITY_PATTERNS = [
       { priority: 98, quality: '2160', pattern: /2160p|\buhd\b|\b4k\b/i },
-      { priority: 90, quality: '1080', pattern: /1080p|\bfhd\b/i },
-      { priority: 88, quality: '1080i', pattern: /1080i/i },
-      { priority: 80, quality: '720', pattern: /720p|\bhd\b/i },
-      { priority: 70, quality: '480', pattern: /480p|\bsd\b/i },
-      { priority: 58, quality: 'BDRemux', pattern: /blu-?ray remux|bd-?remux/i },
-      { priority: 60, quality: 'Blu-Ray', pattern: /blu-?ray|\bbd\b/i },
-      { priority: 56, quality: 'BDRip', pattern: /bd-?rip/i },
-      { priority: 54, quality: 'HDRip', pattern: /hd-?rip/i },
-      { priority: 52, quality: 'DVDRip', pattern: /dvd-?rip/i },
-      { priority: 50, quality: 'WEB-DL', pattern: /web-?dl|webdl-?rip|web-?rip/i },
-      { priority: 38, quality: 'VHSRip', pattern: /vhs-?rip/i },
-      { priority: 36, quality: 'CAMRip', pattern: /cam-?rip/i },
-      { priority: 40, quality: 'TV', pattern: /hdtv|iptv|sat|dvb|\btv\b|tvrip/i },
-      { priority: 30, quality: 'TC', pattern: /telecine|\btc\b/i },
-      { priority: 20, quality: 'TS', pattern: /telesync|\bts\b/i }
+      { priority: 88, quality: '1080', pattern: /1080p|\bfhd\b/i },
+      { priority: 86, quality: '1080i', pattern: /1080i/i },
+      { priority: 78, quality: '720', pattern: /720p|\bhd\b/i },
+      { priority: 76, quality: '480', pattern: /480p|\bsd\b/i },
+      { priority: 68, quality: 'BDRemux', pattern: /blu-?ray remux|bd-?remux/i },
+      { priority: 66, quality: 'Blu-Ray', pattern: /blu-?ray|\bbd\b/i },
+      { priority: 58, quality: 'BDRip', pattern: /bd-?rip/i },
+      { priority: 56, quality: 'HDRip', pattern: /hd-?rip/i },
+      { priority: 54, quality: 'DVDRip', pattern: /dvd-?rip/i },
+      { priority: 52, quality: 'WEB-DL', pattern: /web-?dl|webdl-?rip|web-?rip/i },
+      { priority: 48, quality: 'VHSRip', pattern: /vhs-?rip/i },
+      { priority: 46, quality: 'CAMRip', pattern: /cam-?rip/i },
+      { priority: 38, quality: 'TV', pattern: /hdtv|iptv|sat|dvb|\btv\b|tvrip/i },
+      { priority: 36, quality: 'TC', pattern: /telecine|\btc\b/i },
+      { priority: 28, quality: 'TS', pattern: /telesync|\bts\b/i }
     ];
     for (const { priority, quality, pattern } of QUALITY_PATTERNS) {
       if (pattern.test(title)) return { quality, priority };
@@ -61,7 +61,7 @@
       const yearMatch = title.match(/\b(19|20)\d{2}\b/);
       const parsed = parseQuality(title);
       if (!parsed || (yearMatch && Math.abs(parseInt(yearMatch[0]) - targetYear) > 1)) return best;
-      const priority = TS_audio.test(title) ? 22 : parsed.priority;
+      const priority = TS_audio.test(title) ? 30 : parsed.priority;
       return priority > best.priority ? { priority, quality: parsed.quality, title } : best;
     }, { priority: -1, quality: null, title: '' });
 
