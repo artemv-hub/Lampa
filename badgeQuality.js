@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.7.0',
+    version: '3.7.1',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -13,14 +13,14 @@
   const CONFIG = {
     CACHE_KEY: 'lampa_quality_cache',
     CACHE_TTL_MS: 24 * 60 * 60 * 1000,
-    JACRED_URL: 'http://jacred.xyz/api/v1.0/torrents'
+    JACRED_URL: Lampa.Storage.get('jackett_url', '')
   };
 
   function getDate(title, year, callback) {
     const network = new Lampa.Reguest();
     network.timeout(5000);
     network.silent(
-      CONFIG.JACRED_URL + '?search=' + encodeURIComponent(title) + '&year=' + year + '&exact=true&uid=' + Lampa.Storage.get('lampac_unic_id', ''),
+      'http://' + CONFIG.JACRED_URL + '/api/v1.0/torrents' + '?search=' + encodeURIComponent(title) + '&year=' + year + '&exact=true&uid=' + Lampa.Storage.get('lampac_unic_id', '') + '&apikey=' + Lampa.Storage.get('jackett_key', ''),
       torrents => callback(!torrents?.length ? null : findBestQuality(torrents, year)),
       () => callback(null)
     );
