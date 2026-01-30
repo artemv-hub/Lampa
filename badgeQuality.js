@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.7.1',
+    version: '3.7.2',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -20,8 +20,14 @@
     const network = new Lampa.Reguest();
     network.timeout(5000);
     network.silent(
-      'http://' + CONFIG.JACRED_URL + '/api/v1.0/torrents' + '?search=' + encodeURIComponent(title) + '&year=' + year + '&exact=true&uid=' + Lampa.Storage.get('lampac_unic_id', '') + '&apikey=' + Lampa.Storage.get('jackett_key', ''),
-      torrents => callback(!torrents?.length ? null : findBestQuality(torrents, year)),
+      'http://' + CONFIG.JACRED_URL + '/api/v2.0/indexers/all/results' +
+      '?title=' + encodeURIComponent(title) +
+      '&year=' + year +
+      '&apikey=' + Lampa.Storage.get('jackett_key', ''),
+      response => {
+        const torrents = response.Results || [];
+        callback(!torrents.length ? null : findBestQuality(torrents, year));
+      },
       () => callback(null)
     );
   }
@@ -54,10 +60,10 @@
   function findBestQuality(torrents, targetYear) {
     const TS_audio = /звук с ts|audio ts/i;
     const trailer = /трейлер|trailer/i;
-    if (torrents.every(t => trailer.test(t.title || ''))) return null;
+    if (torrents.every(t => trailer.test(t.Title || ''))) return null;
 
     const result = torrents.reduce((best, t) => {
-      const title = (t.title || '').toLowerCase();
+      const title = (t.Title || '').toLowerCase();
       const yearMatch = title.match(/\b(19|20)\d{2}\b/);
       const parsed = parseQuality(title);
       if (!parsed || (yearMatch && Math.abs(parseInt(yearMatch[0]) - targetYear) > 1)) return best;
