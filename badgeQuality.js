@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.7.2',
+    version: '3.7.4',
     name: 'Quality Badge',
     component: 'quality_badge'
   };
@@ -95,29 +95,27 @@
     badge.innerText = quality;
   }
 
-  function processCards() {  
-    setTimeout(() => {  
-      document.querySelectorAll('.card:not([data-quality-processed])').forEach(cardElement => {  
-        const cardData = cardElement.card_data;  
-        if (!cardData) return;  
-        cardElement.setAttribute('data-quality-processed', 'true');  
-  
-        const title = cardData.title || cardData.name;  
-        const year = (cardData.release_date || cardData.first_air_date || '').substring(0, 4);  
-        if (!title || !year) return;  
-  
-        const cacheKey = `${cardData.id}_${year}`;  
-        const cached = getCache(cacheKey);  
-        cached ? renderQualityBadge(cardElement, cached) : getDate(title, year, quality => {  
-          quality && (setCache(cacheKey, quality), renderQualityBadge(cardElement, quality));  
-        });  
-      });  
-    }, 80);  
+  function processCards() {
+    document.querySelectorAll('.card:not([data-quality-processed])').forEach(cardElement => {
+      const cardData = cardElement.card_data;
+      if (!cardData) return;
+      cardElement.setAttribute('data-quality-processed', 'true');
+
+      const title = cardData.title || cardData.name;
+      const year = (cardData.release_date || cardData.first_air_date || '').substring(0, 4);
+      if (!title || !year) return;
+
+      const cacheKey = `${cardData.id}_${year}`;
+      const cached = getCache(cacheKey);
+      cached ? renderQualityBadge(cardElement, cached) : getDate(title, year, quality => {
+        quality && (setCache(cacheKey, quality), renderQualityBadge(cardElement, quality));
+      });
+    });
   }
 
   Lampa.Listener.follow('activity', function (e) {
     if (e.type == 'start' || e.type == 'page') {
-      processCards();
+      setTimeout(processCards, 80);
     }
   });
 
