@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.8.6',
+    version: '3.9.0',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -81,6 +81,18 @@
     });
   }
 
+  function processAllCards() {  
+    const cards = Array.from(document.querySelectorAll('.card')).filter(card => Lampa.Favorite.check(card.card_data).any);  
+      
+    Promise.all(cards.map(card => {  
+      const data = card.card_data;  
+      Lampa.Storage.set('activity', { movie: data, card: data });  
+      Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });  
+          
+      return new Promise(resolve => setTimeout(resolve, 80));  
+    })).then(() => processCards());  
+  }
+
   Lampa.Listener.follow('activity', function (e) {
     if (e.type == 'start' || e.type == 'page') {
       processCards();
@@ -98,14 +110,10 @@
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
-  if (window.appready) { processCards(); }
+  if (window.appready) { processAllCards(); }
   else {
     Lampa.Listener.follow("app", function (e) {
-      if (e.type === "ready") { processCards(); }
+      if (e.type === "ready") { processAllCards(); }
     });
   }
 })();
-
-
-
-
