@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.8.5',
+    version: '3.8.6',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -53,7 +53,7 @@
   }
 
   function processCards() {
-    const cards = Array.from(document.querySelectorAll('.card')).filter(card => Lampa.Favorite.check(card.card_data).any && Lampa.Timeline.watched(card.card_data) > 0);
+    const cards = Array.from(document.querySelectorAll('.card')).filter(card => Lampa.Favorite.check(card.card_data).any && Lampa.Timeline.watched(card.card_data));
     Promise.all(cards.map(card => {
       const data = card.card_data;
       Lampa.Storage.set('activity', { movie: data, card: data });
@@ -105,6 +105,7 @@
     });
   }
 })();
+
 
 
 
