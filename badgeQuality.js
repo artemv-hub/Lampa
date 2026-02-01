@@ -3,15 +3,15 @@
 
   let manifest = {
     type: 'other',
-    version: '3.7.4',
-    name: 'Quality Badge',
-    component: 'quality_badge'
+    version: '3.7.6',
+    name: 'Badge Quality',
+    component: 'badge_quality'
   };
 
   Lampa.Manifest.plugins = manifest;
 
   const CONFIG = {
-    CACHE_KEY: 'lampa_quality_cache',
+    CACHE_KEY: 'badge_quality_cache',
     CACHE_TTL_MS: 24 * 60 * 60 * 1000,
     JACRED_URL: Lampa.Storage.get('jackett_url', '')
   };
@@ -105,7 +105,7 @@
       const year = (cardData.release_date || cardData.first_air_date || '').substring(0, 4);
       if (!title || !year) return;
 
-      const cacheKey = `${cardData.id}_${year}`;
+      const cacheKey = `${title}_${year}`;
       const cached = getCache(cacheKey);
       cached ? renderQualityBadge(cardElement, cached) : getDate(title, year, quality => {
         quality && (setCache(cacheKey, quality), renderQualityBadge(cardElement, quality));
