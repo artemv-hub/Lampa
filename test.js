@@ -108,11 +108,11 @@
     });
   }
 
-  Lampa.Listener.follow('state:changed', function (e) {  
-    if (e.target === 'timeline' && e.reason === 'update') {  
+  Lampa.Listener.follow('activity', function (e) {  
+    if (e.type === 'start' || e.type === 'page') {  
       updateCardForHash(e.data.hash);  
     }  
-  });
+  });  
 
   var observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
@@ -132,3 +132,4 @@
     });
   }
 })();
+
