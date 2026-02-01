@@ -114,8 +114,8 @@
   }
 
   Lampa.Listener.follow('activity', function (e) {
-    if (e.type == 'start' || e.type == 'page') {
-      setTimeout(processCards, 80);
+    if (e.type == 'start') {
+      setTimeout(processCards, 100);
     }
   });
 
