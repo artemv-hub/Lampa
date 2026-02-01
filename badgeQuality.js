@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.7.6',
+    version: '3.7.7',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -105,7 +105,7 @@
       const year = (cardData.release_date || cardData.first_air_date || '').substring(0, 4);
       if (!title || !year) return;
 
-      const cacheKey = `${title}_${year}`;
+      const cacheKey = `${cardData.id}_${year}`;
       const cached = getCache(cacheKey);
       cached ? renderQualityBadge(cardElement, cached) : getDate(title, year, quality => {
         quality && (setCache(cacheKey, quality), renderQualityBadge(cardElement, quality));
