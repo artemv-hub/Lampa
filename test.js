@@ -52,30 +52,9 @@
     badge.innerText = formatWatched(getData(data));
   }
     
-  function updateCardForHash(updatedHash) {  
-    const cards = document.querySelectorAll('.card[data-watched-processed="true"]');  
-      
-    cards.forEach(card => {  
-      const cardData = card.card_data;  
-      let cardHash;  
-        
-      if (cardData.original_name) {  
-        for (let season = cardData.number_of_seasons; season >= 1; season--) {  
-          const episodeCount = cardData.seasons?.find(s => s.season_number === season)?.episode_count;  
-          for (let episode = episodeCount; episode >= 1; episode--) {  
-            cardHash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_name].join(''));  
-            if (cardHash === updatedHash) {  
-              renderWatchedBadge(card, cardData);  
-              return;  
-            }  
-          }  
-        }  
-      } else {  
-        cardHash = Lampa.Utils.hash([cardData.original_title || cardData.title].join(''));  
-        if (cardHash === updatedHash) {  
-          renderWatchedBadge(card, cardData);  
-        }  
-      }  
+  function updateCard() {  
+    document.querySelectorAll('.card[data-watched-processed="true"]').forEach(card => {  
+      renderWatchedBadge(card, card.card_data);  
     });  
   }
     
@@ -110,7 +89,7 @@
 
   Lampa.Listener.follow('activity', function (e) {  
     if (e.type === 'start' || e.type === 'page') {  
-      updateCardForHash(e.data.hash);  
+      updateCard();  
     }  
   });  
 
@@ -132,4 +111,5 @@
     });
   }
 })();
+
 
