@@ -51,49 +51,40 @@
   }
 
   function processCards() {
-  // 1️⃣ Фильтр ТОЛЬКО по истории (все потенциальные)
-  const allHistoryCards = Array.from(document.querySelectorAll('.card'))
-    .filter(card => Lampa.Favorite.check(card.card_data).history);
-  
-  if (allHistoryCards.length === 0) return;
+    const allHistoryCards = Array.from(document.querySelectorAll('.card'))
+      .filter(card => Lampa.Favorite.check(card.card_data).history);
 
-  // 2️⃣ Разделяем: готовые vs новые
-  const processedCards = allHistoryCards.filter(card => card.hasAttribute('data-watched-processed'));
-  const unprocessedCards = allHistoryCards.filter(card => !card.hasAttribute('data-watched-processed'));
+    const processedCards = allHistoryCards.filter(card => card.hasAttribute('data-watched-processed'));
+    const unprocessedCards = allHistoryCards.filter(card => !card.hasAttribute('data-watched-processed'));
 
-  // 3️⃣ Сразу рендерим готовые (синхронно)
-  processedCards.forEach(card => renderWatchedBadge(card, card.card_data));
+    processedCards.forEach(card => renderWatchedBadge(card, card.card_data));
 
-  // 4️⃣ Если есть новые — обрабатываем асинхронно
-  if (unprocessedCards.length === 0) return;
+    Promise.all(unprocessedCards.map(card => {
+      const data = card.card_data;
+      Lampa.Storage.set('activity', { movie: data, card: data });
+      Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
 
-  Promise.all(unprocessedCards.map(card => {
-    const data = card.card_data;
-    Lampa.Storage.set('activity', { movie: data, card: data });
-    Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
-
-    if (data.original_name && data.number_of_seasons && !data.seasons) {
-      return new Promise(resolve => {
-        const seasons = Array.from({ length: data.number_of_seasons }, (_, i) => i + 1);
-        Lampa.Api.seasons(data, seasons, seasonsData => {
-          data.seasons = seasons.map(season => ({
-            season_number: season,
-            episode_count: seasonsData[season]?.episodes?.length || 0
-          }));
-          resolve();
+      if (data.original_name && data.number_of_seasons && !data.seasons) {
+        return new Promise(resolve => {
+          const seasons = Array.from({ length: data.number_of_seasons }, (_, i) => i + 1);
+          Lampa.Api.seasons(data, seasons, seasonsData => {
+            data.seasons = seasons.map(season => ({
+              season_number: season,
+              episode_count: seasonsData[season]?.episodes?.length || 0
+            }));
+            resolve();
+          });
         });
+      }
+      return Promise.resolve();
+    })).then(() => {
+      unprocessedCards.forEach(card => {
+        card.setAttribute('data-watched-processed', 'true');
+        const text = formatWatched(getData(card.card_data));
+        if (text) renderWatchedBadge(card, card.card_data);
       });
-    }
-    return Promise.resolve();
-  })).then(() => {
-    // 5️⃣ Финальный рендер ТОЛЬКО новых
-    unprocessedCards.forEach(card => {
-      card.setAttribute('data-watched-processed', 'true');
-      const text = formatWatched(getData(card.card_data));
-      if (text) renderWatchedBadge(card, card.card_data);
     });
-  });
-}
+  }
 
   Lampa.Listener.follow('activity', (e) => {
     if (e.type === 'start') {
