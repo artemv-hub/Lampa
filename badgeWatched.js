@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.9.5',
+    version: '3.9.6',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -18,7 +18,6 @@
         for (let episode = episodeCount; episode >= 1; episode--) {
           let hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''));
           let timelineData = Lampa.Timeline.view(hash);
-
           if (timelineData?.time > 0 || timelineData?.percent > 0) {
             return { season, seasonCount, episode, episodeCount };
           }
@@ -32,8 +31,7 @@
   }
 
   function formatWatched(timeData) {
-    if (!timeData || (!timeData.episode && !timeData.time)) return null;
-
+    if (!timeData) return null;
     if (timeData.season && timeData.episode) {
       return `S ${timeData.season}/${timeData.seasonCount} • E ${timeData.episode}/${timeData.episodeCount}`;
     } else if (timeData.time && timeData.duration) {
@@ -71,7 +69,7 @@
           });
         });
       }
-      return new Promise(resolve => setTimeout(resolve, 80));
+      return new Promise(resolve => setTimeout(resolve, 40));
     })).then(() => {
       cards.forEach(card => {
         card.setAttribute('data-watched-processed', 'true');
@@ -81,16 +79,16 @@
     });
   }
 
-  function updateCard() {  
-    document.querySelectorAll('.card[data-watched-processed="true"]').forEach(card => {  
-      renderWatchedBadge(card, card.card_data);  
-    });  
+  function updateCard() {
+    document.querySelectorAll('.card[data-watched-processed="true"]').forEach(card => {
+      renderWatchedBadge(card, card.card_data);
+    });
   }
 
-  Lampa.Listener.follow('activity', (e) => {  
-    if (e.type === 'start') {  
-      document.querySelector('.card:not([data-watched-processed])') ? processCards() : updateCard();  
-    }  
+  Lampa.Listener.follow('activity', (e) => {
+    if (e.type === 'start') {
+      document.querySelector('.card:not([data-watched-processed])') ? processCards() : updateCard();
+    }
   });
 
   var observer = new MutationObserver(function (mutations) {
@@ -111,8 +109,3 @@
     });
   }
 })();
-
-
-
-
-
