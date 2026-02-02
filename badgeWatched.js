@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.9.6',
+    version: '3.9.7',
     name: 'Watched Badge',
     component: 'watched_badge'
   };
@@ -69,7 +69,7 @@
           });
         });
       }
-      return new Promise(resolve => setTimeout(resolve, 40));
+      return Promise.resolve();
     })).then(() => {
       cards.forEach(card => {
         card.setAttribute('data-watched-processed', 'true');
