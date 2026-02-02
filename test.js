@@ -54,10 +54,14 @@
     const allHistoryCards = Array.from(document.querySelectorAll('.card'))
       .filter(card => Lampa.Favorite.check(card.card_data).history);
 
+    if (allHistoryCards.length === 0) return;
+
     const processedCards = allHistoryCards.filter(card => card.hasAttribute('data-watched-processed'));
     const unprocessedCards = allHistoryCards.filter(card => !card.hasAttribute('data-watched-processed'));
 
     processedCards.forEach(card => renderWatchedBadge(card, card.card_data));
+
+    if (unprocessedCards.length === 0) return;
 
     Promise.all(unprocessedCards.map(card => {
       const data = card.card_data;
@@ -110,3 +114,4 @@
     });
   }
 })();
+
