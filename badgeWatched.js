@@ -3,12 +3,25 @@
 
   let manifest = {
     type: 'other',
-    version: '3.10.2',
+    version: '3.10.3',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
 
   Lampa.Manifest.plugins = manifest;
+
+  const CONFIG = { CACHE_KEY: 'badge_watched_cache' };
+
+  function setCache(key, watched) {
+    const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 400, {});
+    cache[key] = { watched, ts: Date.now() };
+    Lampa.Storage.set(CONFIG.CACHE_KEY, cache);
+  }
+
+  function getCache(key) {
+    const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 400, {});
+    return cache[key] || null;
+  }
 
   function getData(cardData) {
     if (cardData.original_name) {
@@ -52,11 +65,9 @@
 
   function processCards() {
     const cards = Array.from(document.querySelectorAll('.card')).filter(card => Lampa.Favorite.check(card.card_data).history);
-    const oldCards = cards.filter(card => card.card_data.badge_watched);
-    const newCards = cards.filter(card => !card.card_data.badge_watched);
-
+    const oldCards = cards.filter(card => getCache(card.card_data.id) && formatWatched(getData(card.card_data)));
     oldCards.forEach(card => renderWatchedBadge(card, card.card_data));
-    Promise.all(newCards.map(card => {
+    Promise.all(cards.map(card => {
       const data = card.card_data;
       Lampa.Storage.set('activity', { movie: data, card: data });
       Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
@@ -75,8 +86,8 @@
       }
       return Promise.resolve();
     })).then(() => {
-      newCards.forEach(card => {
-        card.card_data.badge_watched = true;
+      cards.forEach(card => {
+        setCache(card.card_data.id, true);
         const text = formatWatched(getData(card.card_data));
         if (text) renderWatchedBadge(card, card.card_data);
       });

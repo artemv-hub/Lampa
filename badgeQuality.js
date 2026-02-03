@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.10.2',
+    version: '3.10.3',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -15,6 +15,17 @@
     CACHE_TTL_MS: 24 * 60 * 60 * 1000,
     JACRED_URL: 'ru.jacred.pro'
   };
+
+  function setCache(key, quality) {
+    const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 400, {});
+    cache[key] = { quality, ts: Date.now() };
+    Lampa.Storage.set(CONFIG.CACHE_KEY, cache);
+  }
+  function getCache(key) {
+    const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 400, {});
+    const item = cache[key];
+    return (item && Date.now() - item.ts < CONFIG.CACHE_TTL_MS) ? item.quality : null;
+  }
 
   function getDate(title, year, callback) {
     const network = new Lampa.Reguest();
@@ -70,17 +81,6 @@
     }, { priority: -1, quality: null, title: '' });
 
     return result.quality ? (TS_audio.test(result.title) ? result.quality + '/TS' : result.quality) : null;
-  }
-
-  function setCache(key, quality) {
-    const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 400, {});
-    cache[key] = { quality, ts: Date.now() };
-    Lampa.Storage.set(CONFIG.CACHE_KEY, cache);
-  }
-  function getCache(key) {
-    const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 400, {});
-    const item = cache[key];
-    return (item && Date.now() - item.ts < CONFIG.CACHE_TTL_MS) ? item.quality : null;
   }
 
   function renderQualityBadge(cardElement, quality) {
