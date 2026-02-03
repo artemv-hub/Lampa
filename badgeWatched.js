@@ -3,9 +3,9 @@
 
   let manifest = {
     type: 'other',
-    version: '3.10.0',
-    name: 'Watched Badge',
-    component: 'watched_badge'
+    version: '3.10.1',
+    name: 'Badge Watched',
+    component: 'badge_watched'
   };
 
   Lampa.Manifest.plugins = manifest;
@@ -55,8 +55,8 @@
 
   function processCards() {
     const cards = Array.from(document.querySelectorAll('.card')).filter(card => Lampa.Favorite.check(card.card_data).history);
-    const processedCards = cards.filter(card => card.card_data.processed);
-    const unprocessedCards = cards.filter(card => !card.card_data.processed);
+    const processedCards = cards.filter(card => card.card_data.badge_watched);
+    const unprocessedCards = cards.filter(card => !card.card_data.badge_watched);
     
     processedCards.forEach(card => renderWatchedBadge(card, card.card_data));
     Promise.all(unprocessedCards.map(card => {
@@ -79,7 +79,7 @@
       return Promise.resolve();
     })).then(() => {
       unprocessedCards.forEach(card => {
-        card.card_data.processed = true;
+        card.card_data.badge_watched = true;
         const text = formatWatched(getData(card.card_data));
         if (text) renderWatchedBadge(card, card.card_data);
       });
