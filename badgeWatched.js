@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.10.1',
+    version: '3.10.2',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
@@ -41,25 +41,22 @@
   }
 
   function renderWatchedBadge(cardElement, data) {
-    const text = formatWatched(getData(data));
-    if (!text) return;
-
     let badge = cardElement.querySelector('.card__view .card__watched');
     if (!badge) {
       badge = document.createElement('div');
       badge.className = 'card__watched';
       cardElement.querySelector('.card__view').appendChild(badge);
     }
-    badge.innerText = text;
+    badge.innerText = formatWatched(getData(data));
   }
 
   function processCards() {
     const cards = Array.from(document.querySelectorAll('.card')).filter(card => Lampa.Favorite.check(card.card_data).history);
-    const processedCards = cards.filter(card => card.card_data.badge_watched);
-    const unprocessedCards = cards.filter(card => !card.card_data.badge_watched);
-    
-    processedCards.forEach(card => renderWatchedBadge(card, card.card_data));
-    Promise.all(unprocessedCards.map(card => {
+    const oldCards = cards.filter(card => card.card_data.badge_watched);
+    const newCards = cards.filter(card => !card.card_data.badge_watched);
+
+    oldCards.forEach(card => renderWatchedBadge(card, card.card_data));
+    Promise.all(newCards.map(card => {
       const data = card.card_data;
       Lampa.Storage.set('activity', { movie: data, card: data });
       Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
@@ -78,7 +75,7 @@
       }
       return Promise.resolve();
     })).then(() => {
-      unprocessedCards.forEach(card => {
+      newCards.forEach(card => {
         card.card_data.badge_watched = true;
         const text = formatWatched(getData(card.card_data));
         if (text) renderWatchedBadge(card, card.card_data);

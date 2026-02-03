@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.7.7',
+    version: '3.10.2',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -13,7 +13,7 @@
   const CONFIG = {
     CACHE_KEY: 'badge_quality_cache',
     CACHE_TTL_MS: 24 * 60 * 60 * 1000,
-    JACRED_URL: Lampa.Storage.get('jackett_url', '')
+    JACRED_URL: 'ru.jacred.pro'
   };
 
   function getDate(title, year, callback) {
@@ -21,9 +21,7 @@
     network.timeout(5000);
     network.silent(
       'http://' + CONFIG.JACRED_URL + '/api/v2.0/indexers/all/results' +
-      '?title=' + encodeURIComponent(title) +
-      '&year=' + year +
-      '&apikey=' + Lampa.Storage.get('jackett_key', ''),
+      '?title=' + encodeURIComponent(title) + '&year=' + year + '&apikey=' + Lampa.Storage.get('jackett_key', ''),
       response => {
         const torrents = response.Results || [];
         callback(!torrents.length ? null : findBestQuality(torrents, year));
@@ -96,10 +94,10 @@
   }
 
   function processCards() {
-    document.querySelectorAll('.card:not([data-quality-processed])').forEach(cardElement => {
+    document.querySelectorAll('.card').forEach(cardElement => {
       const cardData = cardElement.card_data;
-      if (!cardData) return;
-      cardElement.setAttribute('data-quality-processed', 'true');
+      if (!cardData || cardData.badge_quality) return;
+      cardData.badge_quality = true;
 
       const title = cardData.title || cardData.name;
       const year = (cardData.release_date || cardData.first_air_date || '').substring(0, 4);
@@ -122,7 +120,7 @@
   var observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
       mutation.addedNodes.forEach(function (node) {
-        if (node.nodeType === 1 && node.classList?.contains('card') && !node.hasAttribute('data-quality-processed')) {
+        if (node.nodeType === 1 && node.classList?.contains('card')) {
           processCards();
         }
       });
