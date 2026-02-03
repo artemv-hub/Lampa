@@ -41,28 +41,24 @@
   }
 
   function renderWatchedBadge(cardElement, data) {
+    const text = formatWatched(getData(data));
+    if (!text) return;
+
     let badge = cardElement.querySelector('.card__view .card__watched');
     if (!badge) {
       badge = document.createElement('div');
       badge.className = 'card__watched';
       cardElement.querySelector('.card__view').appendChild(badge);
     }
-    badge.innerText = formatWatched(getData(data));
+    badge.innerText = text;
   }
 
   function processCards() {
-    const allHistoryCards = Array.from(document.querySelectorAll('.card'))
-      .filter(card => Lampa.Favorite.check(card.card_data).history);
-
-    if (allHistoryCards.length === 0) return;
-
-    const processedCards = allHistoryCards.filter(card => card.hasAttribute('data-watched-processed'));
-    const unprocessedCards = allHistoryCards.filter(card => !card.hasAttribute('data-watched-processed'));
-
+    const cards = Array.from(document.querySelectorAll('.card')).filter(card => Lampa.Favorite.check(card.card_data).history);
+    const processedCards = cards.filter(card => card.card_data.processed);
+    const unprocessedCards = cards.filter(card => !card.card_data.processed);
+    
     processedCards.forEach(card => renderWatchedBadge(card, card.card_data));
-
-    if (unprocessedCards.length === 0) return;
-
     Promise.all(unprocessedCards.map(card => {
       const data = card.card_data;
       Lampa.Storage.set('activity', { movie: data, card: data });
@@ -83,7 +79,7 @@
       return Promise.resolve();
     })).then(() => {
       unprocessedCards.forEach(card => {
-        card.setAttribute('data-watched-processed', 'true');
+        card.card_data.processed = true;
         const text = formatWatched(getData(card.card_data));
         if (text) renderWatchedBadge(card, card.card_data);
       });
@@ -99,7 +95,7 @@
   var observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
       mutation.addedNodes.forEach(function (node) {
-        if (node.nodeType === 1 && node.classList?.contains('card') && !node.hasAttribute('data-watched-processed')) {
+        if (node.nodeType === 1 && node.classList?.contains('card')) {
           processCards();
         }
       });
