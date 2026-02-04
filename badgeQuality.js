@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.10.3',
+    version: '3.10.4',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -83,21 +83,20 @@
     return result.quality ? (TS_audio.test(result.title) ? result.quality + '/TS' : result.quality) : null;
   }
 
-  function renderQualityBadge(cardElement, quality) {
-    let badge = cardElement.querySelector('.card__view .card__quality');
+  function renderQualityBadge(card, quality) {
+    let badge = card.querySelector('.card__view .card__quality');
     if (!badge) {
       badge = document.createElement('div');
       badge.className = 'card__quality';
-      cardElement.querySelector('.card__view').appendChild(badge);
+      card.querySelector('.card__view').appendChild(badge);
     }
     badge.innerText = quality;
   }
 
   function processCards() {
-    document.querySelectorAll('.card').forEach(cardElement => {
-      const cardData = cardElement.card_data;
-      if (!cardData || cardData.badge_quality) return;
-      cardData.badge_quality = true;
+    Array.from(document.querySelectorAll('.card')).filter(card => !card.card_data.badge_quality).forEach(card => {
+      const cardData = card.card_data;
+      if (!cardData) return;
 
       const title = cardData.title || cardData.name;
       const year = (cardData.release_date || cardData.first_air_date || '').substring(0, 4);
@@ -105,9 +104,18 @@
 
       const cacheKey = `${cardData.id}_${year}`;
       const cached = getCache(cacheKey);
-      cached ? renderQualityBadge(cardElement, cached) : getDate(title, year, quality => {
-        quality && (setCache(cacheKey, quality), renderQualityBadge(cardElement, quality));
-      });
+      if (cached) {
+        card.card_data.badge_quality = cached;
+        renderQualityBadge(card, cached);
+      } else {
+        getDate(title, year, quality => {
+          if (quality) {
+            card.card_data.badge_quality = quality;
+            setCache(cacheKey, quality);
+            renderQualityBadge(card, quality);
+          }
+        });
+      }
     });
   }
 
