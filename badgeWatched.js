@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.10.9',
+    version: '3.11.0',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
@@ -106,9 +106,9 @@
     }
   });
 
-  var observer = new MutationObserver(function (mutations) {
-    mutations.forEach(function (mutation) {
-      mutation.addedNodes.forEach(function (node) {
+  var observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
         if (node.nodeType === 1 && node.classList?.contains('card')) {
           processCards();
         }
@@ -119,7 +119,7 @@
 
   if (window.appready) { processCards(); }
   else {
-    Lampa.Listener.follow("app", function (e) {
+    Lampa.Listener.follow("app", (e) => {
       if (e.type === "ready") { processCards(); }
     });
   }

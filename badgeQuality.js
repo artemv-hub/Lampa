@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.10.5',
+    version: '3.11.0',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -115,15 +115,15 @@
     });
   }
 
-  Lampa.Listener.follow('activity', function (e) {
-    if (e.type == 'start') {
+  Lampa.Listener.follow('activity', (e) => {
+    if (e.type === 'start') {
       setTimeout(processCards, 100);
     }
   });
 
-  var observer = new MutationObserver(function (mutations) {
-    mutations.forEach(function (mutation) {
-      mutation.addedNodes.forEach(function (node) {
+  var observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
         if (node.nodeType === 1 && node.classList?.contains('card')) {
           processCards();
         }
@@ -134,7 +134,7 @@
 
   if (window.appready) { processCards(); }
   else {
-    Lampa.Listener.follow("app", function (e) {
+    Lampa.Listener.follow("app", (e) => {
       if (e.type === "ready") { processCards(); }
     });
   }
