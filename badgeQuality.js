@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.10.4',
+    version: '3.10.5',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -28,6 +28,9 @@
   }
 
   function getDate(title, year, callback) {
+    const cached = getCache(`${title}_${year}`);
+    if (cached) return callback(cached);
+
     const network = new Lampa.Reguest();
     network.timeout(5000);
     network.silent(
@@ -102,20 +105,13 @@
       const year = (cardData.release_date || cardData.first_air_date || '').substring(0, 4);
       if (!title || !year) return;
 
-      const cacheKey = `${cardData.id}_${year}`;
-      const cached = getCache(cacheKey);
-      if (cached) {
-        card.card_data.badge_quality = cached;
-        renderQualityBadge(card, cached);
-      } else {
-        getDate(title, year, quality => {
-          if (quality) {
-            card.card_data.badge_quality = quality;
-            setCache(cacheKey, quality);
-            renderQualityBadge(card, quality);
-          }
-        });
-      }
+      getDate(title, year, quality => {
+        if (quality) {
+          card.card_data.badge_quality = quality;
+          setCache(`${title}_${year}`, quality);
+          renderQualityBadge(card, quality);
+        }
+      });
     });
   }
 
