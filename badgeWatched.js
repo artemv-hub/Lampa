@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.10.7',
+    version: '3.10.8',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
@@ -104,5 +104,3 @@
     });
   }
 })();
-
-
