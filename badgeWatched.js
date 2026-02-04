@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.10.6',
+    version: '3.10.7',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
@@ -40,14 +40,14 @@
     return null;
   }
 
-  function renderWatchedBadge(cardElement, data) {
+  function renderWatchedBadge(card, data) {
     const text = formatWatched(getData(data));
-    let badge = cardElement.querySelector('.card__view .card__watched');
+    let badge = card.querySelector('.card__view .card__watched');
     if (!text) return badge?.remove();
     if (!badge) {
       badge = document.createElement('div');
       badge.className = 'card__watched';
-      cardElement.querySelector('.card__view').appendChild(badge);
+      card.querySelector('.card__view').appendChild(badge);
     }
     badge.innerText = text;
   }
