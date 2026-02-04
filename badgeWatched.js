@@ -3,21 +3,38 @@
 
   let manifest = {
     type: 'other',
-    version: '3.10.8',
+    version: '3.10.9',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
 
   Lampa.Manifest.plugins = manifest;
 
+  const CONFIG = {
+    CACHE_KEY: 'badge_watched_cache'
+  };
+
+  function setCache(key, seasons) {
+    const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 400, {});
+    cache[key] = { seasons, ts: Date.now() };
+    Lampa.Storage.set(CONFIG.CACHE_KEY, cache);
+  }
+  function getCache(key) {
+    const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 400, {});
+    const item = cache[key];
+    return item ? item.seasons : null;
+  }
+
   function getData(cardData) {
     if (cardData.original_name) {
+      const cached = getCache(cardData.id);
+      if (cached) cardData.seasons = cached;
       const seasonCount = cardData.number_of_seasons;
       for (let season = seasonCount; season >= 1; season--) {
         const episodeCount = cardData.seasons?.find(s => s.season_number === season)?.episode_count;
         for (let episode = episodeCount; episode >= 1; episode--) {
-          let hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''));
-          let timelineData = Lampa.Timeline.view(hash);
+          const hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''));
+          const timelineData = Lampa.Timeline.view(hash);
           if (timelineData?.time > 0 || timelineData?.percent > 0) {
             return { season, seasonCount, episode, episodeCount };
           }
@@ -56,9 +73,11 @@
     const cards = Array.from(document.querySelectorAll('.card')).filter(card => Lampa.Favorite.check(card.card_data).history);
     const oldCards = cards.filter(card => formatWatched(getData(card.card_data)));
     const newCards = cards.filter(card => !formatWatched(getData(card.card_data)));
+
     oldCards.forEach(card => renderWatchedBadge(card, card.card_data));
     Promise.all(newCards.map(card => {
       const data = card.card_data;
+
       Lampa.Storage.set('activity', { movie: data, card: data });
       Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
 
@@ -70,6 +89,7 @@
               season_number: season,
               episode_count: seasonsData[season]?.episodes?.length || 0
             }));
+            setCache(data.id, data.seasons);
             resolve();
           });
         });
@@ -82,7 +102,7 @@
 
   Lampa.Listener.follow('activity', (e) => {
     if (e.type === 'start') {
-      processCards();
+      setTimeout(processCards, 100);
     }
   });
 
