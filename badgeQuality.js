@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.11.2',
+    version: '3.11.3',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -12,7 +12,7 @@
 
   const CONFIG = {
     CACHE_KEY: 'badge_quality_cache',
-    CACHE_TTL_MS: 24 * 60 * 60 * 1000,
+    CACHE_TTL_MS: 24 * 60 * 60 * 1000
   };
 
   function setCache(key, quality) {

@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.11.0',
+    version: '3.11.3',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
@@ -11,7 +11,8 @@
   Lampa.Manifest.plugins = manifest;
 
   const CONFIG = {
-    CACHE_KEY: 'badge_watched_cache'
+    CACHE_KEY: 'badge_watched_cache',
+    CACHE_TTL_MS: 30 * 24 * 60 * 60 * 1000
   };
 
   function setCache(key, seasons) {
@@ -22,7 +23,7 @@
   function getCache(key) {
     const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 400, {});
     const item = cache[key];
-    return item ? item.seasons : null;
+    return (item && Date.now() - item.ts < CONFIG.CACHE_TTL_MS) ? item.seasons : null;
   }
 
   function getData(cardData) {
