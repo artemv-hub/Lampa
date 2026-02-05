@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.11.4',
+    version: '3.11.5',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
@@ -11,28 +11,32 @@
   Lampa.Manifest.plugins = manifest;
 
   const CONFIG = {
-    CACHE_KEY: 'badge_watched_cache',
-    CACHE_TTL_MS: 30 * 24 * 60 * 60 * 1000
+    CACHE_KEY: 'badge_watched_cache'
   };
 
-  function setCache(key, seasons) {
+  function clearCache() {
+    Lampa.Storage.set(CONFIG.CACHE_KEY, '{}');
+  }
+
+  function setCache(key, title, seasons) {
     const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 400, {});
-    cache[key] = { seasons, ts: Date.now() };
+    cache[key] = { title, seasons };
     Lampa.Storage.set(CONFIG.CACHE_KEY, cache);
   }
+
   function getCache(key) {
     const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 400, {});
     const item = cache[key];
-    return (item && Date.now() - item.ts < CONFIG.CACHE_TTL_MS) ? item.seasons : null;
+    return item ? { title: item.title, seasons: item.seasons } : null;
   }
 
   function getData(cardData) {
     if (cardData.original_name) {
       const cached = getCache(cardData.id);
-      if (cached) cardData.seasons = cached;
+      if (cached) cardData.seasons = cached.seasons;
       const seasonCount = cardData.number_of_seasons;
       for (let season = seasonCount; season >= 1; season--) {
-        const episodeCount = cardData.seasons?.find(s => s.season_number === season)?.episode_count;
+        const episodeCount = cardData.seasons.find(s => s.season_number === season).episode_count;
         for (let episode = episodeCount; episode >= 1; episode--) {
           const hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, cardData.original_title].join(''));
           const timelineData = Lampa.Timeline.view(hash);
@@ -72,8 +76,8 @@
 
   function processCards() {
     const cards = Array.from(document.querySelectorAll('.card')).filter(card => Lampa.Favorite.check(card.card_data).history);
-    const oldCards = cards.filter(card => processedCard.has(card.card_data.id));
-    const newCards = cards.filter(card => !processedCard.has(card.card_data.id));
+    const oldCards = cards.filter(card => getCache(card.card_data.id));
+    const newCards = cards.filter(card => !getCache(card.card_data.id));
 
     oldCards.forEach(card => renderWatchedBadge(card, card.card_data));
     Promise.all(newCards.map(card => {
@@ -82,7 +86,7 @@
       Lampa.Storage.set('activity', { movie: data, card: data });
       Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
 
-      if (data.original_name && data.number_of_seasons && !data.seasons) {
+      if (data.original_name && !data.seasons) {
         return new Promise(resolve => {
           const seasons = Array.from({ length: data.number_of_seasons }, (_, i) => i + 1);
           Lampa.Api.seasons(data, seasons, seasonsData => {
@@ -90,20 +94,21 @@
               season_number: season,
               episode_count: seasonsData[season]?.episodes?.length || 0
             }));
-            setCache(data.id, data.seasons);
+            setCache(data.id, data.title, data.seasons);
             resolve();
           });
         });
       }
+      setCache(data.id, data.title);
       return Promise.resolve();
     })).then(() => {
       newCards.forEach(card => {
         renderWatchedBadge(card, card.card_data);
-        processedCard.add(card.card_data.id);
       });
     });
   }
-  const processedCard = new Set();
+
+  clearCache();
 
   Lampa.Listener.follow('activity', (e) => {
     if (e.type === 'start') {
@@ -121,11 +126,4 @@
     });
   });
   observer.observe(document.body, { childList: true, subtree: true });
-
-  if (window.appready) { processCards(); }
-  else {
-    Lampa.Listener.follow("app", (e) => {
-      if (e.type === "ready") { processCards(); }
-    });
-  }
 })();

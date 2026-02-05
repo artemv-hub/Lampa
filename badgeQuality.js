@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.11.4',
+    version: '3.11.5',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -102,7 +102,7 @@
 
       getDate(title, year, quality => {
         if (quality) {
-          setCache(`${title}_${year}`, quality);
+          setCache(data.id, quality);
           renderQualityBadge(card, quality);
         }
       });
@@ -125,11 +125,4 @@
     });
   });
   observer.observe(document.body, { childList: true, subtree: true });
-
-  if (window.appready) { processCards(); }
-  else {
-    Lampa.Listener.follow("app", (e) => {
-      if (e.type === "ready") { processCards(); }
-    });
-  }
 })();
