@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.11.1',
+    version: '3.11.2',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -13,7 +13,6 @@
   const CONFIG = {
     CACHE_KEY: 'badge_quality_cache',
     CACHE_TTL_MS: 24 * 60 * 60 * 1000,
-    JACRED_URL: 'ru.jacred.pro'
   };
 
   function setCache(key, quality) {
@@ -33,9 +32,7 @@
 
     const network = new Lampa.Reguest();
     network.timeout(5000);
-    network.silent(
-      'http://' + CONFIG.JACRED_URL + '/api/v2.0/indexers/all/results' +
-      '?title=' + encodeURIComponent(title) + '&year=' + year,
+    network.silent('http://' + 'jac-red.ru' + '/api/v2.0/indexers/all/results' + '?title=' + encodeURIComponent(title) + '&year=' + year,
       response => {
         const torrents = response.Results || [];
         callback(!torrents.length ? null : findBestQuality(torrents, year));
@@ -97,7 +94,7 @@
   }
 
   function processCards() {
-    Array.from(document.querySelectorAll('.card')).filter(card => !card.card_data.badge_quality).forEach(card => {
+    Array.from(document.querySelectorAll('.card')).forEach(card => {
       const cardData = card.card_data;
       if (!cardData) return;
 
@@ -107,7 +104,6 @@
 
       getDate(title, year, quality => {
         if (quality) {
-          card.card_data.badge_quality = quality;
           setCache(`${title}_${year}`, quality);
           renderQualityBadge(card, quality);
         }
