@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.11.3',
+    version: '3.11.4',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -95,12 +95,10 @@
 
   function processCards() {
     Array.from(document.querySelectorAll('.card')).forEach(card => {
-      const cardData = card.card_data;
-      if (!cardData) return;
-
-      const title = cardData.title || cardData.name;
-      const year = (cardData.release_date || cardData.first_air_date || '').substring(0, 4);
-      if (!title || !year) return;
+      const data = card.card_data;
+      const title = data.title || data.name;
+      const year = (data.release_date || data.first_air_date || '').substring(0, 4);
+      if (!title || !year || !data.vote_average) return;
 
       getDate(title, year, quality => {
         if (quality) {
