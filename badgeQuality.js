@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.11.5',
+    version: '3.11.6',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -102,7 +102,7 @@
 
       getDate(title, year, quality => {
         if (quality) {
-          setCache(data.id, quality);
+          setCache(`${title}_${year}`, quality);
           renderQualityBadge(card, quality);
         }
       });
