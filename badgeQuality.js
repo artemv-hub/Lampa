@@ -3,31 +3,27 @@
 
   let manifest = {
     type: 'other',
-    version: '3.11.6',
+    version: '3.12.0',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
 
   Lampa.Manifest.plugins = manifest;
 
-  const CONFIG = {
-    CACHE_KEY: 'badge_quality_cache',
-    CACHE_TTL_MS: 24 * 60 * 60 * 1000
-  };
-
-  function setCache(key, quality) {
-    const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 400, {});
-    cache[key] = { quality, ts: Date.now() };
-    Lampa.Storage.set(CONFIG.CACHE_KEY, cache);
+  const key = 'badge_quality_cache';
+  function setCache(card, quality) {
+    const cache = Lampa.Storage.cache(key, 400, {});
+    cache[card] = { quality, ts: Date.now() };
+    Lampa.Storage.set(key, cache);
   }
-  function getCache(key) {
-    const cache = Lampa.Storage.cache(CONFIG.CACHE_KEY, 400, {});
-    const item = cache[key];
-    return (item && Date.now() - item.ts < CONFIG.CACHE_TTL_MS) ? item.quality : null;
+  function getCache(card) {
+    const cache = Lampa.Storage.cache(key, 400, {});
+    const item = cache[card];
+    return (item && Date.now() - item.ts < 24 * 60 * 60 * 1000) ? item.quality : null;
   }
 
-  function getDate(title, year, callback) {
-    const cached = getCache(`${title}_${year}`);
+  function getDate(card, title, year, callback) {
+    const cached = getCache(card.id);
     if (cached) return callback(cached);
 
     const network = new Lampa.Reguest();
@@ -100,9 +96,9 @@
       const year = (data.release_date || data.first_air_date || '').substring(0, 4);
       if (!title || !year || !data.vote_average) return;
 
-      getDate(title, year, quality => {
+      getDate(data, title, year, quality => {
         if (quality) {
-          setCache(`${title}_${year}`, quality);
+          setCache(data.id, quality);
           renderQualityBadge(card, quality);
         }
       });
@@ -111,7 +107,7 @@
 
   Lampa.Listener.follow('activity', (e) => {
     if (e.type === 'start') {
-      setTimeout(processCards, 100);
+      setTimeout(processCards, 80);
     }
   });
 
