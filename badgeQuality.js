@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.12.0',
+    version: '3.12.1',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -28,7 +28,7 @@
 
     const network = new Lampa.Reguest();
     network.timeout(5000);
-    network.silent('http://' + 'jac-red.ru' + '/api/v2.0/indexers/all/results' + '?title=' + encodeURIComponent(title) + '&year=' + year,
+    network.silent('http://' + Lampa.Storage.field('jackett_url_two') + '/api/v2.0/indexers/all/results' + '?title=' + encodeURIComponent(title) + '&year=' + year,
       response => {
         const torrents = response.Results || [];
         callback(!torrents.length ? null : findBestQuality(torrents, year));
