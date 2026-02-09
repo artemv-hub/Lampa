@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.10.0',
+    version: '3.10.1',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -58,7 +58,8 @@
   const updateSize = () => $('body').css({ fontSize: getSize() + 'px' });
   updateSize();
   Lampa.Storage.listener.follow('change', e => {
-    if (e.name == 'interface_size') updateSize();
+    if (e.name == 'interface_size')
+      updateSize();
   });
 
   // CardFull
@@ -80,18 +81,6 @@
         titleElement.text(title);
       }
     }
-  });
-
-  // MenuSettings
-  Lampa.Settings.listener.follow('open', function (e) {
-    e.body.find('[data-component="parental_control"]').remove();
-    e.body.find('[data-name="light_version"]').remove();
-    e.body.find('[data-name="jackett_url"]').hide();
-    e.body.find('[data-name="jackett_key"]').hide();
-    e.body.find('[data-name="torrserver_url"]').hide();
-    e.body.find('[data-name="torrserver_password"]').hide();
-    e.body.find('[data-name="card_quality"]').hide();
-    e.body.find('[data-name="card_episodes"]').hide();
   });
 
   const observer = new MutationObserver(() => {
