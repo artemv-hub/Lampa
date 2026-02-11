@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.12.1',
+    version: '3.13.0',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
@@ -46,7 +46,7 @@
     return null;
   }
 
-  function formatWatched(card) {
+  function formatBadge(card) {
     if (!card) return null;
     if (card.season && card.episode) {
       return `S ${card.season}/${card.seasonCount} • E ${card.episode}/${card.episodeCount}`;
@@ -56,8 +56,8 @@
     return null;
   }
 
-  function renderWatchedBadge(card, data) {
-    const text = formatWatched(getData(data));
+  function renderBadge(card, data) {
+    const text = formatBadge(getData(data));
     let badge = card.querySelector('.card__view .card__watched');
     if (!text) return badge?.remove();
     if (!badge) {
@@ -69,13 +69,15 @@
   }
 
   function processCards() {
-    const cards = Array.from(document.querySelectorAll('.card')).filter(card => Lampa.Favorite.check(card.card_data).history || Lampa.Timeline.watched(card.card_data));
-    const oldCards = cards.filter(card => getCache(card.card_data.id));
-    const newCards = cards.filter(card => !getCache(card.card_data.id));
-    oldCards.forEach(card => renderWatchedBadge(card, card.card_data));
-    Promise.all(newCards.map(card => {
-      const data = card.card_data;
+    const cards = Array.from(document.querySelectorAll('.card'))
+      .map(card => ({ card, data: card.card_data }))
+      .filter(({ data }) => Lampa.Favorite.check(data).history || Lampa.Timeline.watched(data));
 
+    const oldCards = cards.filter(({ data }) => getCache(data.id));
+    const newCards = cards.filter(({ data }) => !getCache(data.id));
+
+    oldCards.forEach(({ card, data }) => renderBadge(card, data));
+    Promise.all(newCards.map(({ data }) => {
       Lampa.Storage.set('activity', { movie: data, card: data });
       Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
 
@@ -95,7 +97,7 @@
       setCache(data.id);
       return Promise.resolve();
     })).then(() => {
-      newCards.forEach(card => renderWatchedBadge(card, card.card_data));
+      newCards.forEach(({ card, data }) => renderBadge(card, data));
     });
   }
 
@@ -116,4 +118,3 @@
   });
   observer.observe(document.body, { childList: true, subtree: true });
 })();
-

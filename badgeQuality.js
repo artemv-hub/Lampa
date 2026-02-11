@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.12.1',
+    version: '3.13.0',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -22,16 +22,13 @@
     return (item && Date.now() - item.ts < 24 * 60 * 60 * 1000) ? item.quality : null;
   }
 
-  function getDate(card, title, year, callback) {
-    const cached = getCache(card.id);
-    if (cached) return callback(cached);
-
+  function getDate(title, year, callback) {
     const network = new Lampa.Reguest();
     network.timeout(5000);
     network.silent('http://' + Lampa.Storage.field('jackett_url_two') + '/api/v2.0/indexers/all/results' + '?title=' + encodeURIComponent(title) + '&year=' + year,
       response => {
         const torrents = response.Results || [];
-        callback(!torrents.length ? null : findBestQuality(torrents, year));
+        callback(!torrents.length ? null : bestQuality(torrents, year));
       },
       () => callback(null)
     );
@@ -62,7 +59,7 @@
     return null;
   }
 
-  function findBestQuality(torrents, targetYear) {
+  function bestQuality(torrents, targetYear) {
     const TS_audio = /звук с ts|audio ts/i;
     const trailer = /трейлер|trailer/i;
     if (torrents.every(t => trailer.test(t.Title || ''))) return null;
@@ -79,7 +76,7 @@
     return result.quality ? (TS_audio.test(result.title) ? result.quality + '/TS' : result.quality) : null;
   }
 
-  function renderQualityBadge(card, quality) {
+  function renderBadge(card, quality) {
     let badge = card.querySelector('.card__view .card__quality');
     if (!badge) {
       badge = document.createElement('div');
@@ -90,16 +87,19 @@
   }
 
   function processCards() {
-    Array.from(document.querySelectorAll('.card')).forEach(card => {
-      const data = card.card_data;
-      const title = data.title || data.name;
-      const year = (data.release_date || data.first_air_date || '').substring(0, 4);
-      if (!title || !year || !data.vote_average) return;
+    const cards = Array.from(document.querySelectorAll('.card'))
+      .map(card => ({ card, data: card.card_data }))
+      .filter(({ data }) => (data.title || data.name) && (data.release_date || data.first_air_date) && data.vote_average);
 
-      getDate(data, title, year, quality => {
+    const oldCards = cards.filter(({ data }) => getCache(data.id));
+    const newCards = cards.filter(({ data }) => !getCache(data.id));
+
+    oldCards.forEach(({ card, data }) => renderBadge(card, getCache(data.id)));
+    newCards.forEach(({ card, data }) => {
+      getDate(data.title || data.name, (data.release_date || data.first_air_date).slice(0, 4), quality => {
         if (quality) {
           setCache(data.id, quality);
-          renderQualityBadge(card, quality);
+          renderBadge(card, quality);
         }
       });
     });
