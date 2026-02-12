@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.13.0',
+    version: '3.13.1',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
@@ -32,7 +32,7 @@
       for (let season = seasonCount; season >= 1; season--) {
         const episodeCount = card.seasons.find(s => s.season_number === season).episode_count;
         for (let episode = episodeCount; episode >= 1; episode--) {
-          const hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, card.original_title].join(''));
+          const hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, card.original_name].join(''));
           const timelineData = Lampa.Timeline.view(hash);
           if (timelineData?.time > 0 || timelineData?.percent > 0) {
             return { season, seasonCount, episode, episodeCount };
@@ -71,30 +71,30 @@
   function processCards() {
     const cards = Array.from(document.querySelectorAll('.card'))
       .map(card => ({ card, data: card.card_data }))
-      .filter(({ data }) => Lampa.Favorite.check(data).history || Lampa.Timeline.watched(data));
+      .filter(({ data }) => Lampa.Favorite.check(data).history);
 
-    const oldCards = cards.filter(({ data }) => getCache(data.id));
-    const newCards = cards.filter(({ data }) => !getCache(data.id));
+    const oldCards = cards.filter(({ data }) => getCache(data.id) && data.number_of_seasons);
+    const newCards = cards.filter(({ data }) => !getCache(data.id) || !data.number_of_seasons);
 
     oldCards.forEach(({ card, data }) => renderBadge(card, data));
     Promise.all(newCards.map(({ data }) => {
       Lampa.Storage.set('activity', { movie: data, card: data });
       Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
 
-      if (data.original_name && data.number_of_seasons && !data.seasons) {
+      if (data.original_name) {
         return new Promise(resolve => {
-          const seasons = Array.from({ length: data.number_of_seasons }, (_, i) => i + 1);
-          Lampa.Api.seasons(data, seasons, seasonsData => {
-            data.seasons = seasons.map(season => ({
-              season_number: season,
-              episode_count: seasonsData[season]?.episodes?.length || 0
+          Lampa.Api.full({ method: 'tv', id: data.id, source: data.source }, ({ movie }) => {
+            if (!movie) return resolve();
+            data.number_of_seasons = movie.number_of_seasons;
+            data.seasons = movie.seasons.filter(s => s.season_number > 0).map(s => ({
+              season_number: s.season_number,
+              episode_count: s.episode_count || 0
             }));
             setCache(data.id, data.seasons);
             resolve();
           });
         });
       }
-      setCache(data.id);
       return Promise.resolve();
     })).then(() => {
       newCards.forEach(({ card, data }) => renderBadge(card, data));
@@ -103,7 +103,7 @@
 
   Lampa.Listener.follow('activity', (e) => {
     if (e.type === 'start') {
-      setTimeout(processCards, 80);
+      setTimeout(processCards, 20);
     }
   });
 
