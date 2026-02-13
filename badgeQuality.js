@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.13.0',
+    version: '3.14.0',
     name: 'Badge Quality',
     component: 'badge_quality'
   };
@@ -89,7 +89,7 @@
   function processCards() {
     const cards = Array.from(document.querySelectorAll('.card'))
       .map(card => ({ card, data: card.card_data }))
-      .filter(({ data }) => (data.title || data.name) && (data.release_date || data.first_air_date) && data.vote_average);
+      .filter(({ data }) => data && data.vote_average);
 
     const oldCards = cards.filter(({ data }) => getCache(data.id));
     const newCards = cards.filter(({ data }) => !getCache(data.id));

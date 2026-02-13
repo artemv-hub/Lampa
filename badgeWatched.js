@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.13.2',
+    version: '3.14.0',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
@@ -72,7 +72,7 @@
   function processCards() {
     const cards = Array.from(document.querySelectorAll('.card'))
       .map(card => ({ card, data: card.card_data }))
-      .filter(({ data }) => Lampa.Favorite.check(data).history);
+      .filter(({ data }) => data && Lampa.Favorite.check(data).history);
 
     const oldCards = cards.filter(({ data }) => getCache(data.id));
     const newCards = cards.filter(({ data }) => !getCache(data.id));
