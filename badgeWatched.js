@@ -3,11 +3,10 @@
 
   let manifest = {
     type: 'other',
-    version: '3.14.0',
+    version: '3.14.1',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
-
   Lampa.Manifest.plugins = manifest;
 
   const key = 'badge_watched_cache';
