@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.14.1',
+    version: '3.14.2',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -36,9 +36,6 @@
     
     .full-start-new__buttons .full-start__button:not(.focus) span { display: unset; }
     .full-start__title-original { font-size: 1.6em; margin-bottom: 0em; }
-
-    .items-line { padding-bottom: 2em; }
-    .register { line-height: 1; min-width: 8em; }
     
     .time-line > div,
     .torrent-serial__progress,
