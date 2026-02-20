@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.14.2',
+    version: '3.14.3',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -27,12 +27,15 @@
     text-transform: none; 
   `;
   style.textContent = `
-    .card__age { ${badgeStyle} bottom: 0em; left: 0em; }  
-    .card__vote { ${badgeStyle} bottom: 1.2em; left: 0em; }  
-    .card__quality { ${badgeStyle} bottom: 2.4em; left: 0em; }  
-    .card__watched { ${badgeStyle} bottom: 0em; right: 0em; }
-    .card--tv .card__type { ${badgeStyle} bottom: 0em; right: 0em; z-index: 0; }
-    .card__marker { display: none; }
+    .card__age { ${badgeStyle} bottom: 0em; left: 0em; }
+    .card__vote { ${badgeStyle} bottom: 0em; right: 0em; }
+    .card__quality { ${badgeStyle} bottom: 1.2em; right: 0em; }
+    .card__watched { ${badgeStyle} bottom: 1.2em; left: 0em; }
+    .card--tv .card__type { ${badgeStyle} bottom: 1.2em; left: 0em; z-index: 0; }
+    .card__icons { top: 0em; }
+    .card__marker { top: 2em; bottom: unset; left: 50%; transform: translateX(-50%); }
+    .card__img { border-radius: 0.4em; }
+    .card.focus .card__view::after { border-radius: 0.8em; }
     
     .full-start-new__buttons .full-start__button:not(.focus) span { display: unset; }
     .full-start__title-original { font-size: 1.6em; margin-bottom: 0em; }
