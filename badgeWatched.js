@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.14.1',
+    version: '3.14.2',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
@@ -49,7 +49,7 @@
   function formatBadge(card) {
     if (!card) return null;
     if (card.season && card.episode) {
-      return `S ${card.season}/${card.seasonCount} • E ${card.episode}/${card.episodeCount}`;
+      return `S${card.season}/${card.seasonCount} E${card.episode}/${card.episodeCount}`;
     } else if (card.time && card.duration) {
       return `${Lampa.Utils.secondsToTime(card.time, true)}/${Lampa.Utils.secondsToTime(card.duration, true)}`;
     }
