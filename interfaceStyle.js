@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.14.3',
+    version: '3.14.4',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -21,17 +21,17 @@
     border-radius: 0.2em;
     padding: 0em 0.2em;
     color: #000;
-    background-color: rgba(255, 255, 255, 1);
+    background: rgba(255, 255, 255, 1);
     z-index: 1;
     white-space: nowrap;
     text-transform: none; 
   `;
   style.textContent = `
-    .card__age { ${badgeStyle} bottom: 0em; left: 0em; }
-    .card__vote { ${badgeStyle} bottom: 0em; right: 0em; }
-    .card__quality { ${badgeStyle} bottom: 1.2em; right: 0em; }
     .card__watched { ${badgeStyle} bottom: 1.2em; left: 0em; }
-    .card--tv .card__type { ${badgeStyle} bottom: 1.2em; left: 0em; z-index: 0; }
+    .card__age { ${badgeStyle} bottom: 0em; left: 0em; }
+    .card__quality { ${badgeStyle} bottom: 1.2em; right: 0em; }
+    .card__vote { ${badgeStyle} bottom: 0em; right: 0em; }
+    .card__type { top: 0em; left: 0em; }
     .card__icons { top: 0em; }
     .card__marker { top: 2em; bottom: unset; left: 50%; transform: translateX(-50%); }
     .card__img { border-radius: 0.4em; }
@@ -39,6 +39,7 @@
     
     .full-start-new__buttons .full-start__button:not(.focus) span { display: unset; }
     .full-start__title-original { font-size: 1.6em; margin-bottom: 0em; }
+    .source--name { display: none; }
     
     .time-line > div,
     .torrent-serial__progress,
@@ -47,20 +48,27 @@
   `;
   document.head.appendChild(style);
 
-  const colorRating = [
-    { ratings: 9, color: "rgba(52, 152, 219, 1)" },
-    { ratings: 7, color: "rgba(46, 204, 113, 1)" },
-    { ratings: 6, color: "rgba(241, 196, 15, 1)" },
-    { ratings: 4, color: "rgba(230, 126, 34, 1)" },
-    { ratings: 0, color: "rgba(231, 76, 60, 1)" }
-  ];
   const colorQuality = [
-    { qualities: ["/ts"], color: "rgba(231, 76, 60, 1)" },
-    { qualities: ["2160", "blu-ray", "bdremux"], color: "rgba(52, 152, 219, 1)" },
-    { qualities: ["1080", "bdrip", "hdrip", "dvdrip", "web-dl"], color: "rgba(46, 204, 113, 1)" },
-    { qualities: ["1080i", "720"], color: "rgba(241, 196, 15, 1)" },
-    { qualities: ["480", "tv", "tc"], color: "rgba(230, 126, 34, 1)" },
-    { qualities: ["vhsrip", "camrip", "ts"], color: "rgba(231, 76, 60, 1)" }
+    { color: "rgba(231, 076, 060, 1)", qualities: ["/ts"] },
+    { color: "rgba(052, 152, 219, 1)", qualities: ["2160", "blu-ray", "bdremux"] },
+    { color: "rgba(046, 204, 113, 1)", qualities: ["1080", "bdrip", "hdrip", "dvdrip", "web-dl"] },
+    { color: "rgba(241, 196, 015, 1)", qualities: ["1080i", "720"] },
+    { color: "rgba(230, 126, 034, 1)", qualities: ["480", "tv", "tc"] },
+    { color: "rgba(231, 076, 060, 1)", qualities: ["vhsrip", "camrip", "ts"] }
+  ];
+  const colorVote = [
+    { color: "rgba(052, 152, 219, 1)", vote: 9 },
+    { color: "rgba(046, 204, 113, 1)", vote: 7 },
+    { color: "rgba(241, 196, 015, 1)", vote: 6 },
+    { color: "rgba(230, 126, 034, 1)", vote: 4 },
+    { color: "rgba(231, 076, 060, 1)", vote: 0 }
+  ];
+  const colorPG = [
+    { color: 'rgba(231, 076, 060, 1)', pg: 18 },
+    { color: 'rgba(230, 126, 034, 1)', pg: 16 },
+    { color: 'rgba(241, 196, 015, 1)', pg: 12 },
+    { color: 'rgba(046, 204, 113, 1)', pg: 6 },
+    { color: 'rgba(052, 152, 219, 1)', pg: 0 }
   ];
 
   const originalLine = Lampa.Maker.map('Line').Items.onInit;
@@ -98,17 +106,22 @@
   });
 
   const observer = new MutationObserver(() => {
+    document.querySelectorAll('.card__type').forEach(e => e.innerText === 'TV' && (e.innerText = 'С'));
     document.querySelectorAll('.card__age').forEach(e => e.parentElement.querySelector('.card__view')?.appendChild(e));
-    document.querySelectorAll('.card__type').forEach(e => e.innerText === 'TV' && (e.innerText = 'Сериал'));
-    document.querySelectorAll(".card__vote").forEach(e => {
-      const ratingValue = parseFloat(e.textContent.trim());
-      const colorMatch = colorRating.find(colorRule => ratingValue >= colorRule.ratings);
-      if (colorMatch) e.style.backgroundColor = colorMatch.color;
-    });
     document.querySelectorAll(".card__quality").forEach(e => {
       const qualityText = e.textContent.trim().toLowerCase();
       const colorMatch = colorQuality.find(colorRule => colorRule.qualities.some(q => qualityText.includes(q)));
-      if (colorMatch) e.style.backgroundColor = colorMatch.color;
+      if (colorMatch) e.style.background = colorMatch.color;
+    });
+    document.querySelectorAll(".card__vote, .full-start__rate").forEach(e => {
+      const voteTest = parseFloat(e.textContent.trim());
+      const colorMatch = colorVote.find(colorRule => voteTest >= colorRule.vote);
+      if (colorMatch) e.style.background = colorMatch.color;
+    });
+    document.querySelectorAll('.full-start__pg').forEach(e => {
+      const pgText = parseInt((e.textContent.trim()).match(/\d+/)?.[0] || NaN);
+      const colorMatch = colorPG.find(colorRule => pgText >= colorRule.pg);
+      if (colorMatch) e.style.background = colorMatch.color;
     });
   });
   observer.observe(document.body, { childList: true, subtree: true });
