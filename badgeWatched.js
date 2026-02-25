@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.14.2',
+    version: '3.14.3',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
@@ -27,7 +27,7 @@
       const cached = getCache(card.id);
       if (cached) card.seasons = cached;
 
-      const seasonMap = new Map(card.seasons.map(s => [s.season_number, s.episode_count]));
+      const seasonMap = new Map(card.seasons?.map(s => [s.season_number, s.episode_count]));
       const seasonCount = card.seasons.length;
       for (let season = seasonCount; season >= 1; season--) {
         const episodeCount = seasonMap.get(season);
@@ -116,4 +116,5 @@
     });
   });
   observer.observe(document.body, { childList: true, subtree: true });
+
 })();
