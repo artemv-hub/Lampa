@@ -3,14 +3,14 @@
 
   let manifest = {
     type: 'interface',
-    version: '3.14.4',
+    version: '3.14.5',
     name: 'UI Style',
     component: 'ui_style'
   };
   Lampa.Manifest.plugins = manifest;
 
   const style = document.createElement('style');
-  const badgeStyle = `
+  const styleBadge = `
     position: absolute;
     left: unset;
     right: unset; 
@@ -21,16 +21,16 @@
     border-radius: 0.2em;
     padding: 0em 0.2em;
     color: #000;
-    background: rgba(255, 255, 255, 1);
+    background: #FFF;
     z-index: 1;
     white-space: nowrap;
     text-transform: none; 
   `;
   style.textContent = `
-    .card__watched { ${badgeStyle} bottom: 1.2em; left: 0em; }
-    .card__age { ${badgeStyle} bottom: 0em; left: 0em; }
-    .card__quality { ${badgeStyle} bottom: 1.2em; right: 0em; }
-    .card__vote { ${badgeStyle} bottom: 0em; right: 0em; }
+    .card__watched { ${styleBadge} bottom: 1.2em; left: 0em; }
+    .card__age { ${styleBadge} bottom: 0em; left: 0em; }
+    .card__quality { ${styleBadge} bottom: 1.2em; right: 0em; }
+    .card__vote { ${styleBadge} bottom: 0em; right: 0em; }
     .card__type { top: 0em; left: 0em; }
     .card__icons { top: 0em; }
     .card__marker { top: 2em; bottom: unset; left: 50%; transform: translateX(-50%); }
@@ -44,31 +44,31 @@
     .time-line > div,
     .torrent-serial__progress,
     .player-panel__position,
-    .player-panel__position > div:after { background-color: #3498db }
+    .player-panel__position > div:after { background-color: #3498DB }
   `;
   document.head.appendChild(style);
 
   const colorQuality = [
-    { color: "rgba(231, 076, 060, 1)", qualities: ["/ts"] },
-    { color: "rgba(052, 152, 219, 1)", qualities: ["2160", "blu-ray", "bdremux"] },
-    { color: "rgba(046, 204, 113, 1)", qualities: ["1080", "bdrip", "hdrip", "dvdrip", "web-dl"] },
-    { color: "rgba(241, 196, 015, 1)", qualities: ["1080i", "720"] },
-    { color: "rgba(230, 126, 034, 1)", qualities: ["480", "tv", "tc"] },
-    { color: "rgba(231, 076, 060, 1)", qualities: ["vhsrip", "camrip", "ts"] }
+    { color: "#E74C3C", qualities: ["/ts"] },
+    { color: "#3498DB", qualities: ["2160", "blu-ray", "bdremux"] },
+    { color: "#2ECC71", qualities: ["1080", "bdrip", "hdrip", "dvdrip", "web-dl"] },
+    { color: "#F1C40F", qualities: ["1080i", "720"] },
+    { color: "#E67E22", qualities: ["480", "tv", "tc"] },
+    { color: "#E74C3C", qualities: ["vhsrip", "camrip", "ts"] }
   ];
   const colorVote = [
-    { color: "rgba(052, 152, 219, 1)", vote: 9 },
-    { color: "rgba(046, 204, 113, 1)", vote: 7 },
-    { color: "rgba(241, 196, 015, 1)", vote: 6 },
-    { color: "rgba(230, 126, 034, 1)", vote: 4 },
-    { color: "rgba(231, 076, 060, 1)", vote: 0 }
+    { color: "#3498DB", vote: 9 },
+    { color: "#2ECC71", vote: 7 },
+    { color: "#F1C40F", vote: 6 },
+    { color: "#E67E22", vote: 4 },
+    { color: "#E74C3C", vote: 0 }
   ];
   const colorPG = [
-    { color: 'rgba(231, 076, 060, 1)', pg: 18 },
-    { color: 'rgba(230, 126, 034, 1)', pg: 16 },
-    { color: 'rgba(241, 196, 015, 1)', pg: 12 },
-    { color: 'rgba(046, 204, 113, 1)', pg: 6 },
-    { color: 'rgba(052, 152, 219, 1)', pg: 0 }
+    { color: "#E74C3C", pg: 18 },
+    { color: "#E67E22", pg: 16 },
+    { color: "#F1C40F", pg: 12 },
+    { color: "#2ECC71", pg: 6 },
+    { color: "#3498DB", pg: 0 }
   ];
 
   const originalLine = Lampa.Maker.map('Line').Items.onInit;
