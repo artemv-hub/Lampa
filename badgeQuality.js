@@ -1,9 +1,9 @@
 (function () {
-  "use strict";
+  'use strict';
 
   let manifest = {
     type: 'other',
-    version: '3.14.1',
+    version: '4.0.0',
     name: 'Badge Quality',
     component: 'badge_quality'
   };

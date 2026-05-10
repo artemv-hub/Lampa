@@ -1,9 +1,9 @@
 (function () {
-  "use strict";
+  'use strict';
 
   let manifest = {
     type: 'interface',
-    version: '3.14.5',
+    version: '4.0.0',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -49,26 +49,26 @@
   document.head.appendChild(style);
 
   const colorQuality = [
-    { color: "#E74C3C", qualities: ["/ts"] },
-    { color: "#3498DB", qualities: ["2160", "blu-ray", "bdremux"] },
-    { color: "#2ECC71", qualities: ["1080", "bdrip", "hdrip", "dvdrip", "web-dl"] },
-    { color: "#F1C40F", qualities: ["1080i", "720"] },
-    { color: "#E67E22", qualities: ["480", "tv", "tc"] },
-    { color: "#E74C3C", qualities: ["vhsrip", "camrip", "ts"] }
+    { color: '#E74C3C', qualities: ['/ts'] },
+    { color: '#3498DB', qualities: ['2160', 'blu-ray', 'bdremux'] },
+    { color: '#2ECC71', qualities: ['1080', 'bdrip', 'hdrip', 'dvdrip', 'web-dl'] },
+    { color: '#F1C40F', qualities: ['1080i', '720'] },
+    { color: '#E67E22', qualities: ['480', 'tv', 'tc'] },
+    { color: '#E74C3C', qualities: ['vhsrip', 'camrip', 'ts'] }
   ];
   const colorVote = [
-    { color: "#3498DB", vote: 9 },
-    { color: "#2ECC71", vote: 7 },
-    { color: "#F1C40F", vote: 6 },
-    { color: "#E67E22", vote: 4 },
-    { color: "#E74C3C", vote: 0 }
+    { color: '#3498DB', vote: 9 },
+    { color: '#2ECC71', vote: 7 },
+    { color: '#F1C40F', vote: 6 },
+    { color: '#E67E22', vote: 4 },
+    { color: '#E74C3C', vote: 0 }
   ];
   const colorPG = [
-    { color: "#E74C3C", pg: 18 },
-    { color: "#E67E22", pg: 16 },
-    { color: "#F1C40F", pg: 12 },
-    { color: "#2ECC71", pg: 6 },
-    { color: "#3498DB", pg: 0 }
+    { color: '#E74C3C', pg: 18 },
+    { color: '#E67E22', pg: 16 },
+    { color: '#F1C40F', pg: 12 },
+    { color: '#2ECC71', pg: 6 },
+    { color: '#3498DB', pg: 0 }
   ];
 
   const originalLine = Lampa.Maker.map('Line').Items.onInit;
@@ -108,12 +108,12 @@
   const observer = new MutationObserver(() => {
     document.querySelectorAll('.card__type').forEach(e => e.innerText === 'TV' && (e.innerText = 'С'));
     document.querySelectorAll('.card__age').forEach(e => e.parentElement.querySelector('.card__view')?.appendChild(e));
-    document.querySelectorAll(".card__quality").forEach(e => {
+    document.querySelectorAll('.card__quality').forEach(e => {
       const qualityText = e.textContent.trim().toLowerCase();
       const colorMatch = colorQuality.find(colorRule => colorRule.qualities.some(q => qualityText.includes(q)));
       if (colorMatch) e.style.background = colorMatch.color;
     });
-    document.querySelectorAll(".card__vote, .full-start__rate").forEach(e => {
+    document.querySelectorAll('.card__vote, .full-start__rate').forEach(e => {
       const voteTest = parseFloat(e.textContent.trim());
       const colorMatch = colorVote.find(colorRule => voteTest >= colorRule.vote);
       if (colorMatch) e.style.background = colorMatch.color;

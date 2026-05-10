@@ -1,9 +1,9 @@
 (function () {
-  "use strict";
+  'use strict';
 
   let manifest = {
     type: 'other',
-    version: '3.14.5',
+    version: '4.0.0',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
@@ -118,4 +118,3 @@
   observer.observe(document.body, { childList: true, subtree: true });
 
 })();
-
