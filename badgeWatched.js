@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '3.14.4',
+    version: '3.14.5',
     name: 'Badge Watched',
     component: 'badge_watched'
   };
@@ -84,10 +84,10 @@
       if (data.original_name) {
         return new Promise(resolve => {
           Lampa.Api.full({ method: 'tv', id: data.id, source: data.source }, ({ movie }) => {
-            data.seasons = movie.seasons.filter(s => s.season_number > 0).map(s => ({
+            data.seasons = movie.seasons?.filter(s => s.season_number > 0).map(s => ({
               season_number: s.season_number,
               episode_count: s.episode_count || 0
-            }));
+            })) ?? [];
             setCache(data.id, data.seasons);
             resolve();
           });
