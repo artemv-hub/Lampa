@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '4.0.1',
+    version: '4.0.2',
     name: 'Favorite Plus',
     component: 'favorite_plus'
   };
@@ -39,7 +39,7 @@
     },
 
     getTypesWithoutSystem(favorite) {
-      const systemFields = ['card', 'migrationVersion'];
+      const systemFields = ['card'];
       return Object.keys(favorite.plusTypes || {}).filter(type => systemFields.indexOf(type) === -1);
     },
 
@@ -386,12 +386,12 @@
         );
         $menuItem.insertBefore(bookmarkMenuItem.parent());
 
-        $menuItem.on('hover:enter', () => {
-          const category = $(this).find('.selectbox-item__title').text();
-          const type = favoritePlus.toggleCard(category, object.data);
+        $menuItem.on('hover:enter', function () {
+          var category = $(this).find('.selectbox-item__title').text();
+          var type = favoritePlus.toggleCard(category, object.data);
           $(this).toggleClass('selectbox-item--checked');
 
-          setTimeout(() => {
+          setTimeout(function () {
             if (object.card) {
               self.refreshPlusIcon(object);
             } else {
