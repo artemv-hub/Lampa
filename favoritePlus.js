@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '4.0.2',
+    version: '4.0.3',
     name: 'Favorite Plus',
     component: 'favorite_plus'
   };
@@ -14,7 +14,6 @@
 
   const favoritePlus = {
     _data: null,
-    allCards: [],
 
     init(obj) {
       this._data = obj || Lampa.Storage.get(STORAGE_KEY, {});
@@ -26,16 +25,8 @@
       return this._data;
     },
 
-    getTypes() {
-      return this.getTypesWithoutSystem(this.getFavorite());
-    },
-
     hasTypeId(favorite, type) {
-      const plusTypes = favorite.plusTypes;
-      for (const key in plusTypes) {
-        if (plusTypes.hasOwnProperty(key) && plusTypes[key] === type) return true;
-      }
-      return false;
+      return Object.values(favorite.plusTypes || {}).includes(type);
     },
 
     getTypesWithoutSystem(favorite) {
@@ -44,13 +35,11 @@
     },
 
     getCards(favorite) {
-      if (!favorite && this.allCards.length > 0) return this.allCards;
       favorite = favorite || this.getFavorite();
-      this.allCards = this.getTypesWithoutSystem(favorite).reduce((acc, key) => {
+      return this.getTypesWithoutSystem(favorite).reduce((acc, key) => {
         const uid = favorite.plusTypes[key];
         return favorite.hasOwnProperty(uid) ? acc.concat(favorite[uid]) : acc;
       }, []);
-      return this.allCards;
     },
 
     createType(typeName) {
@@ -99,21 +88,22 @@
       if (!uid) throw new Error('Категория не найдена');
 
       const typeList = favorite[uid] || [];
-      favorite[uid] = typeList;
       const plusTypeCards = favorite.plusTypes.card;
+      const cardId = card.id;
+      const isAdded = typeList.includes(cardId);
 
-      if (typeList.indexOf(card.id) === -1) {
-        if (plusTypeCards.every(c => c.id !== card.id)) {
+      if (isAdded) {
+        Lampa.Arrays.remove(typeList, cardId);
+        const isInAnyList = this.getTypesWithoutSystem(favorite)
+          .some(key => favorite[favorite.plusTypes[key]]?.includes(cardId));
+        if (!isInAnyList) {
+          favorite.plusTypes.card = plusTypeCards.filter(c => c.id !== cardId);
+        }
+      } else {
+        if (!plusTypeCards.some(c => c.id === cardId)) {
           Lampa.Arrays.insert(plusTypeCards, 0, this.sanitizeCard(card));
         }
-        Lampa.Arrays.insert(typeList, 0, card.id);
-        this.getCards(favorite);
-      } else {
-        Lampa.Arrays.remove(typeList, card.id);
-        const plusCards = this.getCards(favorite);
-        if (plusCards.indexOf(card.id) < 0) {
-          favorite.plusTypes.card = plusTypeCards.filter(c => c.id !== card.id);
-        }
+        Lampa.Arrays.insert(typeList, 0, cardId);
       }
 
       Lampa.Storage.set(STORAGE_KEY, favorite);
@@ -202,6 +192,14 @@
   };
 
   const plusPageSvc = {
+    restoreController(controllerName, $focusElement, $render) {
+      Lampa.Controller.toggle(controllerName);
+      Lampa.Controller.toggle('content');
+      if ($focusElement && $render) {
+        Lampa.Controller.collectionFocus($focusElement, $render);
+      }
+    },
+
     renderPlusButton(type) {
       const plusTypeCssClass = 'plus-type-' + type.uid;
       const $register = Lampa.Template.js('register')
@@ -224,16 +222,14 @@
           title: 'Выберите действие',
           items: menu,
           onBack: () => {
-            Lampa.Controller.toggle(controllerName);
-            Lampa.Controller.toggle('content');
+            this.restoreController(controllerName);
           },
           onSelect: item => {
             switch (item.action) {
               case 'remove':
                 favoritePlus.removeType(type.name);
                 $register.remove();
-                Lampa.Controller.toggle(controllerName);
-                Lampa.Controller.toggle('content');
+                this.restoreController(controllerName);
                 break;
               case 'rename':
                 Lampa.Input.edit({
@@ -250,8 +246,7 @@
                   favoritePlus.renameType(type.name, value);
                   $register.find('.register__name').text(value);
                   type.name = value;
-                  Lampa.Controller.toggle(controllerName);
-                  Lampa.Controller.collectionFocus($register, $render);
+                  this.restoreController(controllerName, $register, $render);
                 });
                 break;
             }
@@ -377,7 +372,7 @@
         return $(this).text() === Lampa.Lang.translate('title_book');
       });
 
-      favoritePlus.getTypes().forEach(plusCategory => {
+      favoritePlus.getTypesWithoutSystem(favoritePlus.getFavorite()).forEach(plusCategory => {
         const $menuItem = $(
           '<div class="selectbox-item selector">' +
           '<div class="selectbox-item__title">' + plusCategory + '</div>' +
@@ -408,14 +403,6 @@
       });
 
       Lampa.Controller.collectionSet($('body > .selectbox').find('.scroll__body'));
-
-      setTimeout(() => {
-        const $menuItems = $('body > .selectbox').find('.selector');
-        if ($menuItems.length > 0) {
-          Lampa.Controller.focus($menuItems.get(0));
-          Navigator.focus($menuItems.get(0));
-        }
-      }, 10);
     },
 
     refreshPlusIcon(object) {
@@ -481,6 +468,7 @@
     };
 
     const onMenuCreate = cardModule.Menu.onCreate;
+
     cardModule.Menu.onCreate = function () {
       const self = this;
       const favMenuList = this.menu_list.filter(m => m.title === Lampa.Lang.translate('settings_input_links'))[0];
@@ -488,7 +476,7 @@
       if (favMenuList) {
         const originalMenu = favMenuList.menu;
         favMenuList.menu = () => {
-          const plusItems = favoritePlus.getTypes().map(typeName => {
+          const plusItems = favoritePlus.getTypesWithoutSystem(favoritePlus.getFavorite()).map(typeName => {
             const isChecked = favoritePlus.getTypeList(typeName).indexOf(self.data.id) >= 0;
             return {
               checkbox: true,
