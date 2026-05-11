@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '4.0.4',
+    version: '4.0.5',
     name: 'Favorite Plus',
     component: 'favorite_plus'
   };
@@ -284,16 +284,13 @@
             const slicedCards = Lampa.Arrays.clone(typeCards.slice(0, 20));
             const totalPages = typeCards.length > 20 ? Math.ceil(typeCards.length / 20) : 1;
             slicedCards.forEach(item => {
-              if (!item.params) {
-                item.params = {
-                  emit: {
-                    onEnter: Lampa.Router.call.bind(Lampa.Router, 'full', item),
-                    onFocus: () => {
-                      Lampa.Background.change(Lampa.Utils.cardImgBackground(item))
-                    }
-                  }
-                };
-              }
+              item.params = item.params || {};
+              item.params.emit = {
+                onEnter: Lampa.Router.call.bind(Lampa.Router, 'full', item),
+                onFocus: () => {
+                  Lampa.Background.change(Lampa.Utils.cardImgBackground(item))
+                }
+              };
             });
             if (slicedCards.length > 0) {
               lines.push({
