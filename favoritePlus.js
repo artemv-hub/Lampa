@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '4.0.3',
+    version: '4.0.4',
     name: 'Favorite Plus',
     component: 'favorite_plus'
   };
@@ -14,26 +14,21 @@
 
   const favoritePlus = {
     _data: null,
-
     init(obj) {
       this._data = obj || Lampa.Storage.get(STORAGE_KEY, {});
       this._data.plusTypes = this._data.plusTypes || { card: [] };
     },
-
     getFavorite() {
       if (this._data == null) this.init();
       return this._data;
     },
-
     hasTypeId(favorite, type) {
       return Object.values(favorite.plusTypes || {}).includes(type);
     },
-
     getTypesWithoutSystem(favorite) {
       const systemFields = ['card'];
       return Object.keys(favorite.plusTypes || {}).filter(type => systemFields.indexOf(type) === -1);
     },
-
     getCards(favorite) {
       favorite = favorite || this.getFavorite();
       return this.getTypesWithoutSystem(favorite).reduce((acc, key) => {
@@ -41,19 +36,15 @@
         return favorite.hasOwnProperty(uid) ? acc.concat(favorite[uid]) : acc;
       }, []);
     },
-
     createType(typeName) {
       const favorite = this.getFavorite();
-      if (favorite.plusTypes[typeName]) {
-        throw new Error('Имя уже используется');
-      }
+      if (favorite.plusTypes[typeName]) throw new Error('Имя уже используется');
       const uid = Lampa.Utils.uid(8).toLowerCase();
       favorite.plusTypes[typeName] = uid;
       favorite[uid] = [];
       Lampa.Storage.set(STORAGE_KEY, favorite);
       return { name: typeName, uid, counter: 0 };
     },
-
     renameType(oldName, newName) {
       const favorite = this.getFavorite();
       const uid = favorite.plusTypes[oldName];
@@ -64,7 +55,6 @@
       Lampa.Storage.set(STORAGE_KEY, favorite);
       return true;
     },
-
     removeType(typeName) {
       const favorite = this.getFavorite();
       const uid = favorite.plusTypes[typeName];
@@ -74,24 +64,20 @@
       Lampa.Storage.set(STORAGE_KEY, favorite);
       return true;
     },
-
     getTypeList(typeName) {
       const favorite = this.getFavorite();
       const uid = favorite.plusTypes[typeName];
       if (!uid) throw new Error('Категория не найдена');
       return favorite[uid] || [];
     },
-
     toggleCard(typeName, card) {
       const favorite = this.getFavorite();
       const uid = favorite.plusTypes[typeName];
       if (!uid) throw new Error('Категория не найдена');
-
       const typeList = favorite[uid] || [];
       const plusTypeCards = favorite.plusTypes.card;
       const cardId = card.id;
       const isAdded = typeList.includes(cardId);
-
       if (isAdded) {
         Lampa.Arrays.remove(typeList, cardId);
         const isInAnyList = this.getTypesWithoutSystem(favorite)
@@ -105,29 +91,24 @@
         }
         Lampa.Arrays.insert(typeList, 0, cardId);
       }
-
       Lampa.Storage.set(STORAGE_KEY, favorite);
       return { name: typeName, uid, counter: typeList.length };
     },
-
     sanitizeCard(card) {
       if (!card) return null;
       return (Lampa.Utils.clearCard && Lampa.Arrays.clone) ? Lampa.Utils.clearCard(Lampa.Arrays.clone(card)) : card;
     }
   };
-
   const plusSync = {
     init() {
       if (window.favorite_plus_sync) return;
       window.favorite_plus_sync = true;
-
       this.goImport(() => {
         Lampa.Storage.listener.follow('change', event => {
           if (event.name === STORAGE_KEY) this.goExport();
         });
       });
     },
-
     account(url) {
       url = url + '';
       const email = Lampa.Storage.get('account_email');
@@ -140,14 +121,11 @@
       }
       return url;
     },
-
     goExport() {
       if (window.sync_disable) return;
       const value = Lampa.Storage.get(STORAGE_KEY, {});
       if (!value.hasOwnProperty('plusTypes')) return;
-
       const uri = this.account(window.location.origin + '/storage/set?path=sync_favorite_plus&pathfile=' + Lampa.Storage.get('lampac_profile_id', ''));
-
       fetch(uri, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -161,7 +139,6 @@
         })
         .catch(() => console.log('Lampac Storage', 'export', 'error'));
     },
-
     goImport(callback) {
       if (window.sync_disable) return;
       const network = new Lampa.Reguest();
@@ -190,7 +167,6 @@
       );
     }
   };
-
   const plusPageSvc = {
     restoreController(controllerName, $focusElement, $render) {
       Lampa.Controller.toggle(controllerName);
@@ -199,7 +175,6 @@
         Lampa.Controller.collectionFocus($focusElement, $render);
       }
     },
-
     renderPlusButton(type) {
       const plusTypeCssClass = 'plus-type-' + type.uid;
       const $register = Lampa.Template.js('register')
@@ -208,16 +183,13 @@
         .addClass('plus-type');
       $register.find('.register__name').text(type.name).addClass(plusTypeCssClass);
       $register.find('.register__counter').text(type.counter || 0).addClass(plusTypeCssClass);
-
       const $render = Lampa.Activity.active().activity.render();
-
       $register.on('hover:long', () => {
         const menu = [
           { title: 'Переименовать', action: 'rename' },
           { title: 'Удалить', action: 'remove' }
         ];
         const controllerName = Lampa.Controller.enabled().name;
-
         Lampa.Select.show({
           title: 'Выберите действие',
           items: menu,
@@ -253,7 +225,6 @@
           }
         });
       });
-
       $register.on('hover:enter', () => {
         Lampa.Activity.push({
           url: '',
@@ -263,18 +234,15 @@
           page: 1
         });
       });
-
       $('.register:last', $render).after($register);
       return $register;
     },
-
     refresh(type) {
       const activity = Lampa.Activity.active();
       if (activity.component === 'bookmarks') {
         $('.register__counter.plus-type-' + type.uid).text(type.counter || 0);
       }
     },
-
     renderAddButton() {
       const self = this;
       const $register = Lampa.Template.js('register')
@@ -282,7 +250,6 @@
         .addClass('plus-type-new');
       $register.find('.register__counter').html('<img src="./img/icons/add.svg"/>');
       $('.register:first').before($register);
-
       $register.on('hover:enter', () => {
         Lampa.Input.edit({
           title: 'Введите название новой папки',
@@ -301,7 +268,6 @@
         });
       });
     },
-
     registerLines() {
       Lampa.ContentRows.add({
         index: 100,
@@ -311,15 +277,12 @@
         call: (params, screen) => {
           const favorite = favoritePlus.getFavorite();
           const lines = [];
-
           favoritePlus.getTypesWithoutSystem(favorite).forEach(typeName => {
             const typeUid = favorite.plusTypes[typeName];
             const typeList = favorite[typeUid] || [];
             const typeCards = favorite.plusTypes.card.filter(card => typeList.indexOf(card.id) !== -1);
-
             const slicedCards = Lampa.Arrays.clone(typeCards.slice(0, 20));
             const totalPages = typeCards.length > 20 ? Math.ceil(typeCards.length / 20) : 1;
-
             slicedCards.forEach(item => {
               if (!item.params) {
                 item.params = {
@@ -332,7 +295,6 @@
                 };
               }
             });
-
             if (slicedCards.length > 0) {
               lines.push({
                 title: typeName,
@@ -358,20 +320,17 @@
               });
             }
           });
-
           if (lines.length) return lines;
         }
       });
     }
   };
-
   const plusCardSvc = {
     extendContextMenu(object) {
       const self = this;
       const bookmarkMenuItem = $('body > .selectbox').find('.selectbox-item__title').filter(function () {
         return $(this).text() === Lampa.Lang.translate('title_book');
       });
-
       favoritePlus.getTypesWithoutSystem(favoritePlus.getFavorite()).forEach(plusCategory => {
         const $menuItem = $(
           '<div class="selectbox-item selector">' +
@@ -380,12 +339,10 @@
           '</div>'
         );
         $menuItem.insertBefore(bookmarkMenuItem.parent());
-
         $menuItem.on('hover:enter', function () {
           var category = $(this).find('.selectbox-item__title').text();
           var type = favoritePlus.toggleCard(category, object.data);
           $(this).toggleClass('selectbox-item--checked');
-
           setTimeout(function () {
             if (object.card) {
               self.refreshPlusIcon(object);
@@ -393,18 +350,14 @@
               self.refreshBookmarkIcon();
             }
           }, 0);
-
           plusPageSvc.refresh(type);
         });
-
         if (favoritePlus.getTypeList(plusCategory).indexOf(object.data.id) >= 0) {
           $menuItem.addClass('selectbox-item--checked');
         }
       });
-
       Lampa.Controller.collectionSet($('body > .selectbox').find('.scroll__body'));
     },
-
     refreshPlusIcon(object) {
       const plusCards = favoritePlus.getCards();
       const $iconHolder = $('.card__icons-inner', object.card);
@@ -412,7 +365,6 @@
       const $starIcon = $('.icon--star', $iconHolder);
       const hasIcon = $starIcon.length > 0;
       const hidden = hasIcon && $starIcon.hasClass('hide');
-
       if (isFavorite) {
         if (!hasIcon) {
           $iconHolder.prepend(Lampa.Template.get('plus-icon'));
@@ -423,32 +375,26 @@
         if (hasIcon && !hidden) $starIcon.addClass('hide');
       }
     },
-
     refreshBookmarkIcon() {
       const active = Lampa.Activity.active();
       if (active.component !== 'full') return;
-
       const card = active.card;
       const plusAny = favoritePlus.getCards().indexOf(card.id) !== -1;
       const favStates = plusAny ? {} : Lampa.Favorite.check(card);
       const anyFavorite = plusAny || Object.keys(favStates).filter(t => t !== 'history' && t !== 'any').some(t => !!favStates[t]);
-
       const $svg = $('.button--book svg path', active.activity.render());
       $svg.attr('fill', anyFavorite ? 'currentColor' : 'transparent');
     }
   };
-
   function start() {
     if (window.favorite_plus) return;
     window.favorite_plus = true;
-
     const originalProfileWaiter = window.__profile_extra_waiter;
     window.__profile_extra_waiter = () => {
       const synced = Lampa.Storage.get(STORAGE_SYNC_KEY, 0) !== 0;
       if (typeof originalProfileWaiter === 'function') return synced && !!originalProfileWaiter();
       return synced;
     };
-
     Lampa.Storage.listener.follow('change', event => {
       if (event.name === 'lampac_sync_favorite' && event.value == 0) {
         Lampa.Storage.set(STORAGE_KEY, '{}', true);
@@ -456,9 +402,7 @@
         favoritePlus.init({});
       }
     });
-
     plusSync.init();
-
     const cardModule = Lampa.Maker.map('Card');
     const onFavoriteUpdate = cardModule.Favorite.onUpdate;
     cardModule.Favorite.onUpdate = function () {
@@ -466,13 +410,10 @@
       onFavoriteUpdate.apply(self);
       plusCardSvc.refreshPlusIcon({ data: self.data, card: self.html });
     };
-
     const onMenuCreate = cardModule.Menu.onCreate;
-
     cardModule.Menu.onCreate = function () {
       const self = this;
       const favMenuList = this.menu_list.filter(m => m.title === Lampa.Lang.translate('settings_input_links'))[0];
-
       if (favMenuList) {
         const originalMenu = favMenuList.menu;
         favMenuList.menu = () => {
@@ -488,7 +429,6 @@
               title: typeName
             };
           });
-
           const originalItems = originalMenu.apply(favMenuList).map(item => {
             if (item.onCheck) {
               const oldOnCheck = item.onCheck;
@@ -499,14 +439,11 @@
             }
             return item;
           });
-
           return plusItems.concat(originalItems);
         };
       }
-
       onMenuCreate.apply(this, arguments);
     };
-
     const favoriteGet = Lampa.Favorite.get;
     Lampa.Favorite.get = function (params) {
       if (!params || !params.type) return favoriteGet.apply(this, arguments);
@@ -522,11 +459,9 @@
       }
       return favoriteGet.apply(this, arguments);
     };
-
     const svgIcon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M11 4h2v16h-2V4zM4 11h16v2H4v-2z"/></svg>';
     Lampa.Template.add('plus-icon-svg', svgIcon);
     Lampa.Template.add('plus-icon', '<div class="card__icon icon--star">' + svgIcon + '</div>');
-
     $('<style>').prop('type', 'text/css').html(
       '.card__icon { position: relative; } ' +
       '.icon--star svg { position: absolute; height: 80%; width: 80%; top: 50%; left: 50%; transform: translate(-50%, -50%) }' +
@@ -570,5 +505,4 @@
   Lampa.Listener.follow('app', event => {
     if (event.type === 'ready') start();
   });
-
 })();
