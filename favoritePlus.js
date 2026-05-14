@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '4.0.6',
+    version: '4.0.7',
     name: 'Favorite Plus',
     component: 'favorite_plus'
   };
@@ -234,7 +234,7 @@
           page: 1
         });
       });
-      $('.register:last', $render).after($register);
+      $('.register:last', $render).before($register);
       return $register;
     },
     refresh(type) {
