@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '4.0.5',
+    version: '4.0.6',
     name: 'Favorite Plus',
     component: 'favorite_plus'
   };
@@ -205,7 +205,7 @@
                 break;
               case 'rename':
                 Lampa.Input.edit({
-                  title: 'Введите новое название',
+                  title: 'Новое название',
                   value: type.name,
                   free: true,
                   nosave: true
@@ -249,10 +249,10 @@
         .addClass('selector')
         .addClass('plus-type-new');
       $register.find('.register__counter').html('<img src="./img/icons/add.svg"/>');
-      $('.register:first').before($register);
+      $('.register:last').after($register);
       $register.on('hover:enter', () => {
         Lampa.Input.edit({
-          title: 'Введите название новой папки',
+          title: 'Название новой категории',
           value: '',
           free: true,
           nosave: true
