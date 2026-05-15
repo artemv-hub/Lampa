@@ -2,8 +2,8 @@
   'use strict';
 
   let manifest = {
-    type: 'other',
-    version: '4.0.0',
+    type: 'interface',
+    version: '4.0.1',
     name: 'Badge Quality',
     component: 'badge_quality'
   };

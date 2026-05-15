@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '4.0.0',
+    version: '4.0.1',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -45,6 +45,8 @@
     .torrent-serial__progress,
     .player-panel__position,
     .player-panel__position > div:after { background-color: #3498DB }
+
+    .loading-layer__text { white-space: pre-wrap; }
   `;
   document.head.appendChild(style);
 
