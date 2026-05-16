@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '4.0.2',
+    version: '4.0.3',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -46,8 +46,8 @@
     .player-panel__position,
     .player-panel__position > div:after { background-color: #3498DB }
 
-    .loading-layer__box { width: 250px; }
-    .loading-layer__text { white-space: pre-wrap; }
+    .loading-layer__box { width: 240px; }
+    .loading-layer__text { font-size: 1.2em; line-height: 1.2; tab-size: 6; white-space: pre-wrap; }
   `;
   document.head.appendChild(style);
 

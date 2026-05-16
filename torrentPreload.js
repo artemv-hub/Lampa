@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'torrent',
-    version: '4.0.2',
+    version: '4.0.3',
     name: 'Torrent Preload',
     component: 'torrent_preload'
   };
@@ -35,9 +35,9 @@
           if (progress >= 95) { clearInterval(interval); Lampa.Loading.stop(); onDone(); }
           else {
             const text =
-              `Раздают:\t\t${t.connected_seeders || 0}/${t.active_peers} (${t.total_peers})\n` +
-              `Скорость: \t${speed}\n` +
-              `Прогресс: \t${loaded} (${Math.round(progress)}%)`;
+              `Раздают:\t${t.connected_seeders || 0}/${t.active_peers} (${t.total_peers})\n` +
+              `Скорость:\t${speed}\n` +
+              `Прогресс:\t${loaded} (${Math.round(progress)}%)`;
             Lampa.Loading.setText(text);
           }
         }
