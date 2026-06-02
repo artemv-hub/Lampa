@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '4.0.7',
+    version: '4.0.8',
     name: 'Favorite Plus',
     component: 'favorite_plus'
   };
@@ -325,9 +325,6 @@
   const plusCardSvc = {
     extendContextMenu(object) {
       const self = this;
-      const bookmarkMenuItem = $('body > .selectbox').find('.selectbox-item__title').filter(function () {
-        return $(this).text() === Lampa.Lang.translate('title_book');
-      });
       favoritePlus.getTypesWithoutSystem(favoritePlus.getFavorite()).forEach(plusCategory => {
         const $menuItem = $(
           '<div class="selectbox-item selector">' +
@@ -335,7 +332,7 @@
           '<div class="selectbox-item__checkbox"></div>' +
           '</div>'
         );
-        $menuItem.insertBefore(bookmarkMenuItem.parent());
+        $menuItem.appendTo($('body > .selectbox').find('.scroll__body'));
         $menuItem.on('hover:enter', function () {
           var category = $(this).find('.selectbox-item__title').text();
           var type = favoritePlus.toggleCard(category, object.data);
@@ -423,7 +420,7 @@
                 favoritePlus.toggleCard(typeName, self.data);
                 Lampa.Maker.map('Card').Favorite.onUpdate.apply(self);
               },
-              title: typeName
+              title: '<span style="text-transform:none">' + typeName + '</span>'
             };
           });
           const originalItems = originalMenu.apply(favMenuList).map(item => {
@@ -436,7 +433,7 @@
             }
             return item;
           });
-          return plusItems.concat(originalItems);
+          return originalItems.concat(plusItems);
         };
       }
       onMenuCreate.apply(this, arguments);
