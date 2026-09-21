@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '5.0.0',
+    version: '5.0.1',
     name: 'UI Badge',
     component: 'ui_badge'
   };
@@ -22,20 +22,20 @@
     position: absolute;
     font-size: 1em;
     font-weight: 800;
-    padding: 0.25em 0.45em;
+    padding: 0.2em 0.4em;
     color: #FFF;
     background: rgba(0, 0, 0, 0.8);
     line-height: 1;
     white-space: nowrap;
   `;
   style.textContent = `
-    .card__type     { ${styleBadge} top: 0em; left: 0em; border-radius: 0.75em 0 0.75em 0; }
-    .card__vote     { ${styleBadge} top: 0em; bottom: unset; right: 0em; border-radius: 0 0.75em 0 0.75em; }
-    .card__age      { ${styleBadge} bottom: 0em; left: 0em; border-radius: 0 0.75em 0 0.75em; }
-    .card__status   { ${styleBadge} bottom: 0em; right: 0em; border-radius: 0.75em 0 0.75em 0; }
-    .card__duration { ${styleBadge} bottom: 0em; right: 0em; border-radius: 0.75em 0 0.75em 0; }
-    .card__quality  { ${styleBadge} bottom: 2em; left: 0em;	right: unset; border-radius: 0 0.75em 0.75em 0; }
-    .card__watched  { ${styleBadge} bottom: 2em; right: 0em; border-radius: 0.75em 0 0 0.75em; }
+    .card__type     { ${styleBadge} top: 0em; left: 0em; border-radius: 0.8em 0 0.8em 0; }
+    .card__vote     { ${styleBadge} top: 0em; bottom: unset; right: 0em; border-radius: 0 0.8em 0 0.8em; }
+    .card__age      { ${styleBadge} bottom: 0em; left: 0em; border-radius: 0 0.8em 0 0.8em; }
+    .card__status   { ${styleBadge} bottom: 0em; right: 0em; border-radius: 0.8em 0 0.8em 0; }
+    .card__duration { ${styleBadge} bottom: 0em; right: 0em; border-radius: 0.8em 0 0.8em 0; }
+    .card__quality  { ${styleBadge} bottom: 2em; left: 0em;	right: unset; border-radius: 0 0.8em 0.8em 0; }
+    .card__watched  { ${styleBadge} bottom: 2em; right: 0em; border-radius: 0.8em 0 0 0.8em; }
     .card__icons    { left: 0em; right: unset; top: 50%; transform: translateY(-50%); }
     .card__icons-inner { flex-direction: column; }
     .card__marker { top: 2em; bottom: unset; left: 50%; transform: translateX(-50%); }
