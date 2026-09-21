@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '5.0.2',
+    version: '5.0.3',
     name: 'UI Badge',
     component: 'ui_badge'
   };
@@ -338,7 +338,7 @@
         status === 'Canceled' ? 'Отменено' : 'Завершено',
         statusLevels[status === 'Canceled' ? 'canceled' : 'ended']);
     } else if (last && last.season_number && last.episode_number) {
-      setBadge(card, 'card__status', 'S' + last.season_number + ':E' + last.episode_number, LEVEL.normal);
+      setBadge(card, 'card__status', 'S' + last.season_number + ':E' + last.episode_number);
     } else {
       setBadge(card, 'card__status', null);
     }
