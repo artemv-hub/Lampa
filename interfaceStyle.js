@@ -3,40 +3,14 @@
 
   let manifest = {
     type: 'interface',
-    version: '4.0.3',
+    version: '4.0.4',
     name: 'UI Style',
     component: 'ui_style'
   };
   Lampa.Manifest.plugins = manifest;
 
   const style = document.createElement('style');
-  const styleBadge = `
-    position: absolute;
-    left: unset;
-    right: unset; 
-    top: unset;
-    bottom: unset;
-    font-size: 1.2em;
-    font-weight: bold;
-    border-radius: 0.2em;
-    padding: 0em 0.2em;
-    color: #000;
-    background: #FFF;
-    z-index: 1;
-    white-space: nowrap;
-    text-transform: none; 
-  `;
   style.textContent = `
-    .card__watched { ${styleBadge} bottom: 1.2em; left: 0em; }
-    .card__age { ${styleBadge} bottom: 0em; left: 0em; }
-    .card__quality { ${styleBadge} bottom: 1.2em; right: 0em; }
-    .card__vote { ${styleBadge} bottom: 0em; right: 0em; }
-    .card__type { top: 0em; left: 0em; }
-    .card__icons { top: 0em; }
-    .card__marker { top: 2em; bottom: unset; left: 50%; transform: translateX(-50%); }
-    .card__img { border-radius: 0.4em; }
-    .card.focus .card__view::after { border-radius: 0.8em; }
-    
     .full-start-new__buttons .full-start__button:not(.focus) span { display: unset; }
     .full-start__title-original { font-size: 1.6em; margin-bottom: 0em; }
     .source--name { display: none; }
@@ -52,12 +26,11 @@
   document.head.appendChild(style);
 
   const colorQuality = [
-    { color: '#E74C3C', qualities: ['/ts'] },
-    { color: '#3498DB', qualities: ['2160', 'blu-ray', 'bdremux'] },
-    { color: '#2ECC71', qualities: ['1080', 'bdrip', 'hdrip', 'dvdrip', 'web-dl'] },
-    { color: '#F1C40F', qualities: ['1080i', '720'] },
-    { color: '#E67E22', qualities: ['480', 'tv', 'tc'] },
-    { color: '#E74C3C', qualities: ['vhsrip', 'camrip', 'ts'] }
+    { color: '#3498DB', quality: '4K' },
+    { color: '#2ECC71', quality: 'FHD' },
+    { color: '#F1C40F', quality: 'HD' },
+    { color: '#E67E22', quality: 'SD' },
+    { color: '#E74C3C', quality: 'TS' }
   ];
   const colorVote = [
     { color: '#3498DB', vote: 9 },
@@ -109,11 +82,9 @@
   });
 
   const observer = new MutationObserver(() => {
-    document.querySelectorAll('.card__type').forEach(e => e.innerText === 'TV' && (e.innerText = 'С'));
-    document.querySelectorAll('.card__age').forEach(e => e.parentElement.querySelector('.card__view')?.appendChild(e));
     document.querySelectorAll('.card__quality').forEach(e => {
       const qualityText = e.textContent.trim().toLowerCase();
-      const colorMatch = colorQuality.find(colorRule => colorRule.qualities.some(q => qualityText.includes(q)));
+      const colorMatch = colorQuality.find(colorRule => colorRule.quality.some(q => qualityText.includes(q)));
       if (colorMatch) e.style.background = colorMatch.color;
     });
     document.querySelectorAll('.card__vote, .full-start__rate').forEach(e => {
