@@ -3,12 +3,13 @@
 
   let manifest = {
     type: 'interface',
-    version: '5.0.3',
+    version: '5.0.5',
     name: 'UI Badge',
     component: 'ui_badge'
   };
   Lampa.Manifest.plugins = manifest;
 
+  // Уровни — единая палитра
   const LEVEL = {
     vgood: 'vgood',
     good: 'good',
@@ -17,14 +18,43 @@
     vbad: 'vbad'
   };
 
+  // Соответствия
+  const qualityMap = {
+    '4K': LEVEL.vgood,
+    'FHD': LEVEL.good,
+    'HD': LEVEL.normal,
+    'SD': LEVEL.bad,
+    'TS': LEVEL.vbad
+  };
+  const statusMap = {
+    ended: LEVEL.vgood,
+    ongoing: LEVEL.good,
+    canceled: LEVEL.normal
+  };
+  const voteMap = [
+    { level: LEVEL.vgood, min: 9 },
+    { level: LEVEL.good, min: 7 },
+    { level: LEVEL.normal, min: 6 },
+    { level: LEVEL.bad, min: 4 },
+    { level: LEVEL.vbad, min: 0 }
+  ];
+  const pgMap = [
+    { level: LEVEL.vbad, min: 18 },
+    { level: LEVEL.bad, min: 16 },
+    { level: LEVEL.normal, min: 12 },
+    { level: LEVEL.good, min: 6 },
+    { level: LEVEL.vgood, min: 0 }
+  ];
+
+  // Стили
   const style = document.createElement('style');
   const styleBadge = `
     position: absolute;
-    font-size: 1em;
+    font-size: 1.2em;
     font-weight: 800;
     padding: 0.2em 0.4em;
-    color: #FFF;
-    background: rgba(0, 0, 0, 0.8);
+    color: #000;
+    background: rgba(255, 255, 255, 0.8);
     line-height: 1;
     white-space: nowrap;
   `;
@@ -34,181 +64,103 @@
     .card__age      { ${styleBadge} bottom: 0em; left: 0em; border-radius: 0 0.8em 0 0.8em; }
     .card__status   { ${styleBadge} bottom: 0em; right: 0em; border-radius: 0.8em 0 0.8em 0; }
     .card__duration { ${styleBadge} bottom: 0em; right: 0em; border-radius: 0.8em 0 0.8em 0; }
-    .card__quality  { ${styleBadge} bottom: 2em; left: 0em;	right: unset; border-radius: 0 0.8em 0.8em 0; }
+    .card__quality  { ${styleBadge} bottom: 2em; left: 0em; right: unset; border-radius: 0 0.8em 0.8em 0; }
     .card__watched  { ${styleBadge} bottom: 2em; right: 0em; border-radius: 0.8em 0 0 0.8em; }
     .card__icons    { left: 0em; right: unset; top: 50%; transform: translateY(-50%); }
     .card__icons-inner { flex-direction: column; }
-    .card__marker { top: 2em; bottom: unset; left: 50%; transform: translateX(-50%); }
+    .card__marker   { top: 2em; bottom: unset; left: 50%; transform: translateX(-50%); }
 
-    [data-level="vgood"]  { background: rgba(52, 152, 219, 0.8); }
-    [data-level="good"]   { background: rgba(46, 204, 113, 0.8); }
-    [data-level="normal"] { background: rgba(241, 196, 15, 0.8); }
-    [data-level="bad"]    { background: rgba(230, 126, 34, 0.8); }
-    [data-level="vbad"]   { background: rgba(231, 76, 60, 0.8); }
+    [data-level="vgood"]  { background: rgba(52, 152, 219, 0.8) !important; }
+    [data-level="good"]   { background: rgba(46, 204, 113, 0.8) !important; }
+    [data-level="normal"] { background: rgba(241, 196, 15, 0.8) !important; }
+    [data-level="bad"]    { background: rgba(230, 126, 34, 0.8) !important; }
+    [data-level="vbad"]   { background: rgba(231, 76, 60, 0.8) !important; }
   `;
   document.head.appendChild(style);
 
+  // Кэш
   const CACHE_TTL = 24 * 60 * 60 * 1000;
   const CACHE_EMPTY_TTL = 6 * 60 * 60 * 1000;
   const CACHE_FAIL_TTL = 60 * 1000;
-  const CACHE_TV = 'card_overlay_tv';
-  const CACHE_MOVIE = 'card_overlay_movie';
-  const CACHE_QUALITY = 'card_overlay_quality';
+  const STORE_TV = 'co_tv';
+  const STORE_MOVIE = 'co_movie';
+  const STORE_QUALITY = 'co_quality';
   const QUALITY_API = 'jr.maxvol.pro';
-  const SCAN_DELAYS = [0, 150, 400, 900];
 
-  const qualityLevels = {
-    '4K': LEVEL.vgood,
-    'FHD': LEVEL.good,
-    'HD': LEVEL.normal,
-    'SD': LEVEL.bad,
-    'TS': LEVEL.vbad
-  };
+  const cacheData = {};
+  const cacheTimers = {};
 
-  const statusLevels = {
-    ended: LEVEL.good,
-    canceled: LEVEL.bad
-  };
-
-  const voteLevels = [
-    { level: LEVEL.vgood, min: 9 },
-    { level: LEVEL.good, min: 7 },
-    { level: LEVEL.normal, min: 6 },
-    { level: LEVEL.bad, min: 4 },
-    { level: LEVEL.vbad, min: 0 }
-  ];
-
-  const pgLevels = [
-    { level: LEVEL.vbad, min: 18 },
-    { level: LEVEL.bad, min: 16 },
-    { level: LEVEL.normal, min: 12 },
-    { level: LEVEL.good, min: 6 },
-    { level: LEVEL.vgood, min: 0 }
-  ];
-
-  const timers = {};
-  function later(fn, delay, key) {
-    const id = key || ('t' + Date.now() + Math.random());
-    if (timers[id]) clearTimeout(timers[id]);
-    timers[id] = setTimeout(() => {
-      delete timers[id];
-      try { fn(); } catch (_) { }
-    }, delay || 0);
-    return id;
-  }
-
-  const requestPool = [];
-  function getRequest() { return requestPool.pop() || new Lampa.Reguest(); }
-  function releaseRequest(req) { try { req.clear(); } catch (_) { } if (requestPool.length < 5) requestPool.push(req); }
-
-  const requestQueue = { tasks: [], processing: false, interval: 200, batch: 2 };
-  function processQueue() {
-    if (requestQueue.processing || !requestQueue.tasks.length) return;
-    requestQueue.processing = true;
-    const batch = requestQueue.tasks.splice(0, requestQueue.batch);
-    for (let i = 0; i < batch.length; i++) {
-      try { batch[i](); } catch (_) { }
-    }
-    setTimeout(() => { requestQueue.processing = false; processQueue(); }, requestQueue.interval);
-  }
-  function addToQueue(task) {
-    requestQueue.tasks.push(task);
-    while (requestQueue.tasks.length > 100) requestQueue.tasks.shift();
-    processQueue();
-  }
-
-  const cacheMem = {};
-  const saveTimers = {};
-  function loadCache(key) {
-    if (cacheMem[key]) return cacheMem[key];
+  function getStore(name) {
+    if (cacheData[name]) return cacheData[name];
     let stored = null;
-    try { stored = Lampa.Storage.get(key, null); } catch (_) { }
+    try { stored = Lampa.Storage.get(name, null); } catch (_) { }
     if (!stored || typeof stored !== 'object') stored = {};
     const now = Date.now();
-    let removed = false;
-    for (const k in stored) {
-      const entry = stored[k];
-      if (!entry || !entry.timestamp) { delete stored[k]; removed = true; continue; }
-      const ttl = entry._failed ? CACHE_FAIL_TTL : (entry._empty ? CACHE_EMPTY_TTL : CACHE_TTL);
-      if (now - entry.timestamp > ttl) { delete stored[k]; removed = true; }
+    let changed = false;
+    for (const key in stored) {
+      const entry = stored[key];
+      if (!entry || !entry.timestamp) { delete stored[key]; changed = true; continue; }
+      const ttl = entry.failed ? CACHE_FAIL_TTL : (entry.empty ? CACHE_EMPTY_TTL : CACHE_TTL);
+      if (now - entry.timestamp > ttl) { delete stored[key]; changed = true; }
     }
-    cacheMem[key] = stored;
-    if (removed) saveCacheDebounced(key);
-    return cacheMem[key];
+    cacheData[name] = stored;
+    if (changed) saveStore(name);
+    return cacheData[name];
   }
-  function saveCacheDebounced(key) {
-    if (saveTimers[key]) return;
-    saveTimers[key] = setTimeout(() => {
-      saveTimers[key] = 0;
-      try { Lampa.Storage.set(key, cacheMem[key]); } catch (_) { }
+  function saveStore(name) {
+    if (cacheTimers[name]) return;
+    cacheTimers[name] = setTimeout(() => {
+      cacheTimers[name] = 0;
+      try { Lampa.Storage.set(name, cacheData[name]); } catch (_) { }
     }, 800);
   }
-  function getCache(key, id) { return loadCache(key)[id] || null; }
-  function setCache(key, id, value) {
+  function getCache(name, id) { return getStore(name)[id] || null; }
+  function setCache(name, id, value) {
     value.timestamp = Date.now();
-    loadCache(key)[id] = value;
-    saveCacheDebounced(key);
+    getStore(name)[id] = value;
+    saveStore(name);
     return value;
   }
 
-  const pendingTmdb = {};
-  const attemptsTmdb = {};
-  function buildTmdbUrl(type, id) {
-    try {
-      if (Lampa.TMDB && Lampa.TMDB.api && Lampa.TMDB.key) return Lampa.TMDB.api(type + '/' + id + '?api_key=' + Lampa.TMDB.key());
-    } catch (_) { }
-    return '';
-  }
-  function fetchTmdb(type, id, cacheKey, callback) {
+  // TMDB
+  function getTmdb(type, id, store, callback) {
     const idKey = String(id);
-    const cached = getCache(cacheKey, idKey);
+    const cached = getCache(store, idKey);
     if (cached) { callback(cached); return; }
-    if (pendingTmdb[cacheKey + idKey]) { pendingTmdb[cacheKey + idKey].push(callback); return; }
-    const attemptKey = cacheKey + idKey;
-    if (attemptsTmdb[attemptKey] && Date.now() - attemptsTmdb[attemptKey] < CACHE_TTL) { callback(null); return; }
-    pendingTmdb[attemptKey] = [callback];
 
-    function complete(result) {
-      const cbs = pendingTmdb[attemptKey] || [];
-      delete pendingTmdb[attemptKey];
-      attemptsTmdb[attemptKey] = Date.now();
-      for (let i = 0; i < cbs.length; i++) { try { cbs[i](result); } catch (_) { } }
-    }
+    let url = '';
+    try {
+      if (Lampa.TMDB && Lampa.TMDB.api && Lampa.TMDB.key) {
+        url = Lampa.TMDB.api(type + '/' + id + '?api_key=' + Lampa.TMDB.key());
+      }
+    } catch (_) { }
+    if (!url) { callback(null); return; }
 
-    addToQueue(() => {
-      const url = buildTmdbUrl(type, id);
-      if (!url) { complete(null); return; }
-      const req = getRequest();
-      req.timeout(7000);
-      req.silent(url,
-        (data) => {
-          releaseRequest(req);
-          if (!data || typeof data !== 'object') { complete(null); return; }
-          complete(setCache(cacheKey, idKey, data));
-        },
-        () => {
-          releaseRequest(req);
-          complete(setCache(cacheKey, idKey, { _failed: true }));
-        },
-        false
-      );
-    });
+    const network = new Lampa.Reguest();
+    network.timeout(7000);
+    network.silent(url,
+      (data) => {
+        try { network.clear(); } catch (_) { }
+        if (!data || typeof data !== 'object') { callback(null); return; }
+        callback(setCache(store, idKey, data));
+      },
+      () => {
+        try { network.clear(); } catch (_) { }
+        callback(setCache(store, idKey, { failed: true }));
+      },
+      false
+    );
   }
 
-  const pendingQuality = {};
-  function makeItem(data) {
+  // Качество
+  function getVideo(data) {
     return {
       id: data.id,
-      type: (data.original_name || data.first_air_date) ? 'tv' : 'movie',
+      type: data.original_name || data.first_air_date ? 'tv' : 'movie',
       title: data.title || data.name || '',
       original_title: data.original_title || data.original_name || '',
       release_date: data.release_date || data.first_air_date || ''
     };
-  }
-  function qualityKey(item) { return item.type + ':' + item.id; }
-  function getQualityCache(key) { return getCache(CACHE_QUALITY, key); }
-  function setQualityCache(key, quality) {
-    return setCache(CACHE_QUALITY, key, { quality: quality || null, _empty: !quality });
   }
   function convertQuality(res) {
     if (res === 2160) return '4K';
@@ -217,34 +169,42 @@
     if (res === 'TS') return 'TS';
     return res >= 720 ? 'HD' : 'SD';
   }
-  const forbidden = ['camrip', 'камрип', 'ts', 'telecine', 'telesync', 'telesynch', 'upscale', 'tc', 'тс'];
-  const forbiddenRe = forbidden.map(t => new RegExp('\\b' + t + '\\b', 'i'));
-  function detectLowQuality(title) { return title ? forbiddenRe.some(p => p.test(title.toLowerCase())) : false; }
+  const badTitles = ['camrip', 'камрип', 'ts', 'telecine', 'telesync', 'telesynch', 'upscale', 'tc', 'тс'];
+  const badPatterns = badTitles.map(t => new RegExp('\\b' + t + '\\b', 'i'));
+  function isBadTitle(title) {
+    return title ? badPatterns.some(p => p.test(title.toLowerCase())) : false;
+  }
 
-  function fetchJacRed(item, callback) {
+  function getDate(video, callback) {
     const HIGHEST = 2160;
     let found = false;
-    const year = (item.release_date || '').substring(0, 4);
+    const year = (video.release_date || '').substring(0, 4);
     if (!year || isNaN(year)) { callback(null); return; }
+
     const uid = Lampa.Storage.get('lampac_unic_id', '');
     let url = 'https://' + QUALITY_API + '/api/v2.0/indexers/all/results?apikey=&uid=' + uid + '&year=' + year;
     let hasTitle = false;
-    if (item.title && /[a-zа-яё0-9]/i.test(item.title)) { url += '&title=' + encodeURIComponent(item.title.trim()); hasTitle = true; }
-    if (item.original_title && /[a-zа-яё]/i.test(item.original_title)) { url += '&title_original=' + encodeURIComponent(item.original_title.trim()); hasTitle = true; }
+    if (video.title && /[a-zа-яё0-9]/i.test(video.title)) {
+      url += '&title=' + encodeURIComponent(video.title.trim());
+      hasTitle = true;
+    }
+    if (video.original_title && /[a-zа-яё]/i.test(video.original_title)) {
+      url += '&title_original=' + encodeURIComponent(video.original_title.trim());
+      hasTitle = true;
+    }
     if (!hasTitle) { callback(null); return; }
 
-    const req = getRequest();
-    req.timeout(15000);
-    req.silent(url,
+    const network = new Lampa.Reguest();
+    network.timeout(15000);
+    network.silent(url,
       (resp) => {
-        releaseRequest(req);
+        try { network.clear(); } catch (_) { }
         if (!resp) { callback(null); return; }
         try {
           const data = typeof resp === 'string' ? JSON.parse(resp) : resp;
           const list = data.Results || [];
           if (!Array.isArray(list) || !list.length) { callback(null); return; }
           let bestRes = -1;
-          let bestRelease = null;
           const ty = parseInt(year, 10);
           const py = ty - 1;
           for (let i = 0; i < list.length; i++) {
@@ -257,39 +217,42 @@
             const y = parseInt(yearVal, 10);
             if (isNaN(y) || y < 1900) continue;
             if (y !== ty && y !== py) continue;
-            if (detectLowQuality(title)) { found = true; continue; }
-            if (res === HIGHEST) { callback({ quality: '4K', title }); return; }
-            if (res > bestRes) { bestRes = res; bestRelease = { quality: res, title }; }
+            if (isBadTitle(title)) { found = true; continue; }
+            if (res === HIGHEST) { callback('4K'); return; }
+            if (res > bestRes) bestRes = res;
           }
-          if (bestRelease) callback({ quality: convertQuality(bestRelease.quality), title: bestRelease.title });
-          else if (found) callback({ quality: 'TS' });
+          if (bestRes > 0) callback(convertQuality(bestRes));
+          else if (found) callback('TS');
           else callback(null);
         } catch (_) { callback(null); }
       },
-      () => { releaseRequest(req); callback(null); }
+      () => {
+        try { network.clear(); } catch (_) { }
+        callback(null);
+      }
     );
-  }
-  function requestQuality(item, key, callback) {
-    if (pendingQuality[key]) { pendingQuality[key].push(callback); return; }
-    pendingQuality[key] = [callback];
-    fetchJacRed(item, (r) => {
-      const q = r && r.quality && r.quality !== 'NO' ? r.quality : null;
-      setQualityCache(key, q);
-      const cbs = pendingQuality[key] || [];
-      delete pendingQuality[key];
-      for (let i = 0; i < cbs.length; i++) { try { cbs[i](q); } catch (_) { } }
-    });
   }
   function getQuality(card, callback) {
     const data = card.card_data;
     if (!data || !data.id) { callback(null); return; }
-    const item = makeItem(data);
-    const key = qualityKey(item);
-    const cached = getQualityCache(key);
+    const video = getVideo(data);
+    const key = video.type + ':' + video.id;
+    const cached = getCache(STORE_QUALITY, key);
     if (cached) { callback(cached.quality); return; }
-    requestQuality(item, key, callback);
+    getDate(video, (quality) => {
+      setCache(STORE_QUALITY, key, { quality: quality || null, empty: !quality });
+      callback(quality);
+    });
   }
 
+  // Утилиты
+  function moveAge(card) {
+    const age = card.querySelector('.card__age');
+    const view = card.querySelector('.card__view');
+    if (age && view && age.parentNode !== view) view.appendChild(age);
+  }
+
+  // Отрисовка бейджей
   function setBadge(card, cls, text, level) {
     const view = card.querySelector('.card__view');
     if (!view) return;
@@ -304,44 +267,26 @@
     if (level) el.setAttribute('data-level', level);
     else el.removeAttribute('data-level');
   }
-  function formatHM(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-  }
-  function moveAge(card) {
-    const age = card.querySelector('.card__age');
-    const view = card.querySelector('.card__view');
-    if (age && view && age.parentNode !== view) view.appendChild(age);
-  }
-  function markLevel(el, rules, value, attr) {
-    if (isNaN(value)) return;
-    const rule = rules.find(r => value >= r.min);
-    if (rule) el.setAttribute(attr, rule.level);
-  }
-  function markVote(el) {
-    markLevel(el, voteLevels, parseFloat(el.textContent), 'data-level');
-  }
-  function markPG(el) {
-    const m = (el.textContent.match(/\d+/) || [])[0];
-    markLevel(el, pgLevels, parseInt(m, 10), 'data-level');
-  }
-
   function renderType(card, isTV) {
     setBadge(card, 'card__type', isTV ? 'Сериал' : 'Фильм', isTV ? LEVEL.vgood : LEVEL.good);
   }
   function renderStatus(card, info) {
     const status = info && info.status;
     const last = info && info.last_episode_to_air;
-    if (status === 'Ended' || status === 'Canceled') {
-      setBadge(card, 'card__status',
-        status === 'Canceled' ? 'Отменено' : 'Завершено',
-        statusLevels[status === 'Canceled' ? 'canceled' : 'ended']);
-    } else if (last && last.season_number && last.episode_number) {
-      setBadge(card, 'card__status', 'S' + last.season_number + ':E' + last.episode_number);
-    } else {
+    if (!last || !last.season_number || !last.episode_number) {
       setBadge(card, 'card__status', null);
+      return;
     }
+
+    let level = null;
+    if (status === 'Ended') level = statusMap.ended;
+    else if (status === 'Canceled') level = statusMap.canceled;
+    else if (status === 'Returning Series') level = statusMap.ongoing;
+
+    setBadge(card, 'card__status', 'S' + last.season_number + ':E' + last.episode_number, level);
+  }
+  function renderQuality(card, quality) {
+    setBadge(card, 'card__quality', quality, quality ? qualityMap[quality] : null);
   }
   function renderDuration(card, info) {
     const data = card.card_data;
@@ -351,19 +296,16 @@
     if (data.original_title) {
       const t = Lampa.Timeline.view(Lampa.Utils.hash(data.original_title));
       if (t && t.time > 0 && t.duration > 0) {
-        progress = formatHM(t.time);
-        total = formatHM(t.duration);
+        progress = Lampa.Utils.secondsToTime(t.time, true);
+        total = Lampa.Utils.secondsToTime(t.duration, true);
       }
     }
     if (!total) {
       const runtime = info && info.runtime;
       if (!runtime) { setBadge(card, 'card__duration', null); return; }
-      total = formatHM(runtime * 60);
+      total = Lampa.Utils.secondsToTime(runtime * 60, true);
     }
-    setBadge(card, 'card__duration', progress ? progress + '/' + total : total);
-  }
-  function renderQuality(card, quality) {
-    setBadge(card, 'card__quality', quality, quality ? qualityLevels[quality] : null);
+    setBadge(card, 'card__duration', progress ? progress + '/' + total : total, LEVEL.good);
   }
   function getWatched(card, info) {
     const data = card.card_data;
@@ -384,39 +326,66 @@
     return null;
   }
   function renderWatched(card, info) {
-    setBadge(card, 'card__watched', getWatched(card, info));
+    setBadge(card, 'card__watched', getWatched(card, info), LEVEL.good);
   }
 
+  // Оценка и возрастной рейтинг
+  function findLevel(map, value) {
+    const rule = map.find(r => value >= r.min);
+    return rule ? rule.level : null;
+  }
+  function renderVote(el) {
+    const value = parseFloat(el.textContent);
+    if (isNaN(value)) return;
+    const level = findLevel(voteMap, value);
+    if (level) el.setAttribute('data-level', level);
+  }
+  function renderPG(el) {
+    const m = (el.textContent.match(/\d+/) || [])[0];
+    const value = parseInt(m, 10);
+    if (isNaN(value)) return;
+    const level = findLevel(pgMap, value);
+    if (level) el.setAttribute('data-level', level);
+  }
+
+  // Обработка карточки
   function processCard(card) {
     if (!card || !card.card_data) return;
     const data = card.card_data;
     if (!data.id || (!data.original_name && !data.original_title)) return;
     const isTV = !!data.original_name;
+
     renderType(card, isTV);
     moveAge(card);
+
+    const vote = card.querySelector('.card__vote');
+    if (vote) renderVote(vote);
+
     if (isTV) {
-      fetchTmdb('tv', data.id, CACHE_TV, (info) => {
+      getTmdb('tv', data.id, STORE_TV, (info) => {
         if (!card.parentNode) return;
         renderStatus(card, info);
         renderWatched(card, info);
       });
     } else {
-      fetchTmdb('movie', data.id, CACHE_MOVIE, (info) => {
+      getTmdb('movie', data.id, STORE_MOVIE, (info) => {
         if (!card.parentNode) return;
         renderDuration(card, info);
       });
     }
-    getQuality(card, (q) => {
+    getQuality(card, (quality) => {
       if (!card.parentNode) return;
-      renderQuality(card, q);
+      renderQuality(card, quality);
     });
   }
 
-  function loadDetailQuality(movie, render) {
+  // Детальная страница — качество
+  function renderDetailQuality(movie, render) {
     if (!render) return;
-    const item = makeItem(movie);
-    const key = qualityKey(item);
-    function apply(q) {
+    const video = getVideo(movie);
+    const key = video.type + ':' + video.id;
+
+    function apply(quality) {
       const line = $(render).find('.full-start-new__rate-line');
       if (!line.length) return;
       let el = line.find('.qualview-quality');
@@ -424,25 +393,71 @@
         el = $('<div class="full-start__status qualview-quality"></div>');
         line.append(el);
       }
-      if (q) {
-        el.text(q)
-          .attr('data-level', qualityLevels[q] || LEVEL.normal)
+      if (quality) {
+        el.text(quality)
+          .attr('data-level', qualityMap[quality] || LEVEL.normal)
           .css({ padding: '0.2em 0.4em', borderRadius: '0.3em', fontWeight: 'bold' });
       } else {
         el.remove();
       }
     }
-    const cached = getQualityCache(key);
+
+    const cached = getCache(STORE_QUALITY, key);
     if (cached) { apply(cached.quality); return; }
     apply('...');
-    requestQuality(item, key, apply);
+    getDate(video, (quality) => {
+      setCache(STORE_QUALITY, key, { quality: quality || null, empty: !quality });
+      apply(quality);
+    });
   }
 
-  function init() {
-    if (window.__card_overlay_v5_initialized__) return;
-    window.__card_overlay_v5_initialized__ = true;
+  // Сканирование
+  const timers = {};
+  function later(fn, delay, key) {
+    const id = key || ('t' + Date.now() + Math.random());
+    if (timers[id]) clearTimeout(timers[id]);
+    timers[id] = setTimeout(() => {
+      delete timers[id];
+      try { fn(); } catch (_) { }
+    }, delay || 0);
+    return id;
+  }
 
-    let observer = null;
+  let observer = null;
+  function observeCard(card) {
+    if (!observer || !card || card.nodeType !== 1) return;
+    if (card.getAttribute('data-observed') === '1') return;
+    card.setAttribute('data-observed', '1');
+    try { observer.observe(card); } catch (_) { }
+  }
+  function scanContainer(target) {
+    if (!target || !target.querySelectorAll) return;
+    const cards = target.querySelectorAll('.card');
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      observeCard(card);
+      if (card.card_data && card.card_data.id) {
+        Lampa.Storage.set('activity', { movie: card.card_data, card: card.card_data });
+        Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
+        processCard(card);
+      }
+    }
+  }
+  function scan() {
+    let render = null;
+    try {
+      const a = Lampa.Activity && Lampa.Activity.active ? Lampa.Activity.active() : null;
+      render = a && a.activity && a.activity.render ? a.activity.render() : null;
+      if (render && render.nodeType !== 1 && render.length) render = render[0];
+    } catch (_) { }
+    scanContainer(render && render.nodeType === 1 ? render : document.body);
+  }
+
+  // Инициализация
+  function init() {
+    if (window.__ui_badge_initialized__) return;
+    window.__ui_badge_initialized__ = true;
+
     if (typeof IntersectionObserver !== 'undefined') {
       observer = new IntersectionObserver((entries) => {
         for (let i = 0; i < entries.length; i++) {
@@ -450,47 +465,17 @@
           if (!card) continue;
           if (entries[i].isIntersecting && card.card_data && card.card_data.id) {
             processCard(card);
-            const vote = card.querySelector('.card__vote');
-            if (vote) markVote(vote);
           }
         }
       }, { root: null, rootMargin: '250px 0px 250px 0px', threshold: 0.01 });
     }
 
-    function observe(card) {
-      if (!observer || !card || card.nodeType !== 1) return;
-      if (card.getAttribute('data-observed') === '1') return;
-      card.setAttribute('data-observed', '1');
-      try { observer.observe(card); } catch (_) { }
-    }
-    function scan(target) {
-      if (!target || !target.querySelectorAll) return;
-      const cards = target.querySelectorAll('.card');
-      for (let i = 0; i < cards.length; i++) {
-        const card = cards[i];
-        observe(card);
-        if (card.card_data && card.card_data.id) {
-          Lampa.Storage.set('activity', { movie: card.card_data, card: card.card_data });
-          Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
-          processCard(card);
-          const vote = card.querySelector('.card__vote');
-          if (vote) markVote(vote);
-        }
-      }
-    }
-    function scanActive() {
-      let render = null;
-      try {
-        const a = Lampa.Activity && Lampa.Activity.active ? Lampa.Activity.active() : null;
-        render = a && a.activity && a.activity.render ? a.activity.render() : null;
-        if (render && render.nodeType !== 1 && render.length) render = render[0];
-      } catch (_) { }
-      scan(render && render.nodeType === 1 ? render : document.body);
-    }
-
     Lampa.Listener.follow('activity', (e) => {
       if (e.type === 'destroy' || e.type === 'archive') return;
-      SCAN_DELAYS.forEach(d => later(scanActive, d, 'scan-' + d));
+      later(scan, 0, 'scan-0');
+      later(scan, 150, 'scan-150');
+      later(scan, 400, 'scan-400');
+      later(scan, 900, 'scan-900');
     });
     Lampa.Listener.follow('line', (e) => {
       if (!e || (e.type !== 'append' && e.type !== 'create' && e.type !== 'visible')) return;
@@ -499,11 +484,11 @@
         if (e.body.nodeType === 1) body = e.body;
         else if (e.body.length && e.body[0] && e.body[0].nodeType === 1) body = e.body[0];
       }
-      later(() => body ? scan(body) : scanActive(), 30, 'scan-line');
+      later(() => body ? scanContainer(body) : scan(), 30, 'scan-line');
     });
     Lampa.Listener.follow('card', (event) => {
       if (event.type === 'build' && event.object && event.object.card) {
-        observe(event.object.card);
+        observeCard(event.object.card);
         processCard(event.object.card);
       }
     });
@@ -512,21 +497,21 @@
         const r = event.object && event.object.activity && event.object.activity.render
           ? event.object.activity.render() : null;
         if (!r) return;
-        loadDetailQuality(event.data.movie, r);
-        $(r).find('.full-start__pg').each(function () { markPG(this); });
-        $(r).find('.full-start__rate').each(function () { markVote(this); });
+        renderDetailQuality(event.data.movie, r);
+        $(r).find('.full-start__pg').each(function () { renderPG(this); });
+        $(r).find('.full-start__rate').each(function () { renderVote(this); });
       }
     });
 
-    window.addEventListener('scroll', () => later(scanActive, 120, 'scan-scroll'), { passive: true });
-    window.addEventListener('touchend', () => later(scanActive, 200, 'scan-touch'), { passive: true });
-    window.addEventListener('keydown', () => later(scanActive, 200, 'scan-key'), { passive: true });
-    window.addEventListener('resize', () => later(scanActive, 150, 'scan-resize'), { passive: true });
-    window.addEventListener('orientationchange', () => later(scanActive, 150, 'scan-orient'), { passive: true });
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) later(scanActive, 0, 'scan-visible'); });
+    window.addEventListener('scroll', () => later(scan, 120, 'scan-scroll'), { passive: true });
+    window.addEventListener('touchend', () => later(scan, 200, 'scan-touch'), { passive: true });
+    window.addEventListener('keydown', () => later(scan, 200, 'scan-key'), { passive: true });
+    window.addEventListener('resize', () => later(scan, 150, 'scan-resize'), { passive: true });
+    window.addEventListener('orientationchange', () => later(scan, 150, 'scan-orient'), { passive: true });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) later(scan, 0, 'scan-visible'); });
 
-    later(scanActive, 200, 'boot-200');
-    later(scanActive, 600, 'boot-600');
+    later(scan, 200, 'boot-200');
+    later(scan, 600, 'boot-600');
   }
 
   if (window.appready) init();
