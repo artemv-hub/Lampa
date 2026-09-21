@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '4.0.5',
+    version: '4.0.6',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -24,28 +24,6 @@
     .loading-layer__text { font-size: 1.2em; line-height: 1.2; tab-size: 6; white-space: pre-wrap; }
   `;
   document.head.appendChild(style);
-
-  const colorQuality = [
-    { color: '#3498DB', quality: '4K' },
-    { color: '#2ECC71', quality: 'FHD' },
-    { color: '#F1C40F', quality: 'HD' },
-    { color: '#E67E22', quality: 'SD' },
-    { color: '#E74C3C', quality: 'TS' }
-  ];
-  const colorVote = [
-    { color: '#3498DB', vote: 9 },
-    { color: '#2ECC71', vote: 7 },
-    { color: '#F1C40F', vote: 6 },
-    { color: '#E67E22', vote: 4 },
-    { color: '#E74C3C', vote: 0 }
-  ];
-  const colorPG = [
-    { color: '#E74C3C', pg: 18 },
-    { color: '#E67E22', pg: 16 },
-    { color: '#F1C40F', pg: 12 },
-    { color: '#2ECC71', pg: 6 },
-    { color: '#3498DB', pg: 0 }
-  ];
 
   const originalLine = Lampa.Maker.map('Line').Items.onInit;
   Lampa.Maker.map('Line').Items.onInit = function () { originalLine.call(this); this.view = 12; };
@@ -80,23 +58,4 @@
       }
     }
   });
-
-  const observer = new MutationObserver(() => {
-    document.querySelectorAll('.card__quality').forEach(e => {
-      const qualityText = e.textContent.trim().toUpperCase();
-      const colorMatch = colorQuality.find(colorRule => qualityText.includes(colorRule.quality));
-      if (colorMatch) e.style.background = colorMatch.color;
-    });
-    document.querySelectorAll('.card__vote, .full-start__rate').forEach(e => {
-      const voteTest = parseFloat(e.textContent.trim());
-      const colorMatch = colorVote.find(colorRule => voteTest >= colorRule.vote);
-      if (colorMatch) e.style.background = colorMatch.color;
-    });
-    document.querySelectorAll('.full-start__pg').forEach(e => {
-      const pgText = parseInt((e.textContent.trim()).match(/\d+/)?.[0] || NaN);
-      const colorMatch = colorPG.find(colorRule => pgText >= colorRule.pg);
-      if (colorMatch) e.style.background = colorMatch.color;
-    });
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
 })();
