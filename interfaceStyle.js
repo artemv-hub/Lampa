@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '4.0.4',
+    version: '4.0.5',
     name: 'UI Style',
     component: 'ui_style'
   };
@@ -83,8 +83,8 @@
 
   const observer = new MutationObserver(() => {
     document.querySelectorAll('.card__quality').forEach(e => {
-      const qualityText = e.textContent.trim().toLowerCase();
-      const colorMatch = colorQuality.find(colorRule => colorRule.quality.some(q => qualityText.includes(q)));
+      const qualityText = e.textContent.trim().toUpperCase();
+      const colorMatch = colorQuality.find(colorRule => qualityText.includes(colorRule.quality));
       if (colorMatch) e.style.background = colorMatch.color;
     });
     document.querySelectorAll('.card__vote, .full-start__rate').forEach(e => {
