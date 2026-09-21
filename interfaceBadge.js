@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '5.0.1',
+    version: '5.0.2',
     name: 'UI Badge',
     component: 'ui_badge'
   };
@@ -360,7 +360,7 @@
       if (!runtime) { setBadge(card, 'card__duration', null); return; }
       total = formatHM(runtime * 60);
     }
-    setBadge(card, 'card__duration', progress ? progress + '/' + total : total, LEVEL.normal);
+    setBadge(card, 'card__duration', progress ? progress + '/' + total : total);
   }
   function renderQuality(card, quality) {
     setBadge(card, 'card__quality', quality, quality ? qualityLevels[quality] : null);
@@ -384,7 +384,7 @@
     return null;
   }
   function renderWatched(card, info) {
-    setBadge(card, 'card__watched', getWatched(card, info), LEVEL.normal);
+    setBadge(card, 'card__watched', getWatched(card, info));
   }
 
   function processCard(card) {
