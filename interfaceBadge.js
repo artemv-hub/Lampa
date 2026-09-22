@@ -4,7 +4,7 @@
   // MANIFEST
   let manifest = {
     type: 'interface',
-    version: '5.0.6',
+    version: '5.0.7',
     name: 'UI Badge',
     component: 'ui_badge'
   };
@@ -17,8 +17,8 @@
     font-size: 1.2em;
     font-weight: 800;
     padding: 0.2em 0.4em;
-    color: #000;
-    background: rgba(255, 255, 255, 0.8);
+    color: #000000;
+    background: #FFFFFFcc;
     line-height: 1;
     white-space: nowrap;
   `;
@@ -34,11 +34,11 @@
     .card__icons-inner    { flex-direction: column; }
     .card__marker         { top: 2em; bottom: unset; left: 50%; transform: translateX(-50%); }
 
-    [data-level="vgood"]  { background: rgba(52, 152, 219, 0.8) !important; }
-    [data-level="good"]   { background: rgba(46, 204, 113, 0.8) !important; }
-    [data-level="normal"] { background: rgba(241, 196, 15, 0.8) !important; }
-    [data-level="bad"]    { background: rgba(230, 126, 34, 0.8) !important; }
-    [data-level="vbad"]   { background: rgba(231, 76, 60, 0.8) !important; }
+    [data-level="vgood"]  { background: #3498DBcc !important; }
+    [data-level="good"]   { background: #2ECC71cc !important; }
+    [data-level="normal"] { background: #F1C40Fcc !important; }
+    [data-level="bad"]    { background: #E67E22cc !important; }
+    [data-level="vbad"]   { background: #E74C3Ccc !important; }
   `;
   document.head.appendChild(style);
 
@@ -347,15 +347,22 @@
   }
 
   // PROCESS
+  function processPull(card) {
+    const idStr = String(card.card_data.id);
+    if (card.getAttribute('data-pulled') === idStr) return;
+    card.setAttribute('data-pulled', idStr);
+    Lampa.Storage.set('activity', { movie: card.card_data, card: card.card_data });
+    Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
+  }
   function processCard(card) {
-    if (!card || !card.card_data) return;
-    const data = card.card_data;
-    if (!data.id || (!data.original_name && !data.original_title)) return;
-
+  const data = card && card.card_data;
+  if (!data || !data.id || (!data.original_name && !data.original_title)) return;
+    
     const isTV = !!data.original_name;
 
-    renderType(card, isTV);
+    processPull(card);
     renderAge(card);
+    renderType(card, isTV);
 
     const vote = card.querySelector('.card__vote');
     if (vote) renderVote(vote);
@@ -377,7 +384,7 @@
       renderQuality(card, quality);
     });
   }
-  function processSetupListener() {
+  function processListener() {
     if (window.__ui_badge_card_patched__) return;
     window.__ui_badge_card_patched__ = true;
 
@@ -414,7 +421,6 @@
     }, delay || 0);
     return id;
   }
-
   let scanObserver = null;
   function scanObserveCard(card) {
     if (!scanObserver || !card || card.nodeType !== 1) return;
@@ -451,13 +457,6 @@
       if (!card.card_data || !card.card_data.id) continue;
       if (!scanIsNearViewport(card, wH)) continue;
 
-      const idStr = String(card.card_data.id);
-      if (card.getAttribute('data-pulled') !== idStr) {
-        card.setAttribute('data-pulled', idStr);
-        Lampa.Storage.set('activity', { movie: card.card_data, card: card.card_data });
-        Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
-      }
-
       processCard(card);
       updated++;
     }
@@ -486,7 +485,7 @@
       }, { root: null, rootMargin: '250px 0px 250px 0px', threshold: 0.01 });
     }
 
-    processSetupListener();
+    processListener();
 
     Lampa.Listener.follow('activity', (e) => {
       if (e.type === 'destroy' || e.type === 'archive') return;
