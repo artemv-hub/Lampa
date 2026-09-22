@@ -1,10 +1,9 @@
 (function () {
   'use strict';
 
-  // MANIFEST
   let manifest = {
     type: 'interface',
-    version: '5.0.7',
+    version: '5.1.0',
     name: 'UI Badge',
     component: 'ui_badge'
   };

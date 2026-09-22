@@ -3,12 +3,13 @@
 
   let manifest = {
     type: 'interface',
-    version: '4.0.6',
+    version: '5.1.0',
     name: 'UI Style',
     component: 'ui_style'
   };
   Lampa.Manifest.plugins = manifest;
 
+  // STYLES
   const style = document.createElement('style');
   style.textContent = `
     .full-start-new__buttons .full-start__button:not(.focus) span { display: unset; }
@@ -25,6 +26,7 @@
   `;
   document.head.appendChild(style);
 
+  // Size
   const originalLine = Lampa.Maker.map('Line').Items.onInit;
   Lampa.Maker.map('Line').Items.onInit = function () { originalLine.call(this); this.view = 12; };
   const originalCategory = Lampa.Maker.map('Category').Items.onInit;
@@ -39,6 +41,7 @@
       updateSize();
   });
 
+  // Buttons / Original title
   Lampa.Listener.follow('full', e => {
     if (e.type == 'complite') {
       let buttonsContainer = e.body.find('.full-start-new__buttons');
