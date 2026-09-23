@@ -4,143 +4,143 @@
     if (window.__lampac_anti_dmca) return;
     window.__lampac_anti_dmca = true;
 
-    // 1. Disable DMCA block list immediately
     window.lampa_settings = window.lampa_settings || {};
     window.lampa_settings.dcma = false;
     window.lampa_settings.disable_features = window.lampa_settings.disable_features || {};
     window.lampa_settings.disable_features.dmca = true;
 
-    // ── Data normalization ───────────────────────────────────
+    function normalizeCard(card) {
+        if (!card || typeof card !== 'object') return;
+        if (!card.title) card.title = card.name || card.original_title || card.original_name || '';
+        if (!card.original_title) card.original_title = card.original_name || card.title;
+        if (!Array.isArray(card.production_countries)) card.production_countries = [];
+        if (!Array.isArray(card.production_companies)) card.production_companies = [];
+        if (!Array.isArray(card.genres)) card.genres = [];
+    }
+
+    // Дописывать поля карточки в произвольный ответ нельзя: чужие плагины делают
+    // for (var i in result) и падают на подсунутых ключах. Поэтому — только списки
+    // (results[]) и только объекты, которые реально являются карточкой (есть id).
     function normalizeData(data) {
-        if (!data || typeof data !== 'object') return;
+        if (!data || typeof data !== 'object' || Array.isArray(data)) return;
         if ('results' in data && !Array.isArray(data.results)) data.results = [];
-        normalizeCard(data);
-        if (data.movie && typeof data.movie === 'object') normalizeCard(data.movie);
-        if (Array.isArray(data.results)) {
-            for (var i = 0; i < data.results.length; i++) {
-                if (data.results[i] && typeof data.results[i] === 'object') normalizeCard(data.results[i]);
+        if (Array.isArray(data.results)) data.results.forEach(normalizeCard);
+        else if (data.id) normalizeCard(data);
+        if (data.movie) normalizeCard(data.movie);
+    }
+
+    function patchParseCountries() {
+        var candidates = [];
+
+        if (window.Lampa) {
+            if (window.Lampa.TMDB) candidates.push(window.Lampa.TMDB);
+            if (window.Lampa.Api && window.Lampa.Api.sources) {
+                if (window.Lampa.Api.sources.tmdb) candidates.push(window.Lampa.Api.sources.tmdb);
+                if (window.Lampa.Api.sources.cub) candidates.push(window.Lampa.Api.sources.cub);
             }
         }
-    }
 
-    function normalizeCard(card) {
-        if (!card || typeof card !== 'object' || !card.id) return;
-        if (!card.title) card.title = card.name || card.original_title || card.original_name || '';
-        if (!Array.isArray(card.production_countries)) card.production_countries = card.production_countries || [];
-        if (!Array.isArray(card.production_companies)) card.production_companies = card.production_companies || [];
-        if (!Array.isArray(card.genres)) card.genres = card.genres || [];
-    }
-
-    // ── request_before hook (ASAP) ───────────────────────────
-    var _hooked = false;
-    function hookRequestBefore() {
-        if (_hooked || typeof Lampa === 'undefined' || !Lampa.Listener) return;
-        _hooked = true;
-        Lampa.Listener.follow('request_before', function (event) {
-            if (!event || !event.params) return;
-            var params = event.params;
-            if (typeof params.complite !== 'function') return;
-            var _origComplite = params.complite;
-            params.complite = function (data) {
-                try { normalizeData(data); } catch (e) {}
-                return _origComplite(data);
-            };
+        candidates.forEach(function (obj) {
+            if (obj && typeof obj.parseCountries === 'function' && !obj.__anti_dmca_patched) {
+                var _orig = obj.parseCountries;
+                obj.parseCountries = function (movie) {
+                    var result;
+                    try { result = _orig.apply(this, arguments); }
+                    catch (e) { result = []; }
+                    return Array.isArray(result) ? result : [];
+                };
+                obj.__anti_dmca_patched = true;
+            }
         });
+
+        return candidates.length > 0;
     }
 
-    hookRequestBefore();
-    if (!_hooked) {
-        var _hookTimer = setInterval(function () {
-            hookRequestBefore();
-            if (_hooked) clearInterval(_hookTimer);
-        }, 50);
-        setTimeout(function () { clearInterval(_hookTimer); }, 10000);
-    }
-
-    // ── Appready fixes ───────────────────────────────────────
     function start() {
-        hookRequestBefore();
-
         if (Lampa && Lampa.Utils) {
             Lampa.Utils.dcma = function () { return false; };
         }
 
-        // Fix parseCountries: returns '' instead of []
-        var tmdb = Lampa.TMDB || (Lampa.Api && Lampa.Api.sources && Lampa.Api.sources.tmdb);
-        if (tmdb && typeof tmdb.parseCountries === 'function') {
-            var _orig = tmdb.parseCountries;
-            tmdb.parseCountries = function (movie) {
-                var result = _orig(movie);
-                return Array.isArray(result) ? result : [];
-            };
+        if (!patchParseCountries()) {
+            var _patchTimer = setInterval(function () {
+                if (patchParseCountries()) clearInterval(_patchTimer);
+            }, 100);
+            setTimeout(function () { clearInterval(_patchTimer); }, 15000);
         }
 
-        // DMCA bypass: when CUB returns {blocked:true} for a card detail request,
-        // abort the request and re-fetch from TMDB via sendSecuses.
-        // request_secuses fires BEFORE complite — we can abort and provide clean data.
         Lampa.Listener.follow('request_secuses', function (event) {
             if (!event || !event.data) return;
 
-            // Only handle blocked responses (CUB DMCA block)
-            if (!event.data.blocked) return;
+            var url = (event.params && event.params.url) || '';
 
-            // Detect if this is a movie/TV detail request by checking URL
-            var url = event.params && event.params.url || '';
-            var isDetail = url.indexOf('append_to_response') >= 0 ||
-                           (url.indexOf('/api/3/') >= 0 && url.indexOf('/movie/') >= 0) ||
-                           (url.indexOf('/api/3/') >= 0 && url.indexOf('/tv/') >= 0);
+            // Детальный запрос карточки — единственный, где сервер шлёт заглушку {blocked:true}
+            // вместо полных данных. У обоих источников (tmdb и cub) он содержит append_to_response.
+            var isDetail = url.indexOf('append_to_response') >= 0;
 
-            if (!isDetail) {
-                // For non-detail requests, just clear blocked flag
-                event.data.blocked = false;
+            // URL бывает api.themoviedb.org/3/movie/1 (tmdb), tmdb.<cub>/3/movie/1 (cub)
+            // или через прокси — без /api/, поэтому матчим только /movie/<id> | /tv/<id>
+            var match = url.match(/\/(movie|tv)\/(\d+)/);
+
+            // Нормализуем ТОЛЬКО ответы TMDB API. Ответы остальных плагинов (таймкоды,
+            // онлайн-балансеры) трогать нельзя — там свои форматы.
+            if (url.indexOf('/3/') < 0 && !match) return;
+
+            var d = event.data;
+
+            try { normalizeData(d); } catch (e) {}
+
+            // Заглушку определяем не только по флагу blocked: в кэше (7 дней) могла осесть
+            // заглушка с уже сброшенным blocked=false. У настоящей карточки всегда есть id и title/name.
+            var stripped = isDetail && (!d.id || !(d.title || d.name));
+
+            if (!d.blocked && !stripped) return;
+
+            if (!isDetail || !match) {
+                // Не детальная карточка: снять флаг можно, данные уже нормализованы выше
+                if (!isDetail) d.blocked = false;
+                // isDetail без match — оставляем blocked: пусть покажет штатный DMCA-экран, а не упадёт
                 return;
             }
 
-            // Extract movie/TV id and method from URL
-            var match = url.match(/\/api\/3\/(movie|tv)\/(\d+)/);
-            if (!match) {
-                event.data.blocked = false;
-                return;
-            }
+            if (typeof event.abort !== 'function') return; // android_go шлёт событие без abort
 
-            var method = match[1];
-            var id = match[2];
-
-            console.log('[anti-dmca] CUB blocked ' + method + '/' + id + ', fetching from TMDB...');
-
-            // Abort the current (blocked) request
             var sendSecuses = event.abort();
 
-            // Fetch from TMDB directly
-            var tmdbKey = Lampa.TMDB && Lampa.TMDB.key ? Lampa.TMDB.key() : '4ef0d7355d9ffb5151e987764708ce96';
-            var lang = Lampa.Storage ? Lampa.Storage.field('tmdb_lang') : 'ru';
-            var tmdbUrl = 'https://api.themoviedb.org/3/' + method + '/' + id +
-                '?api_key=' + tmdbKey +
-                '&append_to_response=content_ratings,release_dates,keywords,alternative_titles' +
-                '&language=' + lang;
+            // Берём хвост оригинального URL (/movie/123?append_to_response=...&language=..)
+            // и шлём его напрямую в TMDB — сохраняются все параметры, включая external_ids и images
+            var tail = url.slice(url.search(/\/(movie|tv)\/\d+/));
+            tail = tail.replace(/&?email=[^&]*/g, '');
+
+            var tmdbUrl = Lampa.TMDB.api(tail.replace(/^\//, ''));
+
+            if (tmdbUrl.indexOf('api_key=') < 0) {
+                var tmdbKey = (Lampa.TMDB && typeof Lampa.TMDB.key === 'function') ? Lampa.TMDB.key() : '4ef0d7355d9ffb5151e987764708ce96';
+                tmdbUrl += (tmdbUrl.indexOf('?') >= 0 ? '&' : '?') + 'api_key=' + tmdbKey;
+            }
+            if (tmdbUrl.indexOf('language=') < 0) {
+                tmdbUrl += '&language=' + (Lampa.Storage ? Lampa.Storage.field('tmdb_lang') : 'ru');
+            }
 
             $.ajax({
                 url: tmdbUrl,
                 dataType: 'json',
                 timeout: 8000,
                 success: function (json) {
-                    console.log('[anti-dmca] TMDB data received for ' + method + '/' + id);
-                    json.source = 'tmdb';
+                    normalizeCard(json);
                     sendSecuses(json);
                 },
                 error: function () {
-                    console.log('[anti-dmca] TMDB fetch failed, showing blocked');
-                    // Let original blocked response through
-                    sendSecuses(event.data);
+                    // TMDB недоступен — форсим blocked, чтобы показать DMCA-экран, а не пустую карточку
+                    d.blocked = true;
+                    sendSecuses(d);
                 }
             });
         });
 
-        // Lock dcma property
         try {
             Object.defineProperty(window.lampa_settings, 'dcma', {
                 get: function () { return false; },
-                set: function () { /* noop */ },
+                set: function () {},
                 configurable: true,
                 enumerable: true
             });
