@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'interface',
-    version: '5.1.0',
+    version: '5.1.1',
     name: 'UI Badge',
     component: 'ui_badge'
   };
@@ -13,22 +13,21 @@
   const style = document.createElement('style');
   const styleBadge = `
     position: absolute;
-    font-size: 1.2em;
+    font-size: 1.1em;
     font-weight: 800;
     padding: 0.2em 0.4em;
-    color: #000000;
-    background: #FFFFFFcc;
+    color: #000000 !important;
+    background: #FFFFFFcc !important;
     line-height: 1;
     white-space: nowrap;
   `;
   style.textContent = `
-    .card__type           { ${styleBadge} top: 0em; left: 0em; border-radius: 0.8em 0 0.8em 0; }
-    .card__vote           { ${styleBadge} top: 0em; bottom: unset; right: 0em; border-radius: 0 0.8em 0 0.8em; }
-    .card__age            { ${styleBadge} bottom: 0em; left: 0em; border-radius: 0 0.8em 0 0.8em; }
-    .card__status         { ${styleBadge} bottom: 0em; right: 0em; border-radius: 0.8em 0 0.8em 0; }
-    .card__duration       { ${styleBadge} bottom: 0em; right: 0em; border-radius: 0.8em 0 0.8em 0; }
-    .card__quality        { ${styleBadge} bottom: 2em; left: 0em; right: unset; border-radius: 0 0.8em 0.8em 0; }
-    .card__watched        { ${styleBadge} bottom: 2em; right: 0em; border-radius: 0.8em 0 0 0.8em; }
+    .card__age            { ${styleBadge} top: unset; bottom: 0em;    left: 0em;    right: unset; border-radius: 0 0.8em 0 0.8em; }
+    .card__duration       { ${styleBadge} top: unset; bottom: 0em;    left: unset;  right: 0em;   border-radius: 0.8em 0 0.8em 0; }
+    .card__watched        { ${styleBadge} top: unset; bottom: 1.6em;  left: unset;  right: 0em;   border-radius: 0.8em 0 0 0.8em; }
+    .card__type           { ${styleBadge} top: 0em;   bottom: unset;  left: 0em;    right: unset; border-radius: 0.8em 0 0.8em 0; }
+    .card__quality        { ${styleBadge} top: 1.6em; bottom: unset;  left: unset;  right: 0em;   border-radius: 0.8em 0 0 0.8em; }
+    .card__vote           { ${styleBadge} top: 0em;   bottom: unset;  left: unset;  right: 0em;   border-radius: 0 0.8em 0 0.8em; }
     .card__icons          { left: 0em; right: unset; top: 50%; transform: translateY(-50%); }
     .card__icons-inner    { flex-direction: column; }
     .card__marker         { top: 2em; bottom: unset; left: 50%; transform: translateX(-50%); }
@@ -54,14 +53,16 @@
     'Canceled': 'canceled',
     'Returning Series': 'ongoing',
     'Released': 'released',
-    'Post Production': 'post'
+    'Post Production': 'post_production',
+    'In Production': 'in_production'
   };
   const mapStatus = {
     ended: 'vgood',
     ongoing: 'good',
     canceled: 'normal',
-    released: 'good',
-    post: 'normal'
+    released: 'vgood',
+    post_production: 'good',
+    in_production: 'normal'
   };
   const mapVote = [
     { level: 'vgood', min: 9 },
@@ -225,7 +226,7 @@
     );
   }
   function qualityGet(card, callback) {
-    const data = card.card_data;
+    const data = card && card.card_data;
     if (!data || !data.id) { callback(null); return; }
     const video = qualityMakeVideo(data);
     const key = video.type + ':' + video.id;
@@ -238,14 +239,7 @@
   }
 
   // RENDER
-  function renderEpisode(season, episode) {
-    return `S${season}:E${episode}`;
-  }
-  function renderLevel(map, value) {
-    const rule = map.find(r => value >= r.min);
-    return rule ? rule.level : null;
-  }
-  function renderBadge(card, cls, text, level) {
+  function setBadge(card, cls, text, level) {
     const view = card.querySelector('.card__view');
     if (!view) return;
     let el = view.querySelector('.' + cls);
@@ -255,127 +249,161 @@
     if (level) el.setAttribute('data-level', level);
     else el.removeAttribute('data-level');
   }
-  function renderVote(el) {
-    const value = parseFloat(el.textContent);
-    if (isNaN(value)) return;
-    const level = renderLevel(mapVote, value);
-    if (level) el.setAttribute('data-level', level);
+  function formatEpisode(season, episode) {
+    return `S${season}:E${episode}`;
   }
-  function renderPG(el) {
-    const m = (el.textContent.match(/\d+/) || [])[0];
-    const value = parseInt(m, 10);
-    if (isNaN(value)) return;
-    const level = renderLevel(mapPG, value);
-    if (level) el.setAttribute('data-level', level);
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const parts = String(dateStr).split('-');
+    if (parts.length !== 3) return dateStr;
+    return parts[2] + '.' + parts[1] + '.' + parts[0];
   }
-  function renderAge(card) {
+  function findLevel(map, value) {
+    const rule = map.find(r => value >= r.min);
+    return rule ? rule.level : null;
+  }
+
+  function renderAge(card, info) {
     const age = card.querySelector('.card__age');
     const view = card.querySelector('.card__view');
-    if (age && view && age.parentNode !== view) view.appendChild(age);
-  }
-  function renderType(card, isTV) {
-    renderBadge(card, 'card__type', isTV ? 'Сериал' : 'Фильм', isTV ? 'vgood' : 'good');
-  }
-  function renderQuality(card, quality) {
-    renderBadge(card, 'card__quality', quality, quality ? mapQuality[quality] : null);
+    if (!age || !view) return;
+    if (age.parentNode !== view) view.appendChild(age);
+
+    const status = info && info.status;
+    const level = mapStatus[mapStatusKey[status]];
+    if (!level) return;
+
+    age.setAttribute('data-level', level);
+
+    const data = card.card_data;
+    if (data.original_title && (status === 'Post Production' || status === 'In Production')) {
+      const releaseDate = info.release_date || data.release_date;
+      if (releaseDate) age.textContent = formatDate(releaseDate);
+    }
   }
   function renderDuration(card, info) {
-    const data = card.card_data;
+    const data = card && card.card_data;
     if (!data) return;
 
-    let progress = null;
+    if (data.original_name) {
+      const last = info && info.last_episode_to_air;
+      if (!last || !last.season_number || !last.episode_number) {
+        setBadge(card, 'card__duration', null);
+        return;
+      }
+      setBadge(card, 'card__duration', formatEpisode(last.season_number, last.episode_number));
+      return;
+    }
     let total = null;
     if (data.original_title) {
       const t = Lampa.Timeline.view(Lampa.Utils.hash(data.original_title));
-      if (t && t.time > 0 && t.duration > 0) {
-        progress = Lampa.Utils.secondsToTime(t.time, true);
-        total = Lampa.Utils.secondsToTime(t.duration, true);
-      }
+      if (t && t.duration > 0) total = Lampa.Utils.secondsToTime(t.duration, true);
     }
     if (!total) {
       const runtime = info && info.runtime;
-      if (!runtime) { renderBadge(card, 'card__duration', null); return; }
+      if (!runtime) { setBadge(card, 'card__duration', null); return; }
       total = Lampa.Utils.secondsToTime(runtime * 60, true);
     }
-
-    const key = info && info.status ? mapStatusKey[info.status] : null;
-    const level = key ? mapStatus[key] : 'good';
-
-    renderBadge(card, 'card__duration', progress ? progress + '/' + total : total, level);
+    setBadge(card, 'card__duration', total);
   }
   function renderWatched(card, info) {
-    const data = card.card_data;
-    if (!data || !data.original_name) return;
+    const data = card && card.card_data;
+    if (!data) return;
 
-    const last = info && info.last_episode_to_air;
-    if (!last) { renderBadge(card, 'card__watched', null); return; }
+    if (data.original_name) {
+      const last = info && info.last_episode_to_air;
+      if (!last) { setBadge(card, 'card__watched', null); return; }
 
-    const name = data.original_name;
-    const seasonMap = {};
-    (info.seasons || []).forEach(s => { if (s.season_number > 0) seasonMap[s.season_number] = s.episode_count; });
+      const name = data.original_name;
+      const seasonMap = {};
+      (info.seasons || []).forEach(s => { if (s.season_number > 0) seasonMap[s.season_number] = s.episode_count; });
 
-    for (let season = last.season_number; season >= 1; season--) {
-      const maxEp = season === last.season_number ? last.episode_number : (seasonMap[season] || 0);
-      for (let episode = maxEp; episode >= 1; episode--) {
-        const hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, name].join(''));
-        const t = Lampa.Timeline.view(hash);
-        if (t.time > 0 || t.percent > 0) {
-          renderBadge(card, 'card__watched', renderEpisode(season, episode), 'good');
-          return;
+      for (let season = last.season_number; season >= 1; season--) {
+        const maxEp = season === last.season_number ? last.episode_number : (seasonMap[season] || 0);
+        for (let episode = maxEp; episode >= 1; episode--) {
+          const hash = Lampa.Utils.hash([season, season > 10 ? ':' : '', episode, name].join(''));
+          const t = Lampa.Timeline.view(hash);
+          if (t.time > 0 || t.percent > 0) {
+            setBadge(card, 'card__watched', formatEpisode(season, episode));
+            return;
+          }
         }
       }
-    }
-    renderBadge(card, 'card__watched', null);
-  }
-  function renderStatus(card, info) {
-    const last = info && info.last_episode_to_air;
-    if (!last || !last.season_number || !last.episode_number) {
-      renderBadge(card, 'card__status', null);
+      setBadge(card, 'card__watched', null);
       return;
     }
-    const key = info.status ? mapStatusKey[info.status] : null;
-    const level = key ? mapStatus[key] : null;
-    renderBadge(card, 'card__status', renderEpisode(last.season_number, last.episode_number), level);
+    if (data.original_title) {
+      const t = Lampa.Timeline.view(Lampa.Utils.hash(data.original_title));
+      if (t && t.time > 0) {
+        setBadge(card, 'card__watched', Lampa.Utils.secondsToTime(t.time, true));
+        return;
+      }
+    }
+    setBadge(card, 'card__watched', null);
   }
-  function renderStatusFull(movie, render) {
-    if (!render || !movie) return;
-    const key = mapStatusKey[movie.status];
-    if (!key) return;
-    const el = $(render).find('.full-start__status').first();
-    if (el.length) el.attr('data-level', mapStatus[key]);
+  function renderQuality(card, quality) {
+    setBadge(card, 'card__quality', quality, quality ? mapQuality[quality] : null);
+  }
+  function renderVote(el) {
+    const value = parseFloat(el.textContent);
+    if (isNaN(value)) return;
+    const level = findLevel(mapVote, value);
+    if (level) el.setAttribute('data-level', level);
+  }
+  function renderPG(el) {
+    const value = parseInt((el.textContent.match(/\d+/) || [])[0], 10);
+    if (isNaN(value)) return;
+    const level = findLevel(mapPG, value);
+    if (level) el.setAttribute('data-level', level);
+  }
+  function renderStatus(el, movie) {
+    if (!el || !movie) return;
+    const level = mapStatus[mapStatusKey[movie.status]];
+    if (level) el.setAttribute('data-level', level);
+  }
+  function renderType(card, isTV) {
+    setBadge(card, 'card__type', isTV ? 'Сериал' : null, isTV ? 'vgood' : null);
+  }
+  function renderTypeFull(el, movie) {
+    if (!el || !movie) return;
+    el.textContent = 'Сериал';
+    el.setAttribute('data-level', 'vgood');
   }
 
   // PROCESS
   function processPull(card) {
-    const idStr = String(card.card_data.id);
+    const data = card && card.card_data;
+    if (!data) return;
+    const idStr = String(data.id);
     if (card.getAttribute('data-pulled') === idStr) return;
     card.setAttribute('data-pulled', idStr);
-    Lampa.Storage.set('activity', { movie: card.card_data, card: card.card_data });
+    Lampa.Storage.set('activity', { movie: data, card: data });
     Lampa.Listener.send('lampac', { type: 'timecode_pullFromServer' });
   }
   function processCard(card) {
-  const data = card && card.card_data;
-  if (!data || !data.id || (!data.original_name && !data.original_title)) return;
-    
-    const isTV = !!data.original_name;
+    const data = card && card.card_data;
+    if (!data || !data.id || (!data.original_name && !data.original_title)) return;
 
     processPull(card);
     renderAge(card);
-    renderType(card, isTV);
+    renderType(card, !!data.original_name);
 
     const vote = card.querySelector('.card__vote');
     if (vote) renderVote(vote);
 
-    if (isTV) {
+    if (data.original_name) {
       tmdbGet('tv', data.id, TMDB_CACHE_TV, (info) => {
         if (!card.parentNode) return;
-        renderStatus(card, info);
+        renderAge(card, info);
+        renderDuration(card, info);
         renderWatched(card, info);
       });
     } else {
       tmdbGet('movie', data.id, TMDB_CACHE_MOVIE, (info) => {
         if (!card.parentNode) return;
+        renderAge(card, info);
         renderDuration(card, info);
+        renderWatched(card, info);
       });
     }
     qualityGet(card, (quality) => {
@@ -513,9 +541,10 @@
         const r = event.object && event.object.activity && event.object.activity.render
           ? event.object.activity.render() : null;
         if (!r) return;
-        renderStatusFull(event.data.movie, r);
-        $(r).find('.full-start__pg').each(function () { renderPG(this); });
         $(r).find('.full-start__rate').each(function () { renderVote(this); });
+        $(r).find('.full-start__pg').each(function () { renderPG(this); });
+        $(r).find('.full-start__status').each(function () { renderStatus(this, event.data.movie); });
+        $(r).find('.full-start-new__poster .card__type').each(function () { renderTypeFull(this, event.data.movie); });
       }
     });
 
