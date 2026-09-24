@@ -3,7 +3,7 @@
 
   let manifest = {
     type: 'other',
-    version: '4.0.8',
+    version: '5.1.0',
     name: 'Favorite Plus',
     component: 'favorite_plus'
   };
@@ -175,7 +175,13 @@
         Lampa.Controller.collectionFocus($focusElement, $render);
       }
     },
-    renderPlusButton(type) {
+    refresh(type) {
+      const activity = Lampa.Activity.active();
+      if (activity.component === 'bookmarks') {
+        $('.register__counter.plus-type-' + type.uid).text(type.counter || 0);
+      }
+    },
+    renderPlusButton(type, $render) {
       const plusTypeCssClass = 'plus-type-' + type.uid;
       const $register = Lampa.Template.js('register')
         .addClass('selector')
@@ -183,7 +189,7 @@
         .addClass('plus-type');
       $register.find('.register__name').text(type.name).addClass(plusTypeCssClass);
       $register.find('.register__counter').text(type.counter || 0).addClass(plusTypeCssClass);
-      const $render = Lampa.Activity.active().activity.render();
+
       $register.on('hover:long', () => {
         const menu = [
           { title: 'Переименовать', action: 'rename' },
@@ -225,6 +231,7 @@
           }
         });
       });
+
       $register.on('hover:enter', () => {
         Lampa.Activity.push({
           url: '',
@@ -234,22 +241,19 @@
           page: 1
         });
       });
+
       $('.register:last', $render).before($register);
       return $register;
     },
-    refresh(type) {
-      const activity = Lampa.Activity.active();
-      if (activity.component === 'bookmarks') {
-        $('.register__counter.plus-type-' + type.uid).text(type.counter || 0);
-      }
-    },
-    renderAddButton() {
+    renderAddButton($render) {
       const self = this;
       const $register = Lampa.Template.js('register')
         .addClass('selector')
         .addClass('plus-type-new');
       $register.find('.register__counter').html('<img src="./img/icons/add.svg"/>');
-      $('.register:last').after($register);
+
+      $('.register:last', $render).after($register);
+
       $register.on('hover:enter', () => {
         Lampa.Input.edit({
           title: 'Название новой категории',
@@ -263,7 +267,7 @@
             return;
           }
           const newType = favoritePlus.createType(value);
-          self.renderPlusButton(newType);
+          self.renderPlusButton(newType, $render);
           Lampa.Controller.toggle('content');
         });
       });
@@ -372,10 +376,12 @@
     refreshBookmarkIcon() {
       const active = Lampa.Activity.active();
       if (active.component !== 'full') return;
+
       const card = active.card;
       const plusAny = favoritePlus.getCards().indexOf(card.id) !== -1;
       const favStates = plusAny ? {} : Lampa.Favorite.check(card);
       const anyFavorite = plusAny || Object.keys(favStates).filter(t => t !== 'history' && t !== 'any').some(t => !!favStates[t]);
+
       const $svg = $('.button--book svg path', active.activity.render());
       $svg.attr('fill', anyFavorite ? 'currentColor' : 'transparent');
     }
@@ -389,6 +395,7 @@
       if (typeof originalProfileWaiter === 'function') return synced && !!originalProfileWaiter();
       return synced;
     };
+
     Lampa.Storage.listener.follow('change', event => {
       if (event.name === 'lampac_sync_favorite' && event.value == 0) {
         Lampa.Storage.set(STORAGE_KEY, '{}', true);
@@ -396,6 +403,7 @@
         favoritePlus.init({});
       }
     });
+
     plusSync.init();
     const cardModule = Lampa.Maker.map('Card');
     const onFavoriteUpdate = cardModule.Favorite.onUpdate;
@@ -404,6 +412,7 @@
       onFavoriteUpdate.apply(self);
       plusCardSvc.refreshPlusIcon({ data: self.data, card: self.html });
     };
+
     const onMenuCreate = cardModule.Menu.onCreate;
     cardModule.Menu.onCreate = function () {
       const self = this;
@@ -438,6 +447,7 @@
       }
       onMenuCreate.apply(this, arguments);
     };
+
     const favoriteGet = Lampa.Favorite.get;
     Lampa.Favorite.get = function (params) {
       if (!params || !params.type) return favoriteGet.apply(this, arguments);
@@ -453,6 +463,7 @@
       }
       return favoriteGet.apply(this, arguments);
     };
+
     const svgIcon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M11 4h2v16h-2V4zM4 11h16v2H4v-2z"/></svg>';
     Lampa.Template.add('plus-icon-svg', svgIcon);
     Lampa.Template.add('plus-icon', '<div class="card__icon icon--star">' + svgIcon + '</div>');
@@ -474,28 +485,25 @@
       }
     });
 
-    Lampa.Storage.listener.follow('change', event => {
-      if (event.name !== 'activity') return;
-      if (Lampa.Activity.active().component === 'bookmarks') {
-        if ($('.plus-type-new').length === 0) {
-          plusPageSvc.renderAddButton();
-          const favorite = favoritePlus.getFavorite();
-          favoritePlus.getTypesWithoutSystem(favorite).forEach(typeName => {
-            const typeUid = favorite.plusTypes[typeName];
-            const typeCounter = (favorite[typeUid] || []).length;
-            plusPageSvc.renderPlusButton({
-              name: typeName,
-              uid: typeUid,
-              counter: typeCounter
-            });
-          });
-          Lampa.Activity.active().activity.toggle();
-        }
-      }
+    Lampa.Listener.follow('activity', event => {
+      if (event.type !== 'create' || event.component !== 'bookmarks') return;
+      const $render = event.object.activity.render();
+      if ($('.plus-type-new', $render).length !== 0) return;
+      plusPageSvc.renderAddButton($render);
+      const favorite = favoritePlus.getFavorite();
+      favoritePlus.getTypesWithoutSystem(favorite).forEach(typeName => {
+        const typeUid = favorite.plusTypes[typeName];
+        const typeCounter = (favorite[typeUid] || []).length;
+        plusPageSvc.renderPlusButton({
+          name: typeName,
+          uid: typeUid,
+          counter: typeCounter
+        }, $render);
+      });
     });
+
     plusPageSvc.registerLines();
   }
-
   Lampa.Listener.follow('app', event => {
     if (event.type === 'ready') start();
   });
