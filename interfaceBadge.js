@@ -3,7 +3,7 @@
 
   const manifest = {
     type: 'interface',
-    version: '5.2.0',
+    version: '5.2.1',
     name: 'UI Badge',
     component: 'ui_badge'
   };
@@ -65,7 +65,7 @@
     in_production: 'normal'
   };
   const mapVote = [
-    { level: 'vgood', min: 9 },
+    { level: 'vgood', min: 8 },
     { level: 'good', min: 7 },
     { level: 'normal', min: 6 },
     { level: 'bad', min: 4 },
