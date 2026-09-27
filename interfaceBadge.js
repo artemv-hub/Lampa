@@ -1,9 +1,9 @@
 (function () {
   'use strict';
 
-  let manifest = {
+  const manifest = {
     type: 'interface',
-    version: '5.1.1',
+    version: '5.2.0',
     name: 'UI Badge',
     component: 'ui_badge'
   };
@@ -245,7 +245,7 @@
     let el = view.querySelector('.' + cls);
     if (!text) { if (el) el.remove(); return; }
     if (!el) { el = document.createElement('div'); el.className = cls; view.appendChild(el); }
-    if (el.innerText !== text) el.innerText = text;
+    if (el.textContent !== text) el.textContent = text;
     if (level) el.setAttribute('data-level', level);
     else el.removeAttribute('data-level');
   }
@@ -344,11 +344,29 @@
   function renderQuality(card, quality) {
     setBadge(card, 'card__quality', quality, quality ? mapQuality[quality] : null);
   }
-  function renderVote(el) {
-    const value = parseFloat(el.textContent);
-    if (isNaN(value)) return;
-    const level = findLevel(mapVote, value);
-    if (level) el.setAttribute('data-level', level);
+  function renderVote(el, info) {
+    let voteEl = el;
+    let view = null;
+
+    if (el.classList.contains('card')) {
+      view = el.querySelector('.card__view');
+      if (!view) return;
+      voteEl = view.querySelector('.card__vote');
+    }
+
+    if (!voteEl || !(parseFloat(voteEl.textContent) > 0)) {
+      const value = info && parseFloat(info.vote_average);
+      if (!value) return;
+      if (!voteEl) {
+        voteEl = document.createElement('div');
+        voteEl.className = 'card__vote';
+        view.appendChild(voteEl);
+      }
+      voteEl.textContent = value.toFixed(1);
+    }
+
+    const level = findLevel(mapVote, parseFloat(voteEl.textContent));
+    if (level) voteEl.setAttribute('data-level', level);
   }
   function renderPG(el) {
     const value = parseInt((el.textContent.match(/\d+/) || [])[0], 10);
@@ -364,8 +382,8 @@
   function renderType(card, isTV) {
     setBadge(card, 'card__type', isTV ? 'Сериал' : null, isTV ? 'vgood' : null);
   }
-  function renderTypeFull(el, movie) {
-    if (!el || !movie) return;
+  function renderTypeFull(el) {
+    if (!el) return;
     el.textContent = 'Сериал';
     el.setAttribute('data-level', 'vgood');
   }
@@ -388,24 +406,16 @@
     renderAge(card);
     renderType(card, !!data.original_name);
 
-    const vote = card.querySelector('.card__vote');
-    if (vote) renderVote(vote);
+    const type = data.original_name ? 'tv' : 'movie';
+    const cacheKey = data.original_name ? TMDB_CACHE_TV : TMDB_CACHE_MOVIE;
+    tmdbGet(type, data.id, cacheKey, (info) => {
+      if (!card.parentNode) return;
+      renderAge(card, info);
+      renderVote(card, info);
+      renderDuration(card, info);
+      renderWatched(card, info);
+    });
 
-    if (data.original_name) {
-      tmdbGet('tv', data.id, TMDB_CACHE_TV, (info) => {
-        if (!card.parentNode) return;
-        renderAge(card, info);
-        renderDuration(card, info);
-        renderWatched(card, info);
-      });
-    } else {
-      tmdbGet('movie', data.id, TMDB_CACHE_MOVIE, (info) => {
-        if (!card.parentNode) return;
-        renderAge(card, info);
-        renderDuration(card, info);
-        renderWatched(card, info);
-      });
-    }
     qualityGet(card, (quality) => {
       if (!card.parentNode) return;
       renderQuality(card, quality);
@@ -413,7 +423,6 @@
   }
   function processListener() {
     if (window.__ui_badge_card_patched__) return;
-    window.__ui_badge_card_patched__ = true;
 
     try {
       if (Lampa.Maker && Lampa.Maker.map) {
@@ -431,6 +440,7 @@
           CardMaker.Card.__ui_badge_patched__ = true;
         }
       }
+      window.__ui_badge_card_patched__ = true;
     } catch (_) { }
   }
 
@@ -516,10 +526,7 @@
 
     Lampa.Listener.follow('activity', (e) => {
       if (e.type === 'destroy' || e.type === 'archive') return;
-      scanLater(scan, 0, 'scan-0');
-      scanLater(scan, 150, 'scan-150');
-      scanLater(scan, 400, 'scan-400');
-      scanLater(scan, 900, 'scan-900');
+      [0, 150, 400, 900].forEach(d => scanLater(scan, d, 'scan-' + d));
     });
     Lampa.Listener.follow('line', (e) => {
       if (!e || (e.type !== 'append' && e.type !== 'create' && e.type !== 'visible')) return;
@@ -544,7 +551,7 @@
         $(r).find('.full-start__rate').each(function () { renderVote(this); });
         $(r).find('.full-start__pg').each(function () { renderPG(this); });
         $(r).find('.full-start__status').each(function () { renderStatus(this, event.data.movie); });
-        $(r).find('.full-start-new__poster .card__type').each(function () { renderTypeFull(this, event.data.movie); });
+        $(r).find('.full-start-new__poster .card__type').each(function () { renderTypeFull(this); });
       }
     });
 
