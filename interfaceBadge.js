@@ -3,7 +3,7 @@
 
   const manifest = {
     type: 'interface',
-    version: '5.2.1',
+    version: '5.2.2',
     name: 'UI Badge',
     component: 'ui_badge'
   };
@@ -354,18 +354,22 @@
       voteEl = view.querySelector('.card__vote');
     }
 
-    if (!voteEl || !(parseFloat(voteEl.textContent) > 0)) {
-      const value = info && parseFloat(info.vote_average);
-      if (!value) return;
+    let value = info && parseFloat(info.vote_average);
+    if (value) {
       if (!voteEl) {
         voteEl = document.createElement('div');
         voteEl.className = 'card__vote';
         view.appendChild(voteEl);
       }
-      voteEl.textContent = value.toFixed(1);
+      const text = value.toFixed(1);
+      if (voteEl.textContent !== text) voteEl.textContent = text;
+    } else {
+      if (!voteEl) return;
+      value = parseFloat(voteEl.textContent);
+      if (!value) return;
     }
 
-    const level = findLevel(mapVote, parseFloat(voteEl.textContent));
+    const level = findLevel(mapVote, value);
     if (level) voteEl.setAttribute('data-level', level);
   }
   function renderPG(el) {
