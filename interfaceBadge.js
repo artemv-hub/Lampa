@@ -3,7 +3,7 @@
 
   const manifest = {
     type: 'interface',
-    version: '5.2.3',
+    version: '5.2.4',
     name: 'UI Badge',
     component: 'ui_badge'
   };
@@ -180,8 +180,7 @@
     const year = (video.release_date || '').substring(0, 4);
     if (!year || isNaN(year)) { callback(null); return; }
 
-    const uid = Lampa.Storage.get('lampac_unic_id', '');
-    let url = 'https://' + QUALITY_API_URL + '/api/v2.0/indexers/all/results?apikey=&uid=' + uid + '&year=' + year;
+    let url = 'https://' + QUALITY_API_URL + '/api/v2.0/indexers/all/results?year=' + year;
     let hasTitle = false;
     if (video.title && /[a-zа-яё0-9]/i.test(video.title)) { url += '&title=' + encodeURIComponent(video.title.trim()); hasTitle = true; }
     if (video.original_title && /[a-zа-яё]/i.test(video.original_title)) { url += '&title_original=' + encodeURIComponent(video.original_title.trim()); hasTitle = true; }
@@ -538,12 +537,6 @@
         else if (e.body.length && e.body[0] && e.body[0].nodeType === 1) body = e.body[0];
       }
       scanLater(() => body ? scanContainer(body) : scan(), 30, 'scan-line');
-    });
-    Lampa.Listener.follow('card', (event) => {
-      if (event.type === 'build' && event.object && event.object.card) {
-        scanObserveCard(event.object.card);
-        processCard(event.object.card);
-      }
     });
     Lampa.Listener.follow('full', (event) => {
       if (event.type === 'complite' && event.data && event.data.movie) {
