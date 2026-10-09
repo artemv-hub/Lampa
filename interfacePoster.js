@@ -3,7 +3,7 @@
 
   const manifest = {
     type: 'interface',
-    version: '5.0.0',
+    version: '5.0.1',
     name: 'UI Poster',
     component: 'ui_poster'
   };
@@ -34,7 +34,7 @@
     return fetch(url, options).then((res) => res.json());
   }
 
-  // api_key и language=tmdb_lang подставляет сам Lampa.Api.sources.tmdb.get
+  // TMDB
   function tmdbPoster(card) {
     return new Promise((resolve) => {
       Lampa.Api.sources.tmdb.get(cardType(card) + '/' + card.id, {}, (data) => {
@@ -43,7 +43,7 @@
     });
   }
 
-  // SYNC: /bookmark/sync не двигает карточку, categories возвращаем как есть с сервера
+  // SYNC
   function pushFavorite(cards) {
     server('/bookmark/dump').then((dump) => {
       const rows = (dump && dump.rows) || [];

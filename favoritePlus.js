@@ -3,7 +3,7 @@
 
   const manifest = {
     type: 'other',
-    version: '5.2.4',
+    version: '5.2.5',
     name: 'Favorite Plus',
     component: 'favorite_plus'
   };
@@ -15,16 +15,16 @@
 
   // FAVORITE
   const favoritePlus = {
-    _data: null,
+    data: null,
 
     init(obj) {
-      this._data = obj || Lampa.Storage.get(STORAGE_KEY, {});
-      this._data.plusTypes = this._data.plusTypes || { card: [] };
+      this.data = obj || Lampa.Storage.get(STORAGE_KEY, {});
+      this.data.plusTypes = this.data.plusTypes || { card: [] };
     },
 
     getFavorite() {
-      if (this._data == null) this.init();
-      return this._data;
+      if (this.data == null) this.init();
+      return this.data;
     },
 
     hasTypeId(favorite, type) {
@@ -75,8 +75,23 @@
 
       delete favorite.plusTypes[typeName];
       delete favorite[uid];
+      this.pruneCards(favorite);
+
       Lampa.Storage.set(STORAGE_KEY, favorite);
       return true;
+    },
+
+    // PRUNE
+    pruneCards(favorite) {
+      const cards = favorite.plusTypes.card;
+      if (!cards) return;
+
+      const referenced = new Set();
+      this.getTypesWithoutSystem(favorite).forEach((key) => {
+        (favorite[favorite.plusTypes[key]] || []).forEach((id) => referenced.add(String(id)));
+      });
+
+      favorite.plusTypes.card = cards.filter((card) => card && referenced.has(String(card.id)));
     },
 
     getTypeList(typeName) {
