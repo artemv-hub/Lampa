@@ -2,10 +2,10 @@
   'use strict';
 
   const manifest = {
-    type: 'interface',
-    version: '5.0.1',
-    name: 'UI Poster',
-    component: 'ui_poster'
+    type: 'other',
+    version: '5.0.2',
+    name: 'Favorite Poster',
+    component: 'favorite_poster'
   };
   Lampa.Manifest.plugins = manifest;
 
@@ -29,8 +29,13 @@
 
   function server(path, options) {
     let url = window.location.origin + path;
+
+    const email = Lampa.Storage.get('account_email');
+    if (email) url = Lampa.Utils.addUrlComponent(url, 'account_email=' + encodeURIComponent(email));
+
     const uid = Lampa.Storage.get('lampac_unic_id', '');
     if (uid) url = Lampa.Utils.addUrlComponent(url, 'uid=' + encodeURIComponent(uid));
+
     return fetch(url, options).then((res) => res.json());
   }
 
