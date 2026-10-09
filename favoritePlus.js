@@ -3,7 +3,7 @@
 
   const manifest = {
     type: 'other',
-    version: '5.2.3',
+    version: '5.2.4',
     name: 'Favorite Plus',
     component: 'favorite_plus'
   };
@@ -216,6 +216,7 @@
 
       this.applySystem(card);
       this.applyPlus(card);
+      this.refresh();
     },
 
     applySystem(card) {
@@ -239,6 +240,16 @@
 
       cards.unshift(cards.splice(at, 1)[0]);
       Lampa.Storage.set(STORAGE_KEY, favorite);
+    },
+
+    refresh() {
+      const stack = Lampa.Activity.all ? Lampa.Activity.all() : [];
+
+      stack.forEach((item) => {
+        if (item.component === 'bookmarks' && item.activity && item.activity.refresh) {
+          item.activity.refresh();
+        }
+      });
     },
 
     init() {
