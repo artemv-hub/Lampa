@@ -3,7 +3,7 @@
 
   const manifest = {
     type: 'other',
-    version: '5.2.0',
+    version: '5.2.1',
     name: 'Favorite Plus',
     component: 'favorite_plus'
   };
@@ -206,6 +206,35 @@
           if (typeof callback === 'function') callback();
         }
       );
+    }
+  };
+
+  // REORDER
+  const plusReorder = {
+    marks: ['look', 'scheduled', 'book', 'like', 'wath', 'viewed', 'continued', 'thrown'],
+    _last: { id: 0, time: 0 },
+
+    apply(card) {
+      if (!card || !card.id) return;
+
+      const now = Date.now();
+      if (this._last.id === card.id && now - this._last.time < 1000) return;
+      this._last = { id: card.id, time: now };
+
+      const status = Lampa.Favorite.check(card) || {};
+      const data = Lampa.Favorite.full() || {};
+
+      this.marks.filter((cat) => status[cat]).forEach((cat) => {
+        const list = data[cat] || [];
+        if (list.map(String).indexOf(String(card.id)) <= 0) return;
+        Lampa.Favorite.add(cat, card);
+      });
+    },
+
+    init() {
+      Lampa.Favorite.listener.follow('add,added', (event) => {
+        if (event.where === 'history' && event.card) this.apply(event.card);
+      });
     }
   };
 
@@ -588,6 +617,7 @@
       });
     });
 
+    plusReorder.init();
     plusPageSvc.registerLines();
   }
 
