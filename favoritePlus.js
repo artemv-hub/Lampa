@@ -3,7 +3,7 @@
 
   const manifest = {
     type: 'other',
-    version: '5.2.5',
+    version: '5.2.6',
     name: 'Favorite Plus',
     component: 'favorite_plus'
   };
@@ -548,14 +548,14 @@
 
     const cardModule = Lampa.Maker.map('Card');
 
-    const onFavoriteUpdate = cardModule.Favorite.onUpdate;
+    const originalFavoriteUpdate = cardModule.Favorite.onUpdate;
     cardModule.Favorite.onUpdate = function () {
       const self = this;
-      onFavoriteUpdate.apply(self);
+      originalFavoriteUpdate.apply(self);
       plusCardSvc.refreshPlusIcon({ data: self.data, card: self.html });
     };
 
-    const onMenuCreate = cardModule.Menu.onCreate;
+    const originalMenuCreate = cardModule.Menu.onCreate;
     cardModule.Menu.onCreate = function () {
       const self = this;
       const favMenuList = this.menu_list.filter((m) => m.title === Lampa.Lang.translate('settings_input_links'))[0];
@@ -591,12 +591,12 @@
         };
       }
 
-      onMenuCreate.apply(this, arguments);
+      originalMenuCreate.apply(this, arguments);
     };
 
-    const favoriteGet = Lampa.Favorite.get;
+    const originalFavoriteGet = Lampa.Favorite.get;
     Lampa.Favorite.get = function (params) {
-      if (!params || !params.type) return favoriteGet.apply(this, arguments);
+      if (!params || !params.type) return originalFavoriteGet.apply(this, arguments);
 
       const favorite = favoritePlus.getFavorite();
       if (favorite && favorite.hasOwnProperty(params.type) &&
@@ -607,19 +607,20 @@
         return plusTypeCards.filter((c) => cardIds.indexOf(c.id) !== -1);
       }
 
-      return favoriteGet.apply(this, arguments);
+      return originalFavoriteGet.apply(this, arguments);
     };
 
     const svgIcon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M11 4h2v16h-2V4zM4 11h16v2H4v-2z"/></svg>';
     Lampa.Template.add('plus-icon-svg', svgIcon);
     Lampa.Template.add('plus-icon', '<div class="card__icon icon--star">' + svgIcon + '</div>');
 
-    $('<style>').prop('type', 'text/css').html(
+    const style = document.createElement('style');
+    style.textContent =
       '.card__icon { position: relative; } ' +
       '.icon--star svg { position: absolute; height: 80%; width: 80%; top: 50%; left: 50%; transform: translate(-50%, -50%) }' +
       '.plus-type-new .register__counter { display:flex; justify-content:center; align-items:center } ' +
-      '.plus-type-new .register__counter img { height:2.2em; padding:0.4em; }'
-    ).appendTo('head');
+      '.plus-type-new .register__counter img { height:2.2em; padding:0.4em; }';
+    document.head.appendChild(style);
 
     Lampa.Listener.follow('full', (event) => {
       if (event.type !== 'complite') return;
