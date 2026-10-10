@@ -3,7 +3,7 @@
 
   const manifest = {
     type: 'other',
-    version: '5.0.2',
+    version: '5.0.3',
     name: 'Favorite Poster',
     component: 'favorite_poster'
   };
@@ -108,8 +108,8 @@
 
   // INIT
   function start() {
-    if (window.ui_poster) return;
-    window.ui_poster = true;
+    if (window.favorite_poster) return;
+    window.favorite_poster = true;
 
     window.posterRefreshNow = () => {
       Lampa.Storage.set(LAST_RUN_KEY, Date.now());
