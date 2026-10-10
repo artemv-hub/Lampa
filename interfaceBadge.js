@@ -3,7 +3,7 @@
 
   const manifest = {
     type: 'interface',
-    version: '5.2.5',
+    version: '5.2.6',
     name: 'UI Badge',
     component: 'ui_badge'
   };
@@ -500,7 +500,7 @@
     });
   }
   function processListener() {
-    if (window.__ui_badge_card_patched__) return;
+    if (window.ui_badge_card) return;
 
     try {
       const CardMaker = Lampa.Maker.map('Card');
@@ -516,7 +516,7 @@
         };
         CardMaker.Card.__ui_badge_patched__ = true;
       }
-      window.__ui_badge_card_patched__ = true;
+      window.ui_badge_card = true;
     } catch (_) { }
   }
 
@@ -596,9 +596,9 @@
   }
 
   // INIT
-  function appInit() {
-    if (window.__ui_badge_initialized__) return;
-    window.__ui_badge_initialized__ = true;
+  function start() {
+    if (window.ui_badge) return;
+    window.ui_badge = true;
 
     if (typeof IntersectionObserver !== 'undefined') {
       scanObserver = new IntersectionObserver((entries) => {
@@ -642,7 +642,7 @@
     scanLater(scan, 600, 'boot-600');
   }
 
-  if (window.appready) appInit();
-  else Lampa.Listener.follow('app', (e) => { if (e.type === 'ready') appInit(); });
+  if (window.appready) start();
+  else Lampa.Listener.follow('app', (e) => { if (e.type === 'ready') start(); });
 
 })();
