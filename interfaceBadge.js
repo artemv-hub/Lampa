@@ -3,7 +3,7 @@
 
   const manifest = {
     type: 'interface',
-    version: '5.2.4',
+    version: '5.2.5',
     name: 'UI Badge',
     component: 'ui_badge'
   };
@@ -122,32 +122,87 @@
     return value;
   }
 
+  // QUEUE
+  const REQUEST_POOL = [];
+  function poolGet() { return REQUEST_POOL.pop() || new Lampa.Reguest(); }
+  function poolRelease(network) {
+    try { network.clear(); } catch (_) { }
+    if (REQUEST_POOL.length < 5) REQUEST_POOL.push(network);
+  }
+  const QUEUE_MAX = 120;
+  const queues = {
+    fast: { running: 0, limit: 6, tasks: [] },
+    slow: { running: 0, limit: 6, tasks: [] }
+  };
+  function queueDrain(name) {
+    const queue = queues[name];
+    while (queue.running < queue.limit && queue.tasks.length) {
+      const item = queue.tasks.shift();
+      queue.running++;
+      item.task(() => { queue.running--; queueDrain(name); });
+    }
+  }
+  function enqueue(name, task, onDrop) {
+    const queue = queues[name];
+    queue.tasks.push({ task, onDrop });
+    while (queue.tasks.length > QUEUE_MAX) {
+      const dropped = queue.tasks.shift();
+      if (dropped && dropped.onDrop) { try { dropped.onDrop(); } catch (_) { } }
+    }
+    queueDrain(name);
+  }
+
   // TMDB
+  const tmdbOverlayBlock = {};
   function tmdbGet(type, id, cacheKey, callback) {
     const idKey = String(id);
     const cached = cacheGet(cacheKey, idKey);
     if (cached) { callback(cached); return; }
 
+    const key = cacheKey + '|' + idKey;
+    if (tmdbOverlayBlock[key]) { tmdbOverlayBlock[key].push(callback); return; }
+
     let url = '';
-    try {
-      if (Lampa.TMDB && Lampa.TMDB.api && Lampa.TMDB.key) url = Lampa.TMDB.api(type + '/' + id + '?api_key=' + Lampa.TMDB.key());
-    } catch (_) { }
+    try { url = Lampa.TMDB.api(type + '/' + id + '?api_key=' + Lampa.TMDB.key()); } catch (_) { }
     if (!url) { callback(null); return; }
 
-    const network = new Lampa.Reguest();
-    network.timeout(7000);
-    network.silent(url,
-      (data) => {
-        try { network.clear(); } catch (_) { }
-        if (!data || typeof data !== 'object') { callback(null); return; }
-        callback(cacheSet(cacheKey, idKey, data));
-      },
-      () => {
-        try { network.clear(); } catch (_) { }
-        callback(cacheSet(cacheKey, idKey, { failed: true }));
-      },
-      false
-    );
+    tmdbOverlayBlock[key] = [callback];
+
+    const flush = (result) => {
+      const waiters = tmdbOverlayBlock[key];
+      delete tmdbOverlayBlock[key];
+      waiters.forEach((cb) => cb(result));
+    };
+
+    enqueue('fast', (done) => {
+      const network = poolGet();
+      network.timeout(7000);
+      network.silent(url,
+        (data) => {
+          poolRelease(network);
+          if (!data || typeof data !== 'object') { flush(null); done(); return; }
+          flush(cacheSet(cacheKey, idKey, tmdbOverlay(data)));
+          done();
+        },
+        () => {
+          poolRelease(network);
+          flush(cacheSet(cacheKey, idKey, { failed: true }));
+          done();
+        },
+        false
+      );
+    }, () => flush(null));
+  }
+  function tmdbOverlay(data) {
+    const last = data.last_episode_to_air || null;
+    return {
+      status: data.status,
+      release_date: data.release_date,
+      vote_average: data.vote_average,
+      runtime: data.runtime,
+      last_episode_to_air: last ? { season_number: last.season_number, episode_number: last.episode_number } : null,
+      seasons: (data.seasons || []).map((s) => ({ season_number: s.season_number, episode_count: s.episode_count }))
+    };
   }
 
   // QUALITY
@@ -186,11 +241,11 @@
     if (video.original_title && /[a-zа-яё]/i.test(video.original_title)) { url += '&title_original=' + encodeURIComponent(video.original_title.trim()); hasTitle = true; }
     if (!hasTitle) { callback(null); return; }
 
-    const network = new Lampa.Reguest();
+    const network = poolGet();
     network.timeout(15000);
     network.silent(url,
       (resp) => {
-        try { network.clear(); } catch (_) { }
+        poolRelease(network);
         if (!resp) { callback(null); return; }
         try {
           const data = typeof resp === 'string' ? JSON.parse(resp) : resp;
@@ -219,11 +274,12 @@
         } catch (_) { callback(null); }
       },
       () => {
-        try { network.clear(); } catch (_) { }
+        poolRelease(network);
         callback(null);
       }
     );
   }
+  const qualityOverlayBlock = {};
   function qualityGet(card, callback) {
     const data = card && card.card_data;
     if (!data || !data.id) { callback(null); return; }
@@ -231,15 +287,36 @@
     const key = video.type + ':' + video.id;
     const cached = cacheGet(QUALITY_CACHE, key);
     if (cached) { callback(cached.quality); return; }
-    qualityFetch(video, (quality) => {
-      cacheSet(QUALITY_CACHE, key, { quality: quality || null, empty: !quality });
-      callback(quality);
-    });
+
+    if (qualityOverlayBlock[key]) { qualityOverlayBlock[key].push(callback); return; }
+
+    qualityOverlayBlock[key] = [callback];
+
+    const flush = (quality) => {
+      const waiters = qualityOverlayBlock[key];
+      delete qualityOverlayBlock[key];
+      waiters.forEach((cb) => cb(quality));
+    };
+
+    enqueue('slow', (done) => {
+      qualityFetch(video, (quality) => {
+        cacheSet(QUALITY_CACHE, key, { quality: quality || null, empty: !quality });
+        flush(quality);
+        done();
+      });
+    }, () => flush(null));
   }
 
   // RENDER
+  function cardView(card) {
+    let view = card.__uiBadgeView;
+    if (view && view.isConnected && card.contains(view)) return view;
+    view = card.querySelector('.card__view');
+    card.__uiBadgeView = view;
+    return view;
+  }
   function setBadge(card, cls, text, level) {
-    const view = card.querySelector('.card__view');
+    const view = cardView(card);
     if (!view) return;
     let el = view.querySelector('.' + cls);
     if (!text) { if (el) el.remove(); return; }
@@ -315,7 +392,7 @@
 
       const name = data.original_name;
       const seasonMap = {};
-      (info.seasons || []).forEach(s => { if (s.season_number > 0) seasonMap[s.season_number] = s.episode_count; });
+      (info.seasons || []).forEach((s) => { if (s.season_number > 0) seasonMap[s.season_number] = s.episode_count; });
 
       for (let season = last.season_number; season >= 1; season--) {
         const maxEp = season === last.season_number ? last.episode_number : (seasonMap[season] || 0);
@@ -426,20 +503,18 @@
     if (window.__ui_badge_card_patched__) return;
 
     try {
-      if (Lampa.Maker && Lampa.Maker.map) {
-        const CardMaker = Lampa.Maker.map('Card');
-        if (CardMaker && CardMaker.Card && !CardMaker.Card.__ui_badge_patched__) {
-          const originalOnVisible = CardMaker.Card.onVisible;
-          CardMaker.Card.onVisible = function () {
-            if (originalOnVisible) originalOnVisible.apply(this, arguments);
-            const card = this.html || this.card;
-            let data = card && card.card_data;
-            if (!data && this.card && this.card.card_data) data = this.card.card_data;
-            if (!data && this.card_data) data = this.card_data;
-            if (card && data && data.id) { scanObserveCard(card); processCard(card); }
-          };
-          CardMaker.Card.__ui_badge_patched__ = true;
-        }
+      const CardMaker = Lampa.Maker.map('Card');
+      if (CardMaker && CardMaker.Card && !CardMaker.Card.__ui_badge_patched__) {
+        const originalOnVisible = CardMaker.Card.onVisible;
+        CardMaker.Card.onVisible = function () {
+          if (originalOnVisible) originalOnVisible.apply(this, arguments);
+          const card = this.html || this.card;
+          let data = card && card.card_data;
+          if (!data && this.card && this.card.card_data) data = this.card.card_data;
+          if (!data && this.card_data) data = this.card_data;
+          if (card && data && data.id) { scanObserveCard(card); processCard(card); }
+        };
+        CardMaker.Card.__ui_badge_patched__ = true;
       }
       window.__ui_badge_card_patched__ = true;
     } catch (_) { }
@@ -460,11 +535,22 @@
     return id;
   }
   let scanObserver = null;
+  const observedCards = [];
   function scanObserveCard(card) {
     if (!scanObserver || !card || card.nodeType !== 1) return;
     if (card.getAttribute('data-observed') === '1') return;
     card.setAttribute('data-observed', '1');
-    try { scanObserver.observe(card); } catch (_) { }
+    try { scanObserver.observe(card); observedCards.push(card); } catch (_) { }
+  }
+  function scanPrune() {
+    if (!scanObserver || !observedCards.length) return;
+    for (let i = observedCards.length - 1; i >= 0; i--) {
+      const node = observedCards[i];
+      if (node && node.parentNode && document.body.contains(node)) continue;
+      try { scanObserver.unobserve(node); } catch (_) { }
+      if (node && node.removeAttribute) node.removeAttribute('data-observed');
+      observedCards.splice(i, 1);
+    }
   }
   function scanIsBlocked() {
     if (document.hidden) return true;
@@ -526,7 +612,7 @@
     processListener();
 
     Lampa.Listener.follow('activity', (e) => {
-      if (e.type === 'destroy' || e.type === 'archive') return;
+      if (e.type === 'destroy' || e.type === 'archive') { scanLater(scanPrune, 0, 'prune'); return; }
       [0, 150, 400, 900].forEach(d => scanLater(scan, d, 'scan-' + d));
     });
     Lampa.Listener.follow('line', (e) => {
