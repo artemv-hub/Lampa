@@ -65,6 +65,30 @@
 - Приватные поля и методы объекта — обычным `camelCase`, без подчёркивания, например `data`.
 - Имена осмысленные, без сокращений-загадок; доменные имена Lampa (`Lampa.Storage`, `Lampa.Listener`, `Lampa.Platform`) не переименовывать.
 
+## Структура плагина
+
+- Порядок файла: `manifest` → объявления (константы, карты, функции) → секции логики → `// INIT` → хвост запуска.
+- На верхнем уровне — только объявления. Всё «делающее» (патчи `Lampa.*`, слушатели, вставка DOM) — внутри `start()`.
+- Имя init-функции всегда `start()`.
+- Guard инициализации — по `component` из manifest, один раз в начале `start()`:
+  ```js
+  if (window.ui_mobile) return;
+  window.ui_mobile = true;
+  ```
+- Хвост запуска одинаковый во всех плагинах:
+  ```js
+  if (window.appready) start();
+  else Lampa.Listener.follow('app', (e) => { if (e.type === 'ready') start(); });
+  ```
+- Сохранённые нативные методы — с префиксом `original`, например `originalFavoriteUpdate`, `originalMenuCreate`, `originalFavoriteGet`.
+- `<style>` вставлять через DOM API, не через jQuery:
+  ```js
+  const style = document.createElement('style');
+  style.textContent = '...';
+  document.head.appendChild(style);
+  ```
+- Исключение: `interfaceStyle` применяется рано, на верхнем уровне (без `start()` и `appready`).
+
 ## Версионирование
 
 - При изменении плагина поднимать `version` в его `manifest`.
