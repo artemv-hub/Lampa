@@ -3,7 +3,7 @@
 
   const manifest = {
     type: 'other',
-    version: '5.2.6',
+    version: '5.2.7',
     name: 'Favorite Plus',
     component: 'favorite_plus'
   };
@@ -615,11 +615,12 @@
     Lampa.Template.add('plus-icon', '<div class="card__icon icon--star">' + svgIcon + '</div>');
 
     const style = document.createElement('style');
-    style.textContent =
-      '.card__icon { position: relative; } ' +
-      '.icon--star svg { position: absolute; height: 80%; width: 80%; top: 50%; left: 50%; transform: translate(-50%, -50%) }' +
-      '.plus-type-new .register__counter { display:flex; justify-content:center; align-items:center } ' +
-      '.plus-type-new .register__counter img { height:2.2em; padding:0.4em; }';
+    style.textContent = `
+      .card__icon { position: relative; }
+      .icon--star svg { position: absolute; height: 80%; width: 80%; top: 50%; left: 50%; transform: translate(-50%, -50%) }
+      .plus-type-new .register__counter { display:flex; justify-content:center; align-items:center }
+      .plus-type-new .register__counter img { height:2.2em; padding:0.4em; }
+    `;
     document.head.appendChild(style);
 
     Lampa.Listener.follow('full', (event) => {
